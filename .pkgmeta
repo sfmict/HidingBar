@@ -12,7 +12,8 @@ manual-changelog:
 	markup-type: markdown
 
 ignore:
-	- *README.*
+	- README.md
 	- CHANGELOG.md
 	- libs/LibStub/LibStub.toc
 	- libs/LibStub/tests
+	- libs/LibDataBroker-1.1/README.textile
