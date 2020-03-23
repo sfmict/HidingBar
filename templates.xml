@@ -40,21 +40,21 @@
 			</OnLoad>
 			<OnEnter>
 				self.icon:SetSize(32, 32)
-				if self.OnEnter then
-					self:OnEnter()
+				if self.data.OnEnter then
+					self.data.OnEnter(self)
 				end
-				if self.OnTooltipShow then
+				if self.data.OnTooltipShow then
 					GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-					self.OnTooltipShow(GameTooltip)
+					self.data.OnTooltipShow(GameTooltip)
 					GameTooltip:Show()
 				end
 			</OnEnter>
 			<OnLeave>
 				self.icon:SetSize(30, 30)
 				if self.OnLeave then
-					self:OnLeave()
+					self.data.OnLeave(self)
 				end
-				if self.OnTooltipShow then
+				if self.data.OnTooltipShow then
 					GameTooltip:Hide()
 				end
 			</OnLeave>

@@ -268,12 +268,17 @@ do
 		config:hidingBarUpdate()
 	end
 
-	function config:createButton(id, order, texture, update)
+	function config:createButton(id, order, data, update)
 		if self.buttons[id] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
 		btn.id = id
 		btn.order = order
-		btn.icon:SetTexture(texture)
+		if data.icon then
+			btn.icon:SetTexture(data.icon)
+			if data.iconDesaturated then
+				btn.icon:SetDesaturated(true)
+			end
+		end
 		btn.btnList = self.buttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
@@ -286,7 +291,10 @@ do
 		btn.settings = btnSettings
 		btn:SetChecked(btnSettings[1])
 		tinsert(self.buttons, btn)
-		if update then self:applyLayout() end
+		if update then
+			self:sort(self.buttons)
+			self:applyLayout()
+		end
 	end
 end
 
@@ -324,7 +332,7 @@ end
 
 function config:initButtons()
 	for i, button in ipairs(self.hidingBar.createdButtons) do
-		self:createButton(button.id, i, button.icon:GetTexture())
+		self:createButton(button.id, i, button.data)
 	end
 	for i, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()

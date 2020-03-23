@@ -4,9 +4,10 @@ local hidingBar = CreateFrame("FRAME", addon.."Addon", UIParent, "HidingBarAddon
 hidingBar:SetFrameStrata("DIALOG")
 hidingBar:EnableMouse(true)
 hidingBar.drag = CreateFrame("FRAME", nil, UIParent)
-hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag:SetFrameStrata("DIALOG")
+hidingBar.drag:EnableMouse(true)
 hidingBar.drag:SetSize(4, 4)
+hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
 hidingBar.drag.bg:SetColorTexture(.8, .6, 0)
@@ -40,28 +41,24 @@ end
 function hidingBar:init()
 	local t = time()
 
-	if LibStub and LibStub.libs then
-		local ldb = LibStub.libs["LibDataBroker-1.1"]
-		if ldb then
-			ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
-			for name, data in ldb:DataObjectIterator() do
-				local settings = self.config.btnSettings[name]
-				if settings then settings.tstmp = t end
-				self:ldb_add(nil, name, data)
-			end
-		end
+	local ldb = LibStub("LibDataBroker-1.1")
+	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
+	for name, data in ldb:DataObjectIterator() do
+		local settings = self.config.btnSettings[name]
+		if settings then settings.tstmp = t end
+		self:ldb_add(nil, name, data)
+	end
 
-		if self.config.grabMinimap then
-			local ldbi = LibStub.libs["LibDBIcon-1.0"]
-			if ldbi then
-				local ldbiTbl = ldbi:GetButtonList()
-				for i = 1, #ldbiTbl do
-					local button = ldbi:GetMinimapButton(ldbiTbl[i])
-					local settings = self.config.mbtnSettings[button:GetName()]
-					if settings then settings.tstmp = t end
-					self.minimapButtons[button[0]] = button
-					self:setHooks(button)
-				end
+	if self.config.grabMinimap then
+		local ldbi = LibStub.libs["LibDBIcon-1.0"]
+		if ldbi then
+			local ldbiTbl = ldbi:GetButtonList()
+			for i = 1, #ldbiTbl do
+				local button = ldbi:GetMinimapButton(ldbiTbl[i])
+				local settings = self.config.mbtnSettings[button:GetName()]
+				if settings then settings.tstmp = t end
+				self.minimapButtons[button[0]] = button
+				self:setHooks(button)
 			end
 		end
 	end
@@ -109,14 +106,12 @@ function hidingBar:init()
 	self:applyLayout()
 	self:setPosition()
 	self:leave()
-	config:openConfig()
 end
 
 
 function hidingBar:ldb_add(event, name, data)
 	if name and data and data.type == "launcher" then
-		self:addButton(name, data)
-		if event then self:applyLayout() end
+		self:addButton(name, data, event)
 	end
 end
 
@@ -129,22 +124,30 @@ icon            - Texture icon
 iconDesaturated - Desaturated icon (boolean)
 OnTooltipShow   - Handler tooltip show: function(TooltipFrame) .. end
 --]]
-function hidingBar:addButton(name, data)
-	local button = CreateFrame("BUTTON", format("ADDON_%s_%s", addon, name), self, "HidingBarAddonCreatedButtonTemplate")
+function hidingBar:addButton(name, data, update)
+	local buttonName  = format("ADDON_%s_%s", addon, name)
+	if _G[buttonName] then return end
+	local button = CreateFrame("BUTTON", buttonName, self, "HidingBarAddonCreatedButtonTemplate")
 	button.id = name
-	button.icon:SetTexture(data.icon)
-	if data.iconDesaturated then
-		button.icon:SetDesaturated(true)
+	button.data = data
+	if data.icon then
+		button.icon:SetTexture(data.icon)
+		if data.iconDesaturated then
+			button.icon:SetDesaturated(true)
+		end
 	end
-	button.OnEnter = data.OnEnter
-	button.OnLeave = data.OnLeave
-	button.OnTooltipShow = data.OnTooltipShow
 	if data.OnClick then
 		button:SetScript("OnClick", data.OnClick)
 	end
 	button:HookScript("OnEnter", function() self:enter() end)
 	button:HookScript("OnLeave", function() self:leave() end)
 	tinsert(self.createdButtons, button)
+	if update then
+		self:sort()
+		self:applyLayout()
+		config:createButton(name, #self.createdButtons, data, update)
+	end
+	return button
 end
 
 

@@ -1,0 +1,16 @@
+package-as: HidingBar
+
+externals:
+	HidingBar/Libs/LibStub: https://repos.wowace.com/wow/libstub/trunk
+	HidingBar/Libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+	HidingBar/Libs/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1
+
+enable-nolib-creation: no
+
+manual-changelog:
+	filename: CHANGELOG.md
+	markup-type: markdown
+
+ignore:
+	- README.md
+	- CHANGELOG.md
