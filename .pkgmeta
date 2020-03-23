@@ -1,9 +1,9 @@
 package-as: HidingBar
 
 externals:
-	HidingBar/Libs/LibStub: https://repos.wowace.com/wow/libstub/trunk
-	HidingBar/Libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
-	HidingBar/Libs/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1
+	libs/LibStub: https://repos.wowace.com/wow/libstub/trunk
+	libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+	libs/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1
 
 enable-nolib-creation: no
 
@@ -12,5 +12,7 @@ manual-changelog:
 	markup-type: markdown
 
 ignore:
-	- README.md
+	- *README.*
 	- CHANGELOG.md
+	- libs/LibStub/LibStub.toc
+	- libs/LibStub/tests

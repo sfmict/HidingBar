@@ -1,0 +1,26 @@
+name: "Retail-Build"
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: download tools
+      uses: actions/checkout@v2
+      with:
+        repository: sfmict/my-tools
+        token: ${{ secrets.GITHUB_OAUTH }}
+        path: my-tools
+
+    - name: files
+      run: bash my-tools/release.sh
+      env:
+        GITHUB_OAUTH: ${{ secrets.GITHUB_OAUTH }}
