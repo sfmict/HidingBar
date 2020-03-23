@@ -1,0 +1,209 @@
+<Ui>
+	<Frame name="HidingBarAddonPanel" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture setAllPoints="true" file="Interface/ChatFrame/ChatFrameBackground">
+					<Color r=".1" g=".1" b=".1" a=".7"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Frame>
+
+	<Frame name="HidingBarAddonOptionsPanel" virtual="true">
+		<Backdrop bgFile="Interface/ChatFrame/ChatFrameBackground" edgeFile="Interface/Tooltips/UI-Tooltip-border" tile="true">
+			<EdgeSize val="14"/>
+			<TileSize val="14"/>
+			<BackgroundInsets left="4" right="4" top="4" bottom="4"/>
+			<Color r=".1" g=".1" b=".1" a=".3"/>
+			<BorderColor r=".5" g=".5" b=".5"/>
+		</Backdrop>
+	</Frame>
+
+	<Button name="HidingBarAddonButtonTemplate" virtual="true">
+		<Size x="32" y="32"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="icon">
+					<Size x="30" y="30"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Button>
+
+	<Button name="HidingBarAddonCreatedButtonTemplate" inherits="HidingBarAddonButtonTemplate" clipChildren="true" virtual="true">
+		<Scripts>
+			<OnLoad>
+				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
+			</OnLoad>
+			<OnEnter>
+				self.icon:SetSize(32, 32)
+				if self.OnEnter then
+					self:OnEnter()
+				end
+				if self.OnTooltipShow then
+					GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+					self.OnTooltipShow(GameTooltip)
+					GameTooltip:Show()
+				end
+			</OnEnter>
+			<OnLeave>
+				self.icon:SetSize(30, 30)
+				if self.OnLeave then
+					self:OnLeave()
+				end
+				if self.OnTooltipShow then
+					GameTooltip:Hide()
+				end
+			</OnLeave>
+			<OnMouseDown>
+				self.icon:SetScale(.9)
+			</OnMouseDown>
+			<OnMouseUp>
+				self.icon:SetScale(1)
+			</OnMouseUp>
+		</Scripts>
+	</Button>
+
+	<CheckButton name="HidingBarAddonConfigButtonTemplate" inherits="HidingBarAddonButtonTemplate" movable="true" virtual="true">
+		<CheckedTexture file="Interface/BUTTONS/UI-GroupLoot-Pass-Up">
+			<Size x="20" y="20"/>
+			<Anchors>
+				<Anchor point="TOPRIGHT"/>
+			</Anchors>
+		</CheckedTexture>
+		<Scripts>
+			<OnLoad>
+				self:RegisterForDrag("LeftButton")
+				hooksecurefunc(self, "SetChecked", function(self, checked)
+					self.icon:SetDesaturated(checked)
+				end)
+			</OnLoad>
+			<OnEnter>
+				self.icon:SetSize(32, 32)
+				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+				GameTooltip:SetText(self.id)
+				GameTooltip:Show()
+			</OnEnter>
+			<OnLeave>
+				self.icon:SetSize(30, 30)
+				GameTooltip:Hide()
+			</OnLeave>
+			<OnClick>
+				self.icon:SetDesaturated(self:GetChecked())
+			</OnClick>
+		</Scripts>
+	</CheckButton>
+
+	<CheckButton name="HidingBarAddonConfigMButtonTemplate" inherits="HidingBarAddonButtonTemplate" movable="true" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="bg" file ="Interface/Minimap/UI-Minimap-Background">
+					<Size x="20" y="20"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="1">
+				<Texture parentKey="border" file ="Interface/Minimap/MiniMap-TrackingBorder">
+					<Size x="54" y="54"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" y="-1"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="2">
+				<Texture parentKey="check" file="Interface/BUTTONS/UI-GroupLoot-Pass-Up">
+					<Size x="15" y="15"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<HighlightTexture file="Interface/Minimap/UI-Minimap-ZoomButton-Highlight" alphaMode="ADD">
+			<Size x="32" y="32"/>
+			<Anchors>
+				<Anchor point="CENTER" y="-1"/>
+			</Anchors>
+		</HighlightTexture>
+		<Scripts>
+			<OnLoad>
+				self:RegisterForDrag("LeftButton")
+				self.icon:SetSize(18, 18)
+				hooksecurefunc(self, "SetChecked", function(self, checked)
+					self.check:SetShown(checked)
+					self.icon:SetDesaturated(checked)
+					self.bg:SetDesaturated(checked)
+					self.border:SetDesaturated(checked)
+					self.check:SetShown(checked)
+				end)
+			</OnLoad>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+				GameTooltip:SetText(self.title)
+				GameTooltip:Show()
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide()
+			</OnLeave>
+			<OnClick>
+				local checked = self:GetChecked()
+				self.icon:SetDesaturated(checked)
+				self.bg:SetDesaturated(checked)
+				self.border:SetDesaturated(checked)
+				self.check:SetShown(checked)
+			</OnClick>
+		</Scripts>
+	</CheckButton>
+
+	<CheckButton name="HidingBarAddonCheckButtonTemplate" inherits="OptionsBaseCheckButtonTemplate" virtual="true">
+		<HitRectInsets>
+			<AbsInset left="0" right="-100" top="0" bottom="0"/>
+		</HitRectInsets>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT">
+							<Offset>
+								<AbsDimension x="1" y="0"/>
+							</Offset>
+						</Anchor>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</CheckButton>
+
+	<Slider name="HidingBarAddonSliderTemplate" inherits="HorizontalSliderTemplate" virtual="true">
+		<Size x="500" y="17"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="text" inherits="GameFontNormalSmall">
+					<Anchors>
+						<Anchor point="BOTTOM" relativePoint="TOP"/>
+					</Anchors>
+				</FontString>
+				<FontString parentKey="label" inherits="GameFontHighlightSmall">
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="2" y="1"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnDisable>
+				self.label:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
+				self.text:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
+			</OnDisable>
+			<OnEnable>
+				self.label:SetVertexColor(HIGHLIGHT_FONT_COLOR:GetRGB())
+				self.text:SetVertexColor(NORMAL_FONT_COLOR:GetRGB())
+			</OnEnable>
+		</Scripts>
+	</Slider>
+</Ui>

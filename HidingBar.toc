@@ -1,0 +1,10 @@
+## Interface: 80300
+## Title: HidingBar
+## Author: sfmict
+## Version: @project-version@
+## Notes: Convenient hiding panel
+## SavedVariables: HidingBarDB
+locales.xml
+templates.xml
+Config.lua
+HidingBar.lua
