@@ -1,5 +1,6 @@
 local addon, L = ...
 local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFramePanelContainer)
+config.buttonPanel = CreateFrame("Frame", nil, nil, "HidingBarAddonPanel")
 config.noIcon = config:CreateTexture()
 config.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 config.name = addon
@@ -180,7 +181,7 @@ config:SetScript("OnShow", function(self)
 	buttonPanelDescription:SetText(L["BUTTON_PANEL_DESCRIPTION"])
 
 	-- BUTTON PANEL
-	self.buttonPanel = CreateFrame("Frame", nil, optionPanelScroll.child, "HidingBarAddonPanel")
+	self.buttonPanel:SetParent(optionPanelScroll.child)
 	self.buttonPanel:SetPoint("TOPLEFT", buttonPanelDescription, "BOTTOMLEFT", 0, -5)
 	self.buttonPanel:SetSize(20, 20)
 
@@ -383,8 +384,6 @@ end
 
 
 function config:applyLayout()
-	if not self.buttonPanel then return end
-
 	for _, btn in ipairs(self.buttons) do
 		self:setPointBtn(btn, 4, 4)
 	end
