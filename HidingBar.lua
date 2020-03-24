@@ -75,7 +75,6 @@ function hidingBar:init()
 		for _, child in ipairs({Minimap:GetChildren()}) do
 			if child:HasScript("OnClick") and math.abs(child:GetWidth() - child:GetHeight()) < 5 then
 				local name = child:GetName()
-				fprint(name)
 				if not ignoreFrameList[name] then
 					local settings = self.config.mbtnSettings[child:GetName()]
 					if settings then settings.tstmp = t end
