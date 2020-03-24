@@ -1,1 +1,1 @@
-* First version :).
+* Compatibility for ELFUI / TUKUI.
