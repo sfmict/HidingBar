@@ -48,6 +48,7 @@ function hidingBar:init()
 
 	local ldb = LibStub("LibDataBroker-1.1")
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged", "ldb_attrChange")
 	for name, data in ldb:DataObjectIterator() do
 		local settings = self.config.btnSettings[name]
 		if settings then settings.tstmp = t end
@@ -115,6 +116,24 @@ end
 function hidingBar:ldb_add(event, name, data)
 	if name and data and data.type == "launcher" then
 		self:addButton(name, data, event)
+	end
+end
+
+
+function hidingBar:ldb_attrChange(_, name, key, value, data)
+	if not data or data.type ~= "launcher" then return end
+	local button = _G[format("ADDON_%s_%s", addon, name)]
+	if button then
+		if key == "iconR" then
+			local _, g, b = button.icon:GetVertexColor()
+			button.icon:SetVertexColor(value, g, b)
+		elseif key == "iconG" then
+			local r, _, b = button.icon:GetVertexColor()
+			button.icon:SetVertexColor(r, value, b)
+		elseif key == "iconB" then
+			local r, g = button.icon:GetVertexColor()
+			button.icon:SetVertexColor(r, g, value)
+		end
 	end
 end
 
@@ -386,7 +405,7 @@ hidingBar.drag:SetScript("OnMouseDown", function(_, button)
 	if button == "LeftButton" and not hidingBar.config.lock then
 		hidingBar.isDrag = true
 		hidingBar:SetScript("OnUpdate", hidingBar.dragBar)
-	else
+	elseif button == "RightButton" then
 		if IsAltKeyDown() then
 			hidingBar.config.lock = not hidingBar.config.lock
 			if config.lock then config.lock:SetChecked(hidingBar.config.lock) end
