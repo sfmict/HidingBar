@@ -14,6 +14,14 @@ hidingBar.drag.bg:SetColorTexture(.8, .6, 0)
 hidingBar.createdButtons, hidingBar.minimapButtons = {}, {}
 
 
+local ignoreFrameList = {
+	["GameTimeFrame"] = true,
+	["QueueStatusMinimapButton"] = true,
+	["HelpOpenTicketButton"] = true,
+	["HelpOpenWebTicketButton"] = true,
+}
+
+
 hidingBar:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 hidingBar:RegisterEvent("ADDON_LOADED")
 
@@ -65,11 +73,10 @@ function hidingBar:init()
 
 	if self.config.grabMinimap then
 		for _, child in ipairs({Minimap:GetChildren()}) do
-			if child:HasScript("OnClick") then
+			if child:HasScript("OnClick") and math.abs(child:GetWidth() - child:GetHeight()) < 5 then
 				local name = child:GetName()
-				if name ~= "GameTimeFrame"
-				and name ~= "TimeManagerClockButton"
-				and name ~= "MinimapZoneTextButton" then
+				fprint(name)
+				if not ignoreFrameList[name] then
 					local settings = self.config.mbtnSettings[child:GetName()]
 					if settings then settings.tstmp = t end
 
@@ -203,7 +210,7 @@ end
 function hidingBar:setPointBtn(btn, offsetX, offsetY, order, orientation)
 	local size, x, y = self.config.size
 	local line = math.ceil(order / size) - 1
-	btn.ClearAllPoints(btn)
+	self.ClearAllPoints(btn)
 	if orientation == 1 then
 		x = (order - 1 - line * size) * 32 + offsetX
 		y = -line * 32 - offsetY
