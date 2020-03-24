@@ -209,19 +209,12 @@ function config:dragBtn(btn)
 	local order = row * self.size + column
 	if order > #btn.btnList then order = #btn.btnList end
 
-	local step = order > btn.order and 1 or -1
-	for i = btn.order + step, order, step do
-		btn.btnList[i].settings[2] = i - step
+	local step = order > btn.settings[2] and 1 or -1
+	for i = btn.settings[2] + step, order, step do
+		self:setPointBtn(btn.btnList[i], 4, 4 + btn.offset, i - step)
 	end
 	btn.settings[2] = order
-
 	self:sort(btn.btnList)
-	for i = 1, #btn.btnList do
-		local button = btn.btnList[i]
-		if button.order ~= i then
-			self:setPointBtn(button, 4, 4 + btn.offset, i)
-		end
-	end
 end
 
 
@@ -246,7 +239,7 @@ function config:dragStop(btn)
 	btn:SetFrameLevel(btn.level)
 	btn:SetScript("OnUpdate", nil)
 	btn:StopMovingOrSizing()
-	self:setPointBtn(btn, 4, 4 + btn.offset, btn.order)
+	self:setPointBtn(btn, 4, 4 + btn.offset, btn.settings[2])
 	self.hidingBar:sort()
 	self:hidingBarUpdate()
 end
@@ -272,7 +265,6 @@ do
 		if self.buttons[id] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
 		btn.id = id
-		btn.order = order
 		if data.icon then
 			btn.icon:SetTexture(data.icon)
 			if data.iconDesaturated then
@@ -283,13 +275,13 @@ do
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
-		local btnSettings = self.hidingBar.config.btnSettings[btn.id]
-		if not btnSettings then
-			btnSettings = {[2] = order, tstmp = time()}
-			self.hidingBar.config.btnSettings[btn.id] = btnSettings
+		btn.settings = self.hidingBar.config.btnSettings[btn.id]
+		if not btn.settings then
+			btn.settings = {[2] = order, tstmp = time()}
+			self.hidingBar.config.btnSettings[btn.id] = btn.settings
 		end
-		btn.settings = btnSettings
-		btn:SetChecked(btnSettings[1])
+		btn.settings[2] = order
+		btn:SetChecked(btn.settings[1])
 		tinsert(self.buttons, btn)
 		if update then
 			self:sort(self.buttons)
@@ -309,7 +301,6 @@ do
 		if type(id) ~= "string" then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.id = id
-		btn.order = order
 		btn.title = id:gsub("LibDBIcon10_", "")
 		btn.icon:SetTexture(icon:GetTexture())
 		btn.icon:SetTexCoord(icon:GetTexCoord())
@@ -318,13 +309,13 @@ do
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * 32) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
-		local btnSettings = self.hidingBar.config.mbtnSettings[btn.id]
-		if not btnSettings then
-			btnSettings = {[2] = order, tstmp = time()}
-			self.hidingBar.config.mbtnSettings[btn.id] = btnSettings
+		btn.settings = self.hidingBar.config.mbtnSettings[btn.id]
+		if not btn.settings then
+			btn.settings = {tstmp = time()}
+			self.hidingBar.config.mbtnSettings[btn.id] = btn.settings
 		end
-		btn.settings = btnSettings
-		btn:SetChecked(btnSettings[1])
+		btn.settings[2] = order
+		btn:SetChecked(btn.settings[1])
 		tinsert(self.mbuttons, btn)
 	end
 end
@@ -337,10 +328,11 @@ function config:initButtons()
 	for i, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()
 		if name then
-			local icon = button.icon or button.Icon or _G[name.."icon"] or _G[name.."Icon"] or button.background or button.Background or self.noIcon
-			if icon and icon.GetTexture then
-				self:createMButton(name, i, icon)
+			local icon = button.icon or button.Icon or _G[name.."icon"] or _G[name.."Icon"] or button.background or button.Background
+			if not icon or not icon.GetTexture then
+				icon = self.noIcon
 			end
+			self:createMButton(name, i, icon)
 		end
 	end
 	self:applyLayout()
@@ -361,12 +353,11 @@ end
 
 function config:setPointBtn(btn, offsetX, offsetY, order)
 	if order then
-		btn.order = order
+		btn.settings[2] = order
 		if btn.isDrag then return end
 		btn.timer = .1
-		_,_,_, btn.x, btn.y = btn:GetPoint(1)
-		local line = math.ceil(btn.order / self.size) - 1
-		btn.x = (btn.order - 1 - line * self.size) * 32 + offsetX
+		local line = math.ceil(order / self.size) - 1
+		btn.x = (order - 1 - line * self.size) * 32 + offsetX
 		btn.y = -line * 32 - offsetY
 		btn.deltaX = btn.x - btn:GetLeft() + self.buttonPanel:GetLeft()
 		btn.deltaY = btn.y - btn:GetTop() + self.buttonPanel:GetTop()
@@ -374,8 +365,8 @@ function config:setPointBtn(btn, offsetX, offsetY, order)
 		btn:SetScript("OnUpdate", setPosAnimated)
 	else
 		btn:ClearAllPoints()
-		local line = math.ceil(btn.order / self.size) - 1
-		btn:SetPoint("TOPLEFT", (btn.order - 1 - line * self.size) * 32 + offsetX, -line * 32 - offsetY)
+		local line = math.ceil(btn.settings[2] / self.size) - 1
+		btn:SetPoint("TOPLEFT", (btn.settings[2] - 1 - line * self.size) * 32 + offsetX, -line * 32 - offsetY)
 	end
 end
 
