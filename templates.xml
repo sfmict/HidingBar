@@ -1,5 +1,5 @@
 <Ui>
-	<Frame name="HidingBarAddonPanel" virtual="true">
+	<Frame name="HidingBarAddonPanel" enableMouse="true" frameStrata="DIALOG" virtual="true">
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture setAllPoints="true" file="Interface/ChatFrame/ChatFrameBackground">
@@ -51,7 +51,7 @@
 			</OnEnter>
 			<OnLeave>
 				self.icon:SetSize(30, 30)
-				if self.OnLeave then
+				if self.data.OnLeave then
 					self.data.OnLeave(self)
 				end
 				if self.data.OnTooltipShow then
