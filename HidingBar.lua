@@ -1,8 +1,6 @@
 local addon, L = ...
 local config = _G[addon.."ConfigAddon"]
 local hidingBar = CreateFrame("FRAME", addon.."Addon", UIParent, "HidingBarAddonPanel")
-hidingBar:SetFrameStrata("DIALOG")
-hidingBar:EnableMouse(true)
 hidingBar.drag = CreateFrame("FRAME", nil, UIParent)
 hidingBar.drag:SetFrameStrata("DIALOG")
 hidingBar.drag:EnableMouse(true)
@@ -69,14 +67,13 @@ function hidingBar:init()
 				self:setHooks(button)
 			end
 		end
-	end
 
-	if self.config.grabMinimap then
 		for _, child in ipairs({Minimap:GetChildren()}) do
-			if child:HasScript("OnClick") and math.abs(child:GetWidth() - child:GetHeight()) < 5 then
+			local width, height = child:GetSize()
+			if child:HasScript("OnClick") and math.abs(width - height) < 5 then
 				local name = child:GetName()
 				if not ignoreFrameList[name] then
-					local settings = self.config.mbtnSettings[child:GetName()]
+					local settings = self.config.mbtnSettings[name]
 					if settings then settings.tstmp = t end
 
 					local btn = self.minimapButtons[child[0]]
@@ -85,7 +82,6 @@ function hidingBar:init()
 						self:setHooks(child)
 					end
 
-					local width, height = child:GetWidth(), child:GetHeight()
 					local maxSize = width > height and width or height
 					self.SetScale(child, 32 / maxSize)
 
