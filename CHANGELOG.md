@@ -1,1 +1,1 @@
-* Compatibility for ELFUI / TUKUI.
+* Fix OnLeave buttons handler.

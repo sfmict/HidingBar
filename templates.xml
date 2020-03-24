@@ -51,7 +51,7 @@
 			</OnEnter>
 			<OnLeave>
 				self.icon:SetSize(30, 30)
-				if self.OnLeave then
+				if self.data.OnLeave then
 					self.data.OnLeave(self)
 				end
 				if self.data.OnTooltipShow then

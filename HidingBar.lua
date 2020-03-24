@@ -84,8 +84,10 @@ function hidingBar:init()
 
 					local maxSize = width > height and width or height
 					self.SetScale(child, 32 / maxSize)
-
+					self.SetAlpha(child, 1)
+					self.SetHitRectInsets(child, 0, 0, 0, 0)
 					self.SetParent(child, self)
+					self.SetScript(child, "OnUpdate", nil)
 					self.HookScript(child, "OnEnter", function() self:enter() end)
 					self.HookScript(child, "OnLeave", function() self:leave() end)
 					tinsert(self.minimapButtons, child)
@@ -134,6 +136,17 @@ function hidingBar:addButton(name, data, update)
 	button.data = data
 	if data.icon then
 		button.icon:SetTexture(data.icon)
+		if data.iconR then
+			button.icon:SetVertexColor(data.iconR, 1, 1)
+		end
+		if data.iconG then
+			local r, _, b = button.icon:GetVertexColor()
+			button.icon:SetVertexColor(r, data.igonG, b)
+		end
+		if data.iconB then
+			local r, g = button.icon:GetVertexColor()
+			button.icon:SetVertexColor(r, g, data.iconB)
+		end
 		if data.iconDesaturated then
 			button.icon:SetDesaturated(true)
 		end
@@ -160,7 +173,7 @@ function hidingBar:setHooks(btn)
 		animationGroup.Play = void
 		return animationGroup
 	end
-	btn:SetAlpha(1)
+	btn.SetHitRectInsets = void
 	btn.ClearAllPoints = void
 	btn.StartMoving = void
 	btn.SetParent = void
@@ -174,7 +187,6 @@ function hidingBar:setHooks(btn)
 	btn.SetWidth = void
 	btn.SetHeight = void
 	btn.HookScript = void
-	btn:SetScript("OnUpdate", nil)
 	btn.SetScript = function(self, event, ...)
 		event = event:lower()
 		if event ~= "onupdate" and event ~= "ondragstart" and event ~= "ondragstop" then

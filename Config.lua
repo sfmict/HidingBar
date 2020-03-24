@@ -267,6 +267,17 @@ do
 		btn.id = id
 		if data.icon then
 			btn.icon:SetTexture(data.icon)
+			if data.iconR then
+				btn.icon:SetVertexColor(data.iconR, 1, 1)
+			end
+			if data.iconG then
+				local r, _, b = btn.icon:GetVertexColor()
+				btn.icon:SetVertexColor(r, data.igonG, b)
+			end
+			if data.iconB then
+				local r, g = btn.icon:GetVertexColor()
+				btn.icon:SetVertexColor(r, g, data.iconB)
+			end
 			if data.iconDesaturated then
 				btn.icon:SetDesaturated(true)
 			end
