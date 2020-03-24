@@ -1,4 +1,4 @@
-name: "Retail-Build"
+name: "Classic-Build"
 
 on:
   push:
