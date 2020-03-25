@@ -1,6 +1,5 @@
 local addon, L = ...
 local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFramePanelContainer)
-config.buttonPanel = CreateFrame("Frame", nil, nil, "HidingBarAddonPanel")
 config.noIcon = config:CreateTexture()
 config.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 config.name = addon
@@ -8,9 +7,6 @@ config.buttons, config.mbuttons = {}, {}
 
 
 config:SetScript("OnShow", function(self)
-	self.hidingBar = _G[addon.."Addon"]
-	self.config = self.hidingBar.config
-
 	self.addonName = ("%s_ADDON_"):format(addon:upper())
 	StaticPopupDialogs[self.addonName.."SET_GRAB"] = {
 		text = addon..": "..L["RELOAD_INTERFACE_QUESTION"],
@@ -154,10 +150,6 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- SLIDER NUMBER BUTTONS IN ROW
-	local maxColumns = 17
-	self.size = self.config.size
-	if self.size > maxColumns then self.size = maxColumns end
-
 	local buttonsSlider = CreateFrame("SLIDER", nil, optionPanelScroll.child, "HidingBarAddonSliderTemplate")
 	buttonsSlider:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 0, -20)
 	buttonsSlider:SetMinMaxValues(1, 30)
@@ -167,8 +159,6 @@ config:SetScript("OnShow", function(self)
 	buttonsSlider:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value + .5)
 		config.config.size = value
-		self.size = value
-		if self.size > maxColumns then self.size = maxColumns end
 		slider.label:SetText(value)
 		slider:SetValue(value)
 		self:applyLayout()
@@ -181,7 +171,7 @@ config:SetScript("OnShow", function(self)
 	buttonPanelDescription:SetText(L["BUTTON_PANEL_DESCRIPTION"])
 
 	-- BUTTON PANEL
-	self.buttonPanel:SetParent(optionPanelScroll.child)
+	self.buttonPanel = CreateFrame("Frame", nil, optionPanelScroll.child, "HidingBarAddonPanel")
 	self.buttonPanel:SetPoint("TOPLEFT", buttonPanelDescription, "BOTTOMLEFT", 0, -5)
 	self.buttonPanel:SetSize(20, 20)
 
@@ -194,8 +184,8 @@ end)
 
 
 function config:hidingBarUpdate()
-	self.hidingBar:applyLayout()
 	self.hidingBar:enter()
+	self.hidingBar:applyLayout()
 	self.hidingBar:leave()
 end
 
@@ -251,21 +241,23 @@ function config:sort(buttons)
 		local o1, o2 = a.settings[2], b.settings[2]
 		return o1 and not o2
 			 or o1 and o2 and o1 < o2
-			 or o1 == o2 and a.id < b.id
+			 or o1 == o2 and a.name < b.name
 	end)
 end
 
 
 do
+	local buttonsByName = {}
+
 	local function btnClick(self)
 		self.settings[1] = self:GetChecked()
 		config:hidingBarUpdate()
 	end
 
-	function config:createButton(id, order, data, update)
-		if self.buttons[id] then return end
+	function config:createButton(name, order, data, update)
+		if not self.buttonPanel or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
-		btn.id = id
+		btn.name = name
 		if data.icon then
 			btn.icon:SetTexture(data.icon)
 			if data.iconR then
@@ -287,13 +279,14 @@ do
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
-		btn.settings = self.hidingBar.config.btnSettings[btn.id]
+		btn.settings = self.config.btnSettings[name]
 		if not btn.settings then
 			btn.settings = {[2] = order, tstmp = time()}
-			self.hidingBar.config.btnSettings[btn.id] = btn.settings
+			self.config.btnSettings[name] = btn.settings
 		end
 		btn.settings[2] = order
 		btn:SetChecked(btn.settings[1])
+		buttonsByName[name] = btn
 		tinsert(self.buttons, btn)
 		if update then
 			self:sort(self.buttons)
@@ -309,11 +302,11 @@ do
 		config:hidingBarUpdate()
 	end
 
-	function config:createMButton(id, order, icon)
-		if type(id) ~= "string" then return end
+	function config:createMButton(name, order, icon)
+		if type(name) ~= "string" then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
-		btn.id = id
-		btn.title = id:gsub("LibDBIcon10_", "")
+		btn.name = name
+		btn.title = name:gsub("LibDBIcon10_", "")
 		btn.icon:SetTexture(icon:GetTexture())
 		btn.icon:SetTexCoord(icon:GetTexCoord())
 		btn.icon:SetVertexColor(icon:GetVertexColor())
@@ -321,10 +314,10 @@ do
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * 32) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
-		btn.settings = self.hidingBar.config.mbtnSettings[btn.id]
+		btn.settings = self.config.mbtnSettings[name]
 		if not btn.settings then
 			btn.settings = {tstmp = time()}
-			self.hidingBar.config.mbtnSettings[btn.id] = btn.settings
+			self.config.mbtnSettings[name] = btn.settings
 		end
 		btn.settings[2] = order
 		btn:SetChecked(btn.settings[1])
@@ -335,7 +328,7 @@ end
 
 function config:initButtons()
 	for i, button in ipairs(self.hidingBar.createdButtons) do
-		self:createButton(button.id, i, button.data)
+		self:createButton(button.name, i, button.data)
 	end
 	for i, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()
@@ -384,6 +377,10 @@ end
 
 
 function config:applyLayout()
+	local maxColumns = 17
+	self.size = self.config.size
+	if self.size > maxColumns then self.size = maxColumns end
+
 	for _, btn in ipairs(self.buttons) do
 		self:setPointBtn(btn, 4, 4)
 	end
