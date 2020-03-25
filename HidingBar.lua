@@ -49,7 +49,9 @@ function hidingBar:init()
 
 	local ldb = LibStub("LibDataBroker-1.1")
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
-	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
 	for name, data in ldb:DataObjectIterator() do
 		local settings = self.config.btnSettings[name]
 		if settings then settings.tstmp = t end
@@ -123,7 +125,7 @@ end
 
 function hidingBar:ldb_attrChange(_, name, key, value, data)
 	if not data or data.type ~= "launcher" then return end
-	local button = _G[format("ADDON_%s_%s", addon, name)]
+	local button = _G[("ADDON_%s_%s"):format(addon, name)]
 	if button then
 		if key == "iconR" then
 			local _, g, b = button.icon:GetVertexColor()
@@ -148,7 +150,7 @@ iconDesaturated - Desaturated icon (boolean)
 OnTooltipShow   - Handler tooltip show: function(TooltipFrame) .. end
 --]]
 function hidingBar:addButton(name, data, update)
-	local buttonName  = format("ADDON_%s_%s", addon, name)
+	local buttonName  = ("ADDON_%s_%s"):format(addon, name)
 	if _G[buttonName] then return end
 	local button = CreateFrame("BUTTON", buttonName, self, "HidingBarAddonCreatedButtonTemplate")
 	button.id = name

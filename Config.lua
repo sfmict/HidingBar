@@ -11,7 +11,7 @@ config:SetScript("OnShow", function(self)
 	self.hidingBar = _G[addon.."Addon"]
 	self.config = self.hidingBar.config
 
-	self.addonName = format("%s_ADDON_", addon:upper())
+	self.addonName = ("%s_ADDON_"):format(addon:upper())
 	StaticPopupDialogs[self.addonName.."SET_GRAB"] = {
 		text = addon..": "..L["RELOAD_INTERFACE_QUESTION"],
 		button1 = ACCEPT,
@@ -31,12 +31,12 @@ config:SetScript("OnShow", function(self)
 	local info = self:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	info:SetPoint("TOPRIGHT", -16, 16)
 	info:SetTextColor(.5, .5, .5, 1)
-	info:SetText(format("%s %s: %s", GetAddOnMetadata(addon, "Version"), L["author"], GetAddOnMetadata(addon, "Author")))
+	info:SetText(("%s %s: %s"):format(GetAddOnMetadata(addon, "Version"), L["author"], GetAddOnMetadata(addon, "Author")))
 
 	-- TITLE
 	local title = self:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("TOPLEFT", 16, -16)
-	title:SetText(format(L["%s Configuration"], addon))
+	title:SetText(L["%s Configuration"]:format(addon))
 
 	-- OPTION PANEL
 	local optionPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
