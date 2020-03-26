@@ -143,13 +143,14 @@
 			<OnLoad>
 				self:RegisterForDrag("LeftButton")
 				self.icon:SetSize(18, 18)
-				hooksecurefunc(self, "SetChecked", function(self, checked)
+				self.updateChecked = function(self, checked)
 					self.check:SetShown(checked)
 					self.icon:SetDesaturated(checked)
 					self.bg:SetDesaturated(checked)
 					self.border:SetDesaturated(checked)
 					self.check:SetShown(checked)
-				end)
+				end
+				hooksecurefunc(self, "SetChecked", self.updateChecked)
 			</OnLoad>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
@@ -160,11 +161,7 @@
 				GameTooltip:Hide()
 			</OnLeave>
 			<OnClick>
-				local checked = self:GetChecked()
-				self.icon:SetDesaturated(checked)
-				self.bg:SetDesaturated(checked)
-				self.border:SetDesaturated(checked)
-				self.check:SetShown(checked)
+				self:updateChecked(self:GetChecked())
 			</OnClick>
 		</Scripts>
 	</CheckButton>

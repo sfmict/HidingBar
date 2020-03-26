@@ -164,10 +164,21 @@ function hidingBar:addButton(name, data, update)
 	button.data = data
 	if data.icon then
 		button.icon:SetTexture(data.icon)
-		if data.iconR then self:ldb_attrChange(nil, name, "iconR", data.iconR, data) end
-		if data.iconG then self:ldb_attrChange(nil, name, "iconG", data.iconG, data) end
-		if data.iconB then self:ldb_attrChange(nil, name, "iconB", data.iconB, data) end
-		if data.iconDesaturated then button.icon:SetDesaturated(true) end
+		if data.iconR then
+			button.iconR = data.iconR
+			self:ldb_attrChange(nil, name, "iconR", data.iconR, data)
+		end
+		if data.iconG then
+			button.iconG = data.iconG
+			self:ldb_attrChange(nil, name, "iconG", data.iconG, data)
+		end
+		if data.iconB then
+			button.iconB = data.iconB
+			self:ldb_attrChange(nil, name, "iconB", data.iconB, data)
+		end
+		if data.iconDesaturated then
+			button.icon:SetDesaturated(true)
+		end
 	end
 	if data.OnClick then
 		button:SetScript("OnClick", data.OnClick)
@@ -179,7 +190,7 @@ function hidingBar:addButton(name, data, update)
 		self:sort()
 		self:applyLayout()
 		self:leave()
-		config:createButton(name, #self.createdButtons, data, update)
+		config:createButton(name, button, data, update)
 	end
 	return button
 end
