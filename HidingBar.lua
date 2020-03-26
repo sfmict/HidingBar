@@ -29,6 +29,11 @@ function hidingBar:ADDON_LOADED(addonName)
 	if addonName == addon then
 		self:UnregisterEvent("ADDON_LOADED")
 
+		local meta = {__index = function(self, key)
+			self[key] = {}
+			return self[key]
+		end}
+
 		HidingBarDB = HidingBarDB or {}
 		self.db = HidingBarDB
 		self.db.config = self.db.config or {}
@@ -37,15 +42,8 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.size = self.config.size or 10
 		self.config.anchor = self.config.anchor or "top"
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
-		self.config.btnSettings = self.config.btnSettings or {}
-		self.config.mbtnSettings = self.config.mbtnSettings or {}
-
-		local meta = {__index = function(self, key)
-			self[key] = {}
-			return self[key]
-		end}
-		setmetatable(self.config.btnSettings, meta)
-		setmetatable(self.config.mbtnSettings, meta)
+		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
+		self.config.mbtnSettings = setmetatable(self.config.mbtnSettings or {}, meta)
 
 		config.hidingBar = self
 		config.config = self.config
@@ -74,9 +72,10 @@ function hidingBar:init()
 			for i = 1, #ldbiTbl do
 				local button = ldbi:GetMinimapButton(ldbiTbl[i])
 				local name = button:GetName()
-				if name then self.config.mbtnSettings[name].tstmp = t end
-				self.minimapButtons[button[0]] = button
-				self:setHooks(button)
+				if name or self.config.grabMinimapWithoutName then
+					self.minimapButtons[button[0]] = button
+					self:setHooks(button)
+				end
 			end
 		end
 
@@ -205,6 +204,10 @@ function hidingBar:setHooks(btn)
 		local animationGroup = getmetatable(self).__index.CreateAnimationGroup(self, ...)
 		animationGroup.Play = void
 		return animationGroup
+	end
+	for _, anim in ipairs({btn:GetAnimationGroups()}) do
+		anim:Stop()
+		anim.Play = void
 	end
 	btn.SetHitRectInsets = void
 	btn.ClearAllPoints = void
