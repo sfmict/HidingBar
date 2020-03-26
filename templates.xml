@@ -183,6 +183,10 @@
 				</FontString>
 			</Layer>
 		</Layers>
+		<Scripts>
+			<OnEnable>self.Text:SetTextColor(1,1,1,1)</OnEnable>
+			<OnDisable>self.Text:SetTextColor(.5,.5,.5,1)</OnDisable>
+		</Scripts>
 	</CheckButton>
 
 	<Slider name="HidingBarAddonSliderTemplate" inherits="HorizontalSliderTemplate" virtual="true">

@@ -14,13 +14,8 @@ config:SetScript("OnShow", function(self)
 		button2 = CANCEL,
 		hideOnEscape = 1,
 		whileDead = 1,
-		OnAccept = function()
-			self.config.grabMinimap = not self.config.grabMinimap
-			ReloadUI()
-		end,
-		OnCancel = function()
-			self.grab:SetChecked(self.config.grabMinimap)
-		end,
+		OnAccept = function(_, data) data.accept() end,
+		OnCancel = function(self) self.data.cancel() end,
 	}
 
 	-- ADDON INFO
@@ -145,13 +140,39 @@ config:SetScript("OnShow", function(self)
 	self.grab:SetPoint("TOPLEFT", self.lock, "BOTTOMLEFT")
 	self.grab.Text:SetText(L["Grab addon buttons on minimap"])
 	self.grab:SetChecked(self.config.grabMinimap)
-	self.grab:SetScript("OnClick", function()
-		StaticPopup_Show(self.addonName.."SET_GRAB")
+	self.grab:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabMinimap = not self.config.grabMinimap
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabMinimap)
+			end,
+		})
+	end)
+
+	-- GRAB WITHOUT NAME
+	self.grabWithoutName = CreateFrame("CheckButton", nil, optionPanelScroll.child, "HidingBarAddonCheckButtonTemplate")
+	self.grabWithoutName:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 20, 0)
+	self.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
+	self.grabWithoutName:SetEnabled(self.config.grabMinimap)
+	self.grabWithoutName:SetChecked(self.config.grabMinimapWithoutName)
+	self.grabWithoutName:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabMinimapWithoutName = not self.config.grabMinimapWithoutName
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabMinimapWithoutName)
+			end,
+		})
 	end)
 
 	-- SLIDER NUMBER BUTTONS IN ROW
 	local buttonsSlider = CreateFrame("SLIDER", nil, optionPanelScroll.child, "HidingBarAddonSliderTemplate")
-	buttonsSlider:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 0, -20)
+	buttonsSlider:SetPoint("TOPLEFT", self.grabWithoutName, "BOTTOMLEFT", -20, -20)
 	buttonsSlider:SetMinMaxValues(1, 30)
 	buttonsSlider.text:SetText(L["Number of buttons"])
 	buttonsSlider:SetValue(self.config.size)
@@ -284,10 +305,6 @@ do
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
 		btn.settings = self.config.btnSettings[name]
-		if not btn.settings then
-			btn.settings = {tstmp = time()}
-			self.config.btnSettings[name] = btn.settings
-		end
 		btn:SetChecked(btn.settings[1])
 		buttonsByName[name] = btn
 		tinsert(self.buttons, btn)
@@ -318,10 +335,6 @@ do
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * 32) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
 		btn.settings = self.config.mbtnSettings[name]
-		if not btn.settings then
-			btn.settings = {tstmp = time()}
-			self.config.mbtnSettings[name] = btn.settings
-		end
 		btn:SetChecked(btn.settings[1])
 		tinsert(self.mbuttons, btn)
 	end

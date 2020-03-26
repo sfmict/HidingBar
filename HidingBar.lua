@@ -40,6 +40,13 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.btnSettings = self.config.btnSettings or {}
 		self.config.mbtnSettings = self.config.mbtnSettings or {}
 
+		local meta = {__index = function(self, key)
+			self[key] = {}
+			return self[key]
+		end}
+		setmetatable(self.config.btnSettings, meta)
+		setmetatable(self.config.mbtnSettings, meta)
+
 		config.hidingBar = self
 		config.config = self.config
 
@@ -66,8 +73,8 @@ function hidingBar:init()
 			local ldbiTbl = ldbi:GetButtonList()
 			for i = 1, #ldbiTbl do
 				local button = ldbi:GetMinimapButton(ldbiTbl[i])
-				local settings = self.config.mbtnSettings[button:GetName()]
-				if settings then settings.tstmp = t end
+				local name = button:GetName()
+				if name then self.config.mbtnSettings[name].tstmp = t end
 				self.minimapButtons[button[0]] = button
 				self:setHooks(button)
 			end
@@ -77,9 +84,8 @@ function hidingBar:init()
 			local width, height = child:GetSize()
 			if child:HasScript("OnClick") and math.abs(width - height) < 5 then
 				local name = child:GetName()
-				if not ignoreFrameList[name] then
-					local settings = self.config.mbtnSettings[name]
-					if settings then settings.tstmp = t end
+				if not ignoreFrameList[name] and (name or self.config.grabMinimapWithoutName) then
+					if name then self.config.mbtnSettings[name].tstmp = t end
 
 					local btn = self.minimapButtons[child[0]]
 					self.minimapButtons[child[0]] = nil
@@ -129,14 +135,12 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 	if not data or data.type ~= "launcher" then return end
 	local button = createdButtonsByName[name]
 	if button then
+		local r, g, b = button.icon:GetVertexColor()
 		if key == "iconR" then
-			local _, g, b = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(value, g, b)
 		elseif key == "iconG" then
-			local r, _, b = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(r, value, b)
 		elseif key == "iconB" then
-			local r, g = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(r, g, value)
 		end
 	end
@@ -156,8 +160,7 @@ OnTooltipShow   - Handler tooltip show: function(TooltipFrame) .. end
 --]]
 function hidingBar:addButton(name, data, update)
 	if createdButtonsByName[name] then return end
-	local settings = self.config.btnSettings[name]
-	if settings then settings.tstmp = time() end
+	self.config.btnSettings[name].tstmp = time()
 	local button = CreateFrame("BUTTON", ("ADDON_%s_%s"):format(addon, name), self, "HidingBarAddonCreatedButtonTemplate")
 	createdButtonsByName[name] = button
 	button.name = name
@@ -228,14 +231,15 @@ end
 
 function hidingBar:sort()
 	sort(self.createdButtons, function(a, b)
-		local o1, o2 = self.config.btnSettings[a.name] and self.config.btnSettings[a.name][2], self.config.btnSettings[b.name] and self.config.btnSettings[b.name][2]
+		local o1, o2 = self.config.btnSettings[a.name][2], self.config.btnSettings[b.name][2]
 		return o1 and not o2
 			 or o1 and o2 and o1 < o2
 			 or o1 == o2 and a.name < b.name
 	end)
 	sort(self.minimapButtons, function(a, b)
-		local n1, n2 = a:GetName(), b:GetName()
-		local o1, o2 = self.config.mbtnSettings[n1] and self.config.mbtnSettings[n1][2], self.config.mbtnSettings[n2] and self.config.mbtnSettings[n2][2]
+		local n1, n2, o1, o2 = a:GetName(), b:GetName()
+		if n1 then o1 = self.config.mbtnSettings[n1][2] end
+		if n2 then o2 = self.config.mbtnSettings[n2][2] end
 		return o1 and not o2
 			 or o1 and o2 and o1 < o2
 			 or o1 == o2 and (n1 and not n2
@@ -270,7 +274,7 @@ function hidingBar:applyLayout()
 
 	local i = 0
 	for _, btn in ipairs(self.createdButtons) do
-		if not self.config.btnSettings[btn.name] or not self.config.btnSettings[btn.name][1] then
+		if not self.config.btnSettings[btn.name][1] then
 			i = i + 1
 			self:setPointBtn(btn, offsetX, offsetY, i, orientation)
 			btn:Show()
@@ -282,7 +286,7 @@ function hidingBar:applyLayout()
 	local j = 0
 	for _, btn in ipairs(self.minimapButtons) do
 		local name = btn:GetName()
-		if not self.config.mbtnSettings[name] or not self.config.mbtnSettings[name][1] then
+		if not name or not self.config.mbtnSettings[name][1] then
 			j = j + 1
 			self:setPointBtn(btn, offsetX, offsetD, j, orientation)
 			self.Show(btn)
