@@ -296,10 +296,9 @@ do
 				local r, g = btn.icon:GetVertexColor()
 				btn.icon:SetVertexColor(r, g, button.iconB)
 			end
-			if data.iconDesaturated then
-				btn.icon:SetDesaturated(true)
-			end
 		end
+		btn.color = {btn.icon:GetVertexColor()}
+		btn.iconDesaturated = data.iconDesaturated
 		btn.btnList = self.buttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
@@ -329,7 +328,7 @@ do
 		btn.title = name:gsub("LibDBIcon10_", "")
 		btn.icon:SetTexture(icon:GetTexture())
 		btn.icon:SetTexCoord(icon:GetTexCoord())
-		btn.icon:SetVertexColor(icon:GetVertexColor())
+		btn.color = {icon:GetVertexColor()}
 		btn.btnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * 32) end)
