@@ -2,6 +2,7 @@ local addon, L = ...
 local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFramePanelContainer)
 config.noIcon = config:CreateTexture()
 config.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
+config.noIcon:Hide()
 config.name = addon
 config.buttons, config.mbuttons = {}, {}
 
@@ -22,11 +23,13 @@ config:SetScript("OnShow", function(self)
 	local info = self:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	info:SetPoint("TOPRIGHT", -16, 16)
 	info:SetTextColor(.5, .5, .5, 1)
+	info:SetJustifyH("RIGHT")
 	info:SetText(("%s %s: %s"):format(GetAddOnMetadata(addon, "Version"), L["author"], GetAddOnMetadata(addon, "Author")))
 
 	-- TITLE
 	local title = self:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("TOPLEFT", 16, -16)
+	title:SetJustifyH("LEFT")
 	title:SetText(L["%s Configuration"]:format(addon))
 
 	-- OPTION PANEL
@@ -222,11 +225,14 @@ function config:dragBtn(btn)
 	if order > #btn.btnList then order = #btn.btnList end
 
 	local step = order > btn.settings[2] and 1 or -1
-	for i = btn.settings[2] + step, order, step do
-		self:setPointBtn(btn.btnList[i], 4, 4 + btn.offset, i - step, .1)
+	for i = btn.settings[2], order - step, step do
+		local button = btn.btnList[i + step]
+		btn.btnList[i] = button
+		button.settings[2] = i
+		self:setPointBtn(button, 4, 4 + btn.offset, i, .1)
 	end
+	btn.btnList[order] = btn
 	btn.settings[2] = order
-	self:sort(btn.btnList)
 end
 
 
@@ -240,10 +246,9 @@ function config:dragStart(btn, offset)
 	btn.offset = offset or 0
 	btn.left = self.buttonPanel:GetLeft()
 	btn.top = self.buttonPanel:GetTop() - btn.offset
-	local numBtns = #btn.btnList
-	btn.maxRow = math.ceil(numBtns / self.size) - 1
-	if numBtns > self.size then numBtns = self.size end
-	btn.maxColumn = numBtns
+	btn.maxColumn = #btn.btnList
+	btn.maxRow = math.floor((btn.maxColumn - 1) / self.size)
+	if btn.maxColumn > self.size then btn.maxColumn = self.size end
 	btn:SetScript("OnUpdate", function(btn) self:dragBtn(btn) end)
 	btn:StartMoving()
 end
@@ -257,16 +262,6 @@ function config:dragStop(btn)
 	self:setPointBtn(btn, 4, 4 + btn.offset, btn.settings[2], .3)
 	self.hidingBar:sort()
 	self:hidingBarUpdate()
-end
-
-
-function config:sort(buttons)
-	sort(buttons, function(a, b)
-		local o1, o2 = a.settings[2], b.settings[2]
-		return o1 and not o2
-			 or o1 and o2 and o1 < o2
-			 or o1 == o2 and a.name < b.name
-	end)
 end
 
 
@@ -308,7 +303,6 @@ do
 		buttonsByName[name] = btn
 		tinsert(self.buttons, btn)
 		if update then
-			self:sort(self.buttons)
 			self:applyLayout()
 		end
 	end
@@ -371,13 +365,12 @@ end
 
 
 function config:setPointBtn(btn, offsetX, offsetY, order, delay)
-	local line = math.ceil(order / self.size) - 1
-	btn.x = (order - 1 - line * self.size) * 32 + offsetX
-	btn.y = -line * 32 - offsetY
+	if btn.isDrag then return end
+	order = order - 1
+	btn.x = order % self.size * 32 + offsetX
+	btn.y = -math.floor(order / self.size) * 32 - offsetY
 
 	if delay then
-		btn.settings[2] = order
-		if btn.isDrag then return end
 		btn.timer = delay
 		btn.delay = delay
 		btn.deltaX = btn.x - btn:GetLeft() + self.buttonPanel:GetLeft()
@@ -399,12 +392,13 @@ function config:applyLayout()
 	for i, btn in ipairs(self.buttons) do
 		self:setPointBtn(btn, 4, 4, i)
 	end
-	local offsetY = math.ceil(#self.buttons / self.size) * 32 + 4
+	local rows = math.ceil(#self.buttons / self.size)
+	local offsetY = rows * 32 + 4
 	for i, btn in ipairs(self.mbuttons) do
 		self:setPointBtn(btn, 4, offsetY, i)
 	end
 
-	local rows = math.ceil(#self.buttons / self.size) + math.ceil(#self.mbuttons / self.size)
+	rows = rows + math.ceil(#self.mbuttons / self.size)
 	self.buttonPanel:SetSize(self.size * 32 + 8, rows * 32 + 8)
 end
 

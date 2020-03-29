@@ -30,7 +30,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self:UnregisterEvent("ADDON_LOADED")
 
 		local meta = {__index = function(self, key)
-			self[key] = {}
+			self[key] = {tstmp = 0}
 			return self[key]
 		end}
 
@@ -205,9 +205,9 @@ function hidingBar:setHooks(btn)
 		animationGroup.Play = void
 		return animationGroup
 	end
-	for _, anim in ipairs({btn:GetAnimationGroups()}) do
-		anim:Stop()
-		anim.Play = void
+	for _, animationGroup in ipairs({btn:GetAnimationGroups()}) do
+		animationGroup:Stop()
+		animationGroup.Play = void
 	end
 	btn.SetHitRectInsets = void
 	btn.ClearAllPoints = void
@@ -252,16 +252,12 @@ end
 
 
 function hidingBar:setPointBtn(btn, offsetX, offsetY, order, orientation)
-	local size, x, y = self.config.size
-	local line = math.ceil(order / size) - 1
+	order = order - 1
+	local size = self.config.size
+	local x = order % size * 32 + offsetX
+	local y = -math.floor(order / size) * 32 - offsetY
+	if orientation == 2 then x, y = -y, -x end
 	self.ClearAllPoints(btn)
-	if orientation == 1 then
-		x = (order - 1 - line * size) * 32 + offsetX
-		y = -line * 32 - offsetY
-	else
-		x = line * 32 + offsetY
-		y = (line * size - order + 1) * 32 - offsetX
-	end
 	local scale = btn:GetScale()
 	self.SetPoint(btn, "TOPLEFT", x / scale, y / scale)
 end
@@ -285,13 +281,14 @@ function hidingBar:applyLayout()
 			btn:Hide()
 		end
 	end
-	local offsetD = math.ceil(i / self.config.size) * 32 + offsetY
+	local line = math.ceil(i / self.config.size)
+	local offsetYm = line * 32 + offsetY
 	local j = 0
 	for _, btn in ipairs(self.minimapButtons) do
 		local name = btn:GetName()
 		if not name or not self.config.mbtnSettings[name][1] then
 			j = j + 1
-			self:setPointBtn(btn, offsetX, offsetD, j, orientation)
+			self:setPointBtn(btn, offsetX, offsetYm, j, orientation)
 			self.Show(btn)
 		else
 			self.Hide(btn)
@@ -304,7 +301,7 @@ function hidingBar:applyLayout()
 
 	local maxButtons = i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
-	local line = math.ceil(i / self.config.size) + math.ceil(j / self.config.size)
+	line = line + math.ceil(j / self.config.size)
 	local width = maxButtons * 32 + offsetX * 2
 	local height = line * 32 + offsetY * 2
 	if orientation == 1 then

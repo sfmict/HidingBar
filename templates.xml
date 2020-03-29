@@ -53,7 +53,14 @@
 					self.data.OnEnter(self)
 				end
 				if self.data.OnTooltipShow then
-					GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+					local tooltipAnchor = "ANCHOR_LEFT"
+					local anchor = self:GetParent().config.anchor
+					if anchor == "left" then
+						tooltipAnchor = "ANCHOR_RIGHT"
+					elseif anchor == "top" then
+						tooltipAnchor = "ANCHOR_BOTTOMLEFT"
+					end
+					GameTooltip:SetOwner(self, tooltipAnchor)
 					self.data.OnTooltipShow(GameTooltip)
 					GameTooltip:Show()
 				end
