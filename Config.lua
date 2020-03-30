@@ -2,6 +2,7 @@ local addon, L = ...
 local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFramePanelContainer)
 config.noIcon = config:CreateTexture()
 config.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
+config.noIcon:SetTexCoord(.05, .95, 0.05, .95)
 config.noIcon:Hide()
 config.name = addon
 config.buttons, config.mbuttons = {}, {}
@@ -265,6 +266,16 @@ function config:dragStop(btn)
 end
 
 
+function config:sort(buttons)
+	sort(buttons, function(a, b)
+		local o1, o2 = a.settings[2], b.settings[2]
+		return o1 and not o2
+			 or o1 and o2 and o1 < o2
+			 or o1 == o2 and a.name < b.name
+	end)
+end
+
+
 do
 	local buttonsByName = {}
 
@@ -273,27 +284,19 @@ do
 		config:hidingBarUpdate()
 	end
 
-	function config:createButton(name, button, data, update)
+	function config:createButton(name, button, update)
 		if not self.buttonPanel or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
 		btn.name = name
-		if data.icon then
-			btn.icon:SetTexture(data.icon)
-			if button.iconR then
-				local _, g, b = btn.icon:GetVertexColor()
-				btn.icon:SetVertexColor(button.iconR, g, b)
+		if button.iconTex then
+			btn.icon:SetTexture(button.iconTex)
+			if button.iconCoords then
+				btn.icon:SetTexCoord(unpack(button.iconCoords))
 			end
-			if button.iconG then
-				local r, _, b = btn.icon:GetVertexColor()
-				btn.icon:SetVertexColor(r, button.iconG, b)
-			end
-			if button.iconB then
-				local r, g = btn.icon:GetVertexColor()
-				btn.icon:SetVertexColor(r, g, button.iconB)
-			end
+			btn.icon:SetVertexColor(button.iconR or 1, button.iconG or 1, button.iconB or 1)
 		end
 		btn.color = {btn.icon:GetVertexColor()}
-		btn.iconDesaturated = data.iconDesaturated
+		btn.iconDesaturated = button.iconDesaturated
 		btn.btnList = self.buttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
@@ -303,6 +306,7 @@ do
 		buttonsByName[name] = btn
 		tinsert(self.buttons, btn)
 		if update then
+			self:sort(self.buttons)
 			self:applyLayout()
 		end
 	end
@@ -336,7 +340,7 @@ end
 
 function config:initButtons()
 	for _, button in ipairs(self.hidingBar.createdButtons) do
-		self:createButton(button.name, button, button.data)
+		self:createButton(button.name, button)
 	end
 	for _, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()

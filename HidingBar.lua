@@ -1,6 +1,11 @@
 local addon, L = ...
 local config = _G[addon.."ConfigAddon"]
 local hidingBar = CreateFrame("FRAME", addon.."Addon", UIParent, "HidingBarAddonPanel")
+hidingBar.cover = CreateFrame("FRAME", nil, hidingBar)
+hidingBar.cover:Hide()
+hidingBar.cover:SetAllPoints()
+hidingBar.cover:EnableMouse(true)
+hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag = CreateFrame("FRAME", nil, UIParent)
 hidingBar.drag:SetFrameStrata("DIALOG")
 hidingBar.drag:EnableMouse(true)
@@ -58,15 +63,18 @@ function hidingBar:init()
 
 	local ldb = LibStub("LibDataBroker-1.1")
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconDesaturated", "ldb_attrChange")
 	for name, data in ldb:DataObjectIterator() do
 		self:ldb_add(nil, name, data)
 	end
 
 	if self.config.grabMinimap then
-		local ldbi = LibStub.libs["LibDBIcon-1.0"]
+		local ldbi = LibStub("LibDBIcon-1.0", true)
 		if ldbi then
 			local ldbiTbl = ldbi:GetButtonList()
 			for i = 1, #ldbiTbl do
@@ -134,13 +142,21 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 	if not data or data.type ~= "launcher" then return end
 	local button = createdButtonsByName[name]
 	if button then
-		local r, g, b = button.icon:GetVertexColor()
-		if key == "iconR" then
+		if key == "icon" then
+			button.icon:SetTexture(value)
+		elseif key == "iconCoords" then
+			button.icon:SetTexCoord(unpack(value))
+		elseif key == "iconR" then
+			local _, g, b = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(value, g, b)
 		elseif key == "iconG" then
+			local r, _, b = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(r, value, b)
 		elseif key == "iconB" then
+			local r, g = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(r, g, value)
+		elseif key == "iconDesaturated" then
+			button.icon:SetDesaturated(value)
 		end
 	end
 end
@@ -151,6 +167,7 @@ OnEnter         - Handler OnEnter
 OnLeave         - Handler OnLeave
 OnClick         - Handler OnClick
 icon            - Texture icon
+iconCoords      - Table with coords
 iconR           - icon R color (RGB)
 iconG           - icon G color (RGB)
 iconB           - icon B color (RGB)
@@ -166,20 +183,18 @@ function hidingBar:addButton(name, data, update)
 	button.data = data
 	if data.icon then
 		button.icon:SetTexture(data.icon)
-		if data.iconR then
-			button.iconR = data.iconR
-			self:ldb_attrChange(nil, name, "iconR", data.iconR, data)
+		button.iconTex = data.icon
+		if data.iconCoords then
+			button.iconCoords = {unpack(data.iconCoords)}
+			button.icon:SetTexCoord(unpack(data.iconCoords))
 		end
-		if data.iconG then
-			button.iconG = data.iconG
-			self:ldb_attrChange(nil, name, "iconG", data.iconG, data)
-		end
-		if data.iconB then
-			button.iconB = data.iconB
-			self:ldb_attrChange(nil, name, "iconB", data.iconB, data)
-		end
-		if data.iconDesaturated then
-			button.icon:SetDesaturated(true)
+		button.iconR = data.iconR
+		button.iconG = data.iconG
+		button.iconB = data.iconB
+		button.icon:SetVertexColor(data.iconR or 1, data.iconG or 1, data.iconB or 1)
+		if data.iconDesaturated ~= nil then
+			button.iconDesaturated = data.iconDesaturated
+			button.icon:SetDesaturated(data.iconDesaturated)
 		end
 	end
 	if data.OnClick then
@@ -192,7 +207,7 @@ function hidingBar:addButton(name, data, update)
 		self:sort()
 		self:applyLayout()
 		self:leave()
-		config:createButton(name, button, data, update)
+		config:createButton(name, button, update)
 	end
 	return button
 end

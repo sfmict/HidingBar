@@ -7,15 +7,6 @@
 				</Texture>
 			</Layer>
 		</Layers>
-		<Frames>
-			<Frame parentKey="cover" setAllPoints="true" enableMouse="true" hidden="true">
-				<Scripts>
-					<OnLoad>
-						self:SetFrameLevel(self:GetParent():GetFrameLevel() + 10)
-					</OnLoad>
-				</Scripts>
-			</Frame>
-		</Frames>
 	</Frame>
 
 	<Frame name="HidingBarAddonOptionsPanel" virtual="true">
@@ -61,6 +52,7 @@
 						tooltipAnchor = "ANCHOR_BOTTOMLEFT"
 					end
 					GameTooltip:SetOwner(self, tooltipAnchor)
+					GameTooltip:ClearLines()
 					self.data.OnTooltipShow(GameTooltip)
 					GameTooltip:Show()
 				end
