@@ -44,7 +44,15 @@
 					self.data.OnEnter(self)
 				end
 				if self.data.OnTooltipShow then
-					GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+					local tooltipAnchor = "ANCHOR_LEFT"
+					local anchor = self:GetParent().config.anchor
+					if anchor == "left" then
+						tooltipAnchor = "ANCHOR_RIGHT"
+					elseif anchor == "top" then
+						tooltipAnchor = "ANCHOR_BOTTOMLEFT"
+					end
+					GameTooltip:SetOwner(self, tooltipAnchor)
+					GameTooltip:ClearLines()
 					self.data.OnTooltipShow(GameTooltip)
 					GameTooltip:Show()
 				end
@@ -77,14 +85,20 @@
 		<Scripts>
 			<OnLoad>
 				self:RegisterForDrag("LeftButton")
-				hooksecurefunc(self, "SetChecked", function(self, checked)
-					self.icon:SetDesaturated(checked)
-				end)
+				self.updateChecked = function(self, checked)
+					if checked then
+						self.icon:SetVertexColor(1, 1, 1)
+					else
+						self.icon:SetVertexColor(unpack(self.color))
+					end
+					self.icon:SetDesaturated(checked or self.iconDesaturated)
+				end
+				hooksecurefunc(self, "SetChecked", self.updateChecked)
 			</OnLoad>
 			<OnEnter>
 				self.icon:SetSize(32, 32)
 				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-				GameTooltip:SetText(self.id)
+				GameTooltip:SetText(self.name)
 				GameTooltip:Show()
 			</OnEnter>
 			<OnLeave>
@@ -92,7 +106,7 @@
 				GameTooltip:Hide()
 			</OnLeave>
 			<OnClick>
-				self.icon:SetDesaturated(self:GetChecked())
+				self:updateChecked(self:GetChecked())
 			</OnClick>
 		</Scripts>
 	</CheckButton>
@@ -134,13 +148,18 @@
 			<OnLoad>
 				self:RegisterForDrag("LeftButton")
 				self.icon:SetSize(18, 18)
-				hooksecurefunc(self, "SetChecked", function(self, checked)
-					self.check:SetShown(checked)
+				self.updateChecked = function(self, checked)
+					if checked then
+						self.icon:SetVertexColor(1, 1, 1)
+					else
+						self.icon:SetVertexColor(unpack(self.color))
+					end
 					self.icon:SetDesaturated(checked)
 					self.bg:SetDesaturated(checked)
 					self.border:SetDesaturated(checked)
 					self.check:SetShown(checked)
-				end)
+				end
+				hooksecurefunc(self, "SetChecked", self.updateChecked)
 			</OnLoad>
 			<OnEnter>
 				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
@@ -151,11 +170,7 @@
 				GameTooltip:Hide()
 			</OnLeave>
 			<OnClick>
-				local checked = self:GetChecked()
-				self.icon:SetDesaturated(checked)
-				self.bg:SetDesaturated(checked)
-				self.border:SetDesaturated(checked)
-				self.check:SetShown(checked)
+				self:updateChecked(self:GetChecked())
 			</OnClick>
 		</Scripts>
 	</CheckButton>
@@ -177,6 +192,10 @@
 				</FontString>
 			</Layer>
 		</Layers>
+		<Scripts>
+			<OnEnable>self.Text:SetTextColor(1,1,1,1)</OnEnable>
+			<OnDisable>self.Text:SetTextColor(.5,.5,.5,1)</OnDisable>
+		</Scripts>
 	</CheckButton>
 
 	<Slider name="HidingBarAddonSliderTemplate" inherits="HorizontalSliderTemplate" virtual="true">

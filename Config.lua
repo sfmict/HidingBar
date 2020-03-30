@@ -1,42 +1,37 @@
 local addon, L = ...
 local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFramePanelContainer)
-config.buttonPanel = CreateFrame("Frame", nil, nil, "HidingBarAddonPanel")
 config.noIcon = config:CreateTexture()
 config.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
+config.noIcon:SetTexCoord(.05, .95, 0.05, .95)
+config.noIcon:Hide()
 config.name = addon
 config.buttons, config.mbuttons = {}, {}
 
 
 config:SetScript("OnShow", function(self)
-	self.hidingBar = _G[addon.."Addon"]
-	self.config = self.hidingBar.config
-
-	self.addonName = format("%s_ADDON_", addon:upper())
+	self.addonName = ("%s_ADDON_"):format(addon:upper())
 	StaticPopupDialogs[self.addonName.."SET_GRAB"] = {
 		text = addon..": "..L["RELOAD_INTERFACE_QUESTION"],
 		button1 = ACCEPT,
 		button2 = CANCEL,
 		hideOnEscape = 1,
 		whileDead = 1,
-		OnAccept = function()
-			self.config.grabMinimap = not self.config.grabMinimap
-			ReloadUI()
-		end,
-		OnCancel = function()
-			self.grab:SetChecked(self.config.grabMinimap)
-		end,
+		OnAccept = function(_, data) data.accept() end,
+		OnCancel = function(self) self.data.cancel() end,
 	}
 
 	-- ADDON INFO
 	local info = self:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	info:SetPoint("TOPRIGHT", -16, 16)
 	info:SetTextColor(.5, .5, .5, 1)
-	info:SetText(format("%s %s: %s", GetAddOnMetadata(addon, "Version"), L["author"], GetAddOnMetadata(addon, "Author")))
+	info:SetJustifyH("RIGHT")
+	info:SetText(("%s %s: %s"):format(GetAddOnMetadata(addon, "Version"), L["author"], GetAddOnMetadata(addon, "Author")))
 
 	-- TITLE
 	local title = self:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("TOPLEFT", 16, -16)
-	title:SetText(format(L["%s Configuration"], addon))
+	title:SetJustifyH("LEFT")
+	title:SetText(L["%s Configuration"]:format(addon))
 
 	-- OPTION PANEL
 	local optionPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
@@ -149,17 +144,39 @@ config:SetScript("OnShow", function(self)
 	self.grab:SetPoint("TOPLEFT", self.lock, "BOTTOMLEFT")
 	self.grab.Text:SetText(L["Grab addon buttons on minimap"])
 	self.grab:SetChecked(self.config.grabMinimap)
-	self.grab:SetScript("OnClick", function()
-		StaticPopup_Show(self.addonName.."SET_GRAB")
+	self.grab:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabMinimap = not self.config.grabMinimap
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabMinimap)
+			end,
+		})
+	end)
+
+	-- GRAB WITHOUT NAME
+	self.grabWithoutName = CreateFrame("CheckButton", nil, optionPanelScroll.child, "HidingBarAddonCheckButtonTemplate")
+	self.grabWithoutName:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 20, 0)
+	self.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
+	self.grabWithoutName:SetEnabled(self.config.grabMinimap)
+	self.grabWithoutName:SetChecked(self.config.grabMinimapWithoutName)
+	self.grabWithoutName:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabMinimapWithoutName = not self.config.grabMinimapWithoutName
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabMinimapWithoutName)
+			end,
+		})
 	end)
 
 	-- SLIDER NUMBER BUTTONS IN ROW
-	local maxColumns = 17
-	self.size = self.config.size
-	if self.size > maxColumns then self.size = maxColumns end
-
 	local buttonsSlider = CreateFrame("SLIDER", nil, optionPanelScroll.child, "HidingBarAddonSliderTemplate")
-	buttonsSlider:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 0, -20)
+	buttonsSlider:SetPoint("TOPLEFT", self.grabWithoutName, "BOTTOMLEFT", -20, -20)
 	buttonsSlider:SetMinMaxValues(1, 30)
 	buttonsSlider.text:SetText(L["Number of buttons"])
 	buttonsSlider:SetValue(self.config.size)
@@ -167,8 +184,6 @@ config:SetScript("OnShow", function(self)
 	buttonsSlider:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value + .5)
 		config.config.size = value
-		self.size = value
-		if self.size > maxColumns then self.size = maxColumns end
 		slider.label:SetText(value)
 		slider:SetValue(value)
 		self:applyLayout()
@@ -181,7 +196,7 @@ config:SetScript("OnShow", function(self)
 	buttonPanelDescription:SetText(L["BUTTON_PANEL_DESCRIPTION"])
 
 	-- BUTTON PANEL
-	self.buttonPanel:SetParent(optionPanelScroll.child)
+	self.buttonPanel = CreateFrame("Frame", nil, optionPanelScroll.child, "HidingBarAddonPanel")
 	self.buttonPanel:SetPoint("TOPLEFT", buttonPanelDescription, "BOTTOMLEFT", 0, -5)
 	self.buttonPanel:SetSize(20, 20)
 
@@ -194,8 +209,8 @@ end)
 
 
 function config:hidingBarUpdate()
-	self.hidingBar:applyLayout()
 	self.hidingBar:enter()
+	self.hidingBar:applyLayout()
 	self.hidingBar:leave()
 end
 
@@ -211,25 +226,30 @@ function config:dragBtn(btn)
 	if order > #btn.btnList then order = #btn.btnList end
 
 	local step = order > btn.settings[2] and 1 or -1
-	for i = btn.settings[2] + step, order, step do
-		self:setPointBtn(btn.btnList[i], 4, 4 + btn.offset, i - step)
+	for i = btn.settings[2], order - step, step do
+		local button = btn.btnList[i + step]
+		btn.btnList[i] = button
+		button.settings[2] = i
+		self:setPointBtn(button, 4, 4 + btn.offset, i, .1)
 	end
+	btn.btnList[order] = btn
 	btn.settings[2] = order
-	self:sort(btn.btnList)
 end
 
 
 function config:dragStart(btn, offset)
 	btn.isDrag = true
+	for i = 1, #btn.btnList do
+		btn.btnList[i].settings[2] = i
+	end
 	if not btn.level then btn.level = btn:GetFrameLevel() end
 	btn:SetFrameLevel(btn.level + 2)
 	btn.offset = offset or 0
 	btn.left = self.buttonPanel:GetLeft()
 	btn.top = self.buttonPanel:GetTop() - btn.offset
-	local numBtns = #btn.btnList
-	btn.maxRow = math.ceil(numBtns / self.size) - 1
-	if numBtns > self.size then numBtns = self.size end
-	btn.maxColumn = numBtns
+	btn.maxColumn = #btn.btnList
+	btn.maxRow = math.floor((btn.maxColumn - 1) / self.size)
+	if btn.maxColumn > self.size then btn.maxColumn = self.size end
 	btn:SetScript("OnUpdate", function(btn) self:dragBtn(btn) end)
 	btn:StartMoving()
 end
@@ -240,7 +260,7 @@ function config:dragStop(btn)
 	btn:SetFrameLevel(btn.level)
 	btn:SetScript("OnUpdate", nil)
 	btn:StopMovingOrSizing()
-	self:setPointBtn(btn, 4, 4 + btn.offset, btn.settings[2])
+	self:setPointBtn(btn, 4, 4 + btn.offset, btn.settings[2], .3)
 	self.hidingBar:sort()
 	self:hidingBarUpdate()
 end
@@ -251,49 +271,39 @@ function config:sort(buttons)
 		local o1, o2 = a.settings[2], b.settings[2]
 		return o1 and not o2
 			 or o1 and o2 and o1 < o2
-			 or o1 == o2 and a.id < b.id
+			 or o1 == o2 and a.name < b.name
 	end)
 end
 
 
 do
+	local buttonsByName = {}
+
 	local function btnClick(self)
 		self.settings[1] = self:GetChecked()
 		config:hidingBarUpdate()
 	end
 
-	function config:createButton(id, order, data, update)
-		if self.buttons[id] then return end
+	function config:createButton(name, button, update)
+		if not self.buttonPanel or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
-		btn.id = id
-		if data.icon then
-			btn.icon:SetTexture(data.icon)
-			if data.iconR then
-				btn.icon:SetVertexColor(data.iconR, 1, 1)
+		btn.name = name
+		if button.iconTex then
+			btn.icon:SetTexture(button.iconTex)
+			if button.iconCoords then
+				btn.icon:SetTexCoord(unpack(button.iconCoords))
 			end
-			if data.iconG then
-				local r, _, b = btn.icon:GetVertexColor()
-				btn.icon:SetVertexColor(r, data.igonG, b)
-			end
-			if data.iconB then
-				local r, g = btn.icon:GetVertexColor()
-				btn.icon:SetVertexColor(r, g, data.iconB)
-			end
-			if data.iconDesaturated then
-				btn.icon:SetDesaturated(true)
-			end
+			btn.icon:SetVertexColor(button.iconR or 1, button.iconG or 1, button.iconB or 1)
 		end
+		btn.color = {btn.icon:GetVertexColor()}
+		btn.iconDesaturated = button.iconDesaturated
 		btn.btnList = self.buttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
-		btn.settings = self.hidingBar.config.btnSettings[btn.id]
-		if not btn.settings then
-			btn.settings = {[2] = order, tstmp = time()}
-			self.hidingBar.config.btnSettings[btn.id] = btn.settings
-		end
-		btn.settings[2] = order
+		btn.settings = self.config.btnSettings[name]
 		btn:SetChecked(btn.settings[1])
+		buttonsByName[name] = btn
 		tinsert(self.buttons, btn)
 		if update then
 			self:sort(self.buttons)
@@ -309,24 +319,19 @@ do
 		config:hidingBarUpdate()
 	end
 
-	function config:createMButton(id, order, icon)
-		if type(id) ~= "string" then return end
+	function config:createMButton(name, icon)
+		if type(name) ~= "string" then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
-		btn.id = id
-		btn.title = id:gsub("LibDBIcon10_", "")
+		btn.name = name
+		btn.title = name:gsub("LibDBIcon10_", "")
 		btn.icon:SetTexture(icon:GetTexture())
 		btn.icon:SetTexCoord(icon:GetTexCoord())
-		btn.icon:SetVertexColor(icon:GetVertexColor())
+		btn.color = {icon:GetVertexColor()}
 		btn.btnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * 32) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
-		btn.settings = self.hidingBar.config.mbtnSettings[btn.id]
-		if not btn.settings then
-			btn.settings = {tstmp = time()}
-			self.hidingBar.config.mbtnSettings[btn.id] = btn.settings
-		end
-		btn.settings[2] = order
+		btn.settings = self.config.mbtnSettings[name]
 		btn:SetChecked(btn.settings[1])
 		tinsert(self.mbuttons, btn)
 	end
@@ -334,17 +339,17 @@ end
 
 
 function config:initButtons()
-	for i, button in ipairs(self.hidingBar.createdButtons) do
-		self:createButton(button.id, i, button.data)
+	for _, button in ipairs(self.hidingBar.createdButtons) do
+		self:createButton(button.name, button)
 	end
-	for i, button in ipairs(self.hidingBar.minimapButtons) do
+	for _, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()
 		if name then
 			local icon = button.icon or button.Icon or _G[name.."icon"] or _G[name.."Icon"] or button.background or button.Background
 			if not icon or not icon.GetTexture then
 				icon = self.noIcon
 			end
-			self:createMButton(name, i, icon)
+			self:createMButton(name, icon)
 		end
 	end
 	self:applyLayout()
@@ -357,42 +362,47 @@ local function setPosAnimated(btn, elapsed)
 		btn:SetPoint("TOPLEFT", btn.x, btn.y)
 		btn:SetScript("OnUpdate", nil)
 	else
-		local k = btn.timer / .1
+		local k = btn.timer / btn.delay
 		btn:SetPoint("TOPLEFT", btn.x - btn.deltaX * k, btn.y - btn.deltaY * k)
 	end
 end
 
 
-function config:setPointBtn(btn, offsetX, offsetY, order)
-	if order then
-		btn.settings[2] = order
-		if btn.isDrag then return end
-		btn.timer = .1
-		local line = math.ceil(order / self.size) - 1
-		btn.x = (order - 1 - line * self.size) * 32 + offsetX
-		btn.y = -line * 32 - offsetY
+function config:setPointBtn(btn, offsetX, offsetY, order, delay)
+	if btn.isDrag then return end
+	order = order - 1
+	btn.x = order % self.size * 32 + offsetX
+	btn.y = -math.floor(order / self.size) * 32 - offsetY
+
+	if delay then
+		btn.timer = delay
+		btn.delay = delay
 		btn.deltaX = btn.x - btn:GetLeft() + self.buttonPanel:GetLeft()
 		btn.deltaY = btn.y - btn:GetTop() + self.buttonPanel:GetTop()
 		btn:ClearAllPoints()
 		btn:SetScript("OnUpdate", setPosAnimated)
 	else
 		btn:ClearAllPoints()
-		local line = math.ceil(btn.settings[2] / self.size) - 1
-		btn:SetPoint("TOPLEFT", (btn.settings[2] - 1 - line * self.size) * 32 + offsetX, -line * 32 - offsetY)
+		btn:SetPoint("TOPLEFT", btn.x, btn.y)
 	end
 end
 
 
 function config:applyLayout()
-	for _, btn in ipairs(self.buttons) do
-		self:setPointBtn(btn, 4, 4)
+	local maxColumns = 17
+	self.size = self.config.size
+	if self.size > maxColumns then self.size = maxColumns end
+
+	for i, btn in ipairs(self.buttons) do
+		self:setPointBtn(btn, 4, 4, i)
 	end
-	local offsetY = math.ceil(#self.buttons / self.size) * 32 + 4
-	for _, btn in ipairs(self.mbuttons) do
-		self:setPointBtn(btn, 4, offsetY)
+	local rows = math.ceil(#self.buttons / self.size)
+	local offsetY = rows * 32 + 4
+	for i, btn in ipairs(self.mbuttons) do
+		self:setPointBtn(btn, 4, offsetY, i)
 	end
 
-	local rows = math.ceil(#self.buttons / self.size) + math.ceil(#self.mbuttons / self.size)
+	rows = rows + math.ceil(#self.mbuttons / self.size)
 	self.buttonPanel:SetSize(self.size * 32 + 8, rows * 32 + 8)
 end
 

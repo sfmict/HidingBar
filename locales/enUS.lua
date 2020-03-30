@@ -12,6 +12,7 @@ L["Horizontal"] = "Horizontal"
 L["Vertical"] = "Vertical"
 L["Lock the bar's location"] = "Lock the bar's location"
 L["Grab addon buttons on minimap"] = "Grab addon buttons on minimap"
+L["Grab buttons without a name"] = "Grab buttons without a name (|cffff2020not recommended|r)"
 L["Number of buttons"] = "Number of buttons in a row / column"
 L["BUTTON_PANEL_DESCRIPTION"] = "Click to enable / disable buttons or drag to reposition."
 
