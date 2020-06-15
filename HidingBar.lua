@@ -432,7 +432,7 @@ function hidingBar:dragBar()
 	if position < 0 then position = 0 end
 
 	self.position = position
-	self.config.position = position * UIParent:GetScale()
+	self.config.position = position * scale
 	self:setBarPosition()
 end
 
