@@ -105,7 +105,7 @@ config:SetScript("OnShow", function(self)
 		self:hidingBarUpdate()
 	end
 
-	UIDropDownMenu_Initialize(orientationCombobox, function(self, level, menuList)
+	UIDropDownMenu_Initialize(orientationCombobox, function(self, level)
 		local info = UIDropDownMenu_CreateInfo()
 
 		info.checked = nil
