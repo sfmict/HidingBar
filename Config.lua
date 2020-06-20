@@ -19,6 +19,22 @@ config:SetScript("OnShow", function(self)
 		OnAccept = function(_, data) data.accept() end,
 		OnCancel = function(self) self.data.cancel() end,
 	}
+	StaticPopupDialogs[self.addonName.."ADD_IGNORE_MBTN"] = {
+		text = addon..": "..L["ADD_IGNORE_MBTN_QUESTION"],
+		button1 = ACCEPT,
+		button2 = CANCEL,
+		hideOnEscape = 1,
+		whileDead = 1,
+		OnAccept = function(_, cb) cb() end,
+	}
+	StaticPopupDialogs[self.addonName.."REMOVE_IGNORE_MBTN"] = {
+		text = addon..": "..L["REMOVE_IGNORE_MBTN_QUESTION"],
+		button1 = ACCEPT,
+		button2 = CANCEL,
+		hideOnEscape = 1,
+		whileDead = 1,
+		OnAccept = function(_, cb) cb() end,
+	}
 
 	-- ADDON INFO
 	local info = self:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -36,25 +52,16 @@ config:SetScript("OnShow", function(self)
 	-- OPTION PANEL
 	local optionPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
 	optionPanel:SetPoint("TOPLEFT", 8, -40)
-	optionPanel:SetPoint("BOTTOMRIGHT", self, -8, 8)
-
-	local optionPanelScroll = CreateFrame("ScrollFrame", nil, optionPanel, "UIPanelScrollFrameTemplate")
-	optionPanelScroll:SetPoint("TOPLEFT", optionPanel, 4, -6)
-	optionPanelScroll:SetPoint("BOTTOMRIGHT", optionPanel, -26, 5)
-	optionPanelScroll.ScrollBar:SetBackdrop({bgFile='interface/buttons/white8x8'})
-	optionPanelScroll.ScrollBar:SetBackdropColor(0,0,0,.2)
-	optionPanelScroll.child = CreateFrame("FRAME")
-	optionPanelScroll.child:SetSize(1, 1)
-	optionPanelScroll:SetScrollChild(optionPanelScroll.child)
+	optionPanel:SetPoint("BOTTOMRIGHT", self, -8, 265)
 
 	-- DESCRIPTION
-	local description = optionPanelScroll.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	description:SetPoint("TOPLEFT", 8, -20)
+	local description = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	description:SetPoint("TOPLEFT", 8, -10)
 	description:SetJustifyH("LEFT")
 	description:SetText(L["SETTINGS_DESCRIPTION"])
 
 	-- FADE
-	local fade = CreateFrame("CheckButton", nil, optionPanelScroll.child, "HidingBarAddonCheckButtonTemplate")
+	local fade = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
 	fade:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -12)
 	fade.Text:SetText(L["Fade out yellow line"])
 	fade:SetChecked(self.config.fade)
@@ -72,7 +79,7 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- FADE OPACITY
-	self.fadeOpacity = CreateFrame("SLIDER", nil, optionPanelScroll.child, "HidingBarAddonSliderTemplate")
+	self.fadeOpacity = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
 	self.fadeOpacity:SetWidth(300)
 	self.fadeOpacity:SetPoint("LEFT", fade, "RIGHT", 200, 0)
 	self.fadeOpacity:SetMinMaxValues(0, .9)
@@ -90,12 +97,12 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- ORIENTATION TEXT
-	local orientationText = optionPanelScroll.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	local orientationText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	orientationText:SetPoint("TOPLEFT", fade, "BOTTOMLEFT", 0, -15)
 	orientationText:SetText(L["Orientation"]..":")
 
 	-- ORIENTATION COMBOBOX
-	local orientationCombobox = CreateFrame("FRAME", "MountsJournalModifier", optionPanelScroll.child, "UIDropDownMenuTemplate")
+	local orientationCombobox = CreateFrame("FRAME", "MountsJournalModifier", optionPanel, "UIDropDownMenuTemplate")
 	orientationCombobox:SetPoint("LEFT", orientationText, "RIGHT", -5, 0)
 	UIDropDownMenu_SetWidth(orientationCombobox, 100)
 
@@ -129,7 +136,7 @@ config:SetScript("OnShow", function(self)
 	UIDropDownMenu_SetSelectedValue(orientationCombobox, self.config.orientation)
 
 	-- LOCK
-	self.lock = CreateFrame("CheckButton", nil, optionPanelScroll.child, "HidingBarAddonCheckButtonTemplate")
+	self.lock = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
 	self.lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -15)
 	self.lock.Text:SetText(L["Lock the bar's location"])
 	self.lock:SetChecked(self.config.lock)
@@ -140,7 +147,7 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- GRAB
-	self.grab = CreateFrame("CheckButton", nil, optionPanelScroll.child, "HidingBarAddonCheckButtonTemplate")
+	self.grab = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
 	self.grab:SetPoint("TOPLEFT", self.lock, "BOTTOMLEFT")
 	self.grab.Text:SetText(L["Grab addon buttons on minimap"])
 	self.grab:SetChecked(self.config.grabMinimap)
@@ -157,7 +164,7 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- GRAB WITHOUT NAME
-	self.grabWithoutName = CreateFrame("CheckButton", nil, optionPanelScroll.child, "HidingBarAddonCheckButtonTemplate")
+	self.grabWithoutName = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
 	self.grabWithoutName:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 20, 0)
 	self.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
 	self.grabWithoutName:SetEnabled(self.config.grabMinimap)
@@ -175,7 +182,7 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- SLIDER NUMBER BUTTONS IN ROW
-	local buttonsSlider = CreateFrame("SLIDER", nil, optionPanelScroll.child, "HidingBarAddonSliderTemplate")
+	local buttonsSlider = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
 	buttonsSlider:SetPoint("TOPLEFT", self.grabWithoutName, "BOTTOMLEFT", -20, -20)
 	buttonsSlider:SetMinMaxValues(1, 30)
 	buttonsSlider.text:SetText(L["Number of buttons"])
@@ -190,15 +197,136 @@ config:SetScript("OnShow", function(self)
 		self:hidingBarUpdate()
 	end)
 
+	-- BUTTONS TAB PANEL
+	self.buttonsTabPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
+	self.buttonsTabPanel:SetPoint("TOPLEFT", optionPanel, "BOTTOMLEFT", 0, -25)
+	self.buttonsTabPanel:SetPoint("BOTTOMRIGHT", self, -8, 8)
+
+	local buttonsTabPanelScroll = CreateFrame("ScrollFrame", nil, self.buttonsTabPanel, "UIPanelScrollFrameTemplate")
+	buttonsTabPanelScroll:SetPoint("TOPLEFT", self.buttonsTabPanel, 4, -6)
+	buttonsTabPanelScroll:SetPoint("BOTTOMRIGHT", self.buttonsTabPanel, -26, 5)
+	buttonsTabPanelScroll.ScrollBar:SetBackdrop({bgFile='interface/buttons/white8x8'})
+	buttonsTabPanelScroll.ScrollBar:SetBackdropColor(0,0,0,.2)
+	buttonsTabPanelScroll.child = CreateFrame("FRAME")
+	buttonsTabPanelScroll.child:SetSize(1, 1)
+	buttonsTabPanelScroll:SetScrollChild(buttonsTabPanelScroll.child)
+
+	self.tabButtons = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
+	self.tabButtons:SetPoint("BOTTOMLEFT", self.buttonsTabPanel, "TOPLEFT", 3, -1)
+	self.tabButtons:SetText(L["Buttons"])
+	self.tabButtons:SetWidth(self.tabButtons:GetTextWidth() + 48)
+	self.tabButtons:Disable()
+	self.tabButtons:SetScript("OnClick", function()
+		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+		self.buttonsTabPanel:Show()
+		self.ignoreTabPanel:Hide()
+		self.tabButtons:Disable()
+		self.tabIgnore:Enable()
+	end)
+
 	-- BUTTON PANEL DESCRIPTION
-	local buttonPanelDescription = optionPanelScroll.child:CreateFontString("ARTWORK", nil, "GameFontHighlight")
-	buttonPanelDescription:SetPoint("TOPLEFT", buttonsSlider, "BOTTOMLEFT", 0, -20)
+	local buttonPanelDescription = buttonsTabPanelScroll.child:CreateFontString("ARTWORK", nil, "GameFontHighlight")
+	buttonPanelDescription:SetPoint("TOPLEFT", buttonsTabPanelScroll.child, "BOTTOMLEFT", 8, -5)
 	buttonPanelDescription:SetText(L["BUTTON_PANEL_DESCRIPTION"])
+	buttonPanelDescription:SetJustifyH("LEFT")
 
 	-- BUTTON PANEL
-	self.buttonPanel = CreateFrame("Frame", nil, optionPanelScroll.child, "HidingBarAddonPanel")
+	self.buttonPanel = CreateFrame("Frame", nil, buttonsTabPanelScroll.child, "HidingBarAddonPanel")
 	self.buttonPanel:SetPoint("TOPLEFT", buttonPanelDescription, "BOTTOMLEFT", 0, -5)
 	self.buttonPanel:SetSize(20, 20)
+
+	-- IGNORE TAB PANEL
+	self.ignoreTabPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
+	self.ignoreTabPanel:SetPoint("TOPLEFT", optionPanel, "BOTTOMLEFT", 0, -25)
+	self.ignoreTabPanel:SetPoint("BOTTOMRIGHT", self, -8, 8)
+	self.ignoreTabPanel:Hide()
+
+	self.tabIgnore = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
+	self.tabIgnore:SetPoint("LEFT", self.tabButtons, "RIGHT", -16, 0)
+	self.tabIgnore:SetText(L["Ignore list"])
+	self.tabIgnore:SetWidth(self.tabIgnore:GetTextWidth() + 48)
+	self.tabIgnore:SetScript("OnClick", function()
+		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+		self.buttonsTabPanel:Hide()
+		self.ignoreTabPanel:Show()
+		self.tabButtons:Enable()
+		self.tabIgnore:Disable()
+	end)
+
+	-- RELOAD BUTTON
+	local reloadBtn = CreateFrame("BUTTON", nil, self, "UIPanelButtonTemplate")
+	reloadBtn:SetSize(96, 22)
+	reloadBtn:SetPoint("BOTTOMRIGHT", self.ignoreTabPanel, "TOPRIGHT")
+	reloadBtn:SetText(RELOADUI)
+	reloadBtn:SetScript("OnClick", function()
+		ReloadUI()
+	end)
+
+	-- ADD IGNORE TEXT
+	local editBoxIgnore = CreateFrame("EditBox", nil, self.ignoreTabPanel, "HidingBarAddonAddTextBox")
+	editBoxIgnore:SetPoint("TOPLEFT", self.ignoreTabPanel, 10, -5)
+	editBoxIgnore:SetScript("OnTextChanged", function(editBox)
+		local textExists = editBox:GetText() ~= ""
+		self.ignoreBtn:SetEnabled(textExists)
+		editBox.clearButton:SetShown(editBox:HasFocus() or textExists)
+	end)
+	editBoxIgnore:SetScript("OnEnterPressed", function(editBox)
+		local text = editBox:GetText()
+		if text ~= "" then
+			self:addIgnoreName(text)
+			editBox:SetText("")
+		end
+		EditBox_ClearFocus(editBox)
+	end)
+
+	-- ADD IGNORE BUTTON
+	self.ignoreBtn = CreateFrame("BUTTON", nil, self.ignoreTabPanel, "UIPanelButtonTemplate")
+	self.ignoreBtn:SetSize(80, 22)
+	self.ignoreBtn:SetPoint("LEFT", editBoxIgnore, "RIGHT")
+	self.ignoreBtn:SetText(ADD)
+	self.ignoreBtn:Disable()
+	self.ignoreBtn:SetScript("OnClick", function()
+		local text = editBoxIgnore:GetText()
+		if text ~= "" then
+			self:addIgnoreName(text)
+			editBoxIgnore:SetText("")
+		end
+	end)
+
+	-- IGNORE SCROLL
+	self.ignoreScroll = CreateFrame("ScrollFrame", nil, self.ignoreTabPanel, "HidingBarAddonHybridScrollTemplate")
+	self.ignoreScroll.scrollBar.doNotHide = true
+	self.ignoreScroll:SetSize(300, 200)
+	self.ignoreScroll:SetPoint("TOPLEFT", editBoxIgnore, "BOTTOMLEFT", -2, -2)
+	self.ignoreScroll.update = function(scroll)
+		local offset = HybridScrollFrame_GetOffset(scroll)
+		local numButtons = #self.config.ignoreMBtn
+
+		for i, btn in ipairs(scroll.buttons) do
+			local index = i + offset
+			if index <= numButtons then
+				btn:SetText(self.config.ignoreMBtn[index])
+				btn.removeButton:SetScript("OnClick", function()
+					self:removeIgnoreName(index)
+				end)
+				btn:Enable()
+			else
+				btn:SetText(EMPTY)
+				btn:Disable()
+			end
+		end
+
+		HybridScrollFrame_Update(scroll, scroll.buttonHeight * numButtons, scroll:GetHeight())
+	end
+	HybridScrollFrame_CreateButtons(self.ignoreScroll, "HidingBarAddonIgnoreButtonTemplate")
+	self.ignoreScroll:update()
+
+	-- IGNORE DESCRIPTION
+	local ignoreDescription = self.ignoreTabPanel:CreateFontString("ARTWORK", nil, "GameFontHighlight")
+	ignoreDescription:SetPoint("TOPLEFT", self.ignoreBtn, "TOPRIGHT", 5, 0)
+	ignoreDescription:SetPoint("BOTTOMRIGHT", self.ignoreTabPanel, -5, 5)
+	ignoreDescription:SetJustifyH("LEFT")
+	ignoreDescription:SetText(L["IGNORE_DESCRIPTION"])
 
 	-- INIT
 	self:initButtons()
@@ -206,6 +334,31 @@ config:SetScript("OnShow", function(self)
 	-- RESET ONSHOW
 	self:SetScript("OnShow", nil)
 end)
+
+
+function config:addIgnoreName(name)
+	name = name:gsub("[%(%)%.%%%+%-%*%?%[%^%$]", "%%%1")
+	for _, n in ipairs(self.config.ignoreMBtn) do
+		if name == n then return end
+	end
+	tinsert(self.config.ignoreMBtn, name)
+	sort(self.config.ignoreMBtn)
+	self.ignoreScroll:update()
+end
+
+
+function config:removeIgnoreName(index)
+	local name = self.config.ignoreMBtn[index]
+	StaticPopup_Show(self.addonName.."REMOVE_IGNORE_MBTN", NORMAL_FONT_COLOR_CODE..name..FONT_COLOR_CODE_CLOSE, nil, function()
+		for i = 1, #self.config.ignoreMBtn do
+			if name == self.config.ignoreMBtn[i] then
+				tremove(self.config.ignoreMBtn, i)
+				break
+			end
+		end
+		self.ignoreScroll:update()
+	end)
+end
 
 
 function config:hidingBarUpdate()
@@ -314,9 +467,16 @@ end
 
 
 do
-	local function btnClick(self)
-		self.settings[1] = self:GetChecked()
-		config:hidingBarUpdate()
+	local function btnClick(self, button)
+		if button == "LeftButton" then
+			self.settings[1] = self:GetChecked()
+			config:hidingBarUpdate()
+		elseif button == "RightButton" then
+			self:SetChecked(not self:GetChecked())
+			StaticPopup_Show(config.addonName.."ADD_IGNORE_MBTN", NORMAL_FONT_COLOR_CODE..self.name..FONT_COLOR_CODE_CLOSE, nil, function()
+				config:addIgnoreName(self.name)
+			end)
+		end
 	end
 
 	function config:createMButton(name, icon)
