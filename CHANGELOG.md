@@ -1,1 +1,1 @@
-* Fixed grab buttons.
+* Added ignore list for minimap buttons.

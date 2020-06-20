@@ -46,6 +46,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.size = self.config.size or 10
 		self.config.anchor = self.config.anchor or "top"
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
+		self.config.ignoreMBtn = self.config.ignoreMBtn or {}
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
 		self.config.mbtnSettings = setmetatable(self.config.mbtnSettings or {}, meta)
 
@@ -54,6 +55,21 @@ function hidingBar:ADDON_LOADED(addonName)
 
 		C_Timer.After(0, function() self:init() end)
 	end
+end
+
+
+function hidingBar:UI_SCALE_CHANGED()
+	self.position = nil
+	self:setBarPosition()
+end
+
+
+function hidingBar:ignoreCheck(name)
+	if not name then return true end
+	for i = 1, #self.config.ignoreMBtn do
+		if name:find(self.config.ignoreMBtn[i]) then return end
+	end
+	return true
 end
 
 
@@ -90,7 +106,7 @@ function hidingBar:init()
 			local width, height = child:GetSize()
 			if child:HasScript("OnClick") and child:GetScript("OnClick") and math.abs(width - height) < 5 then
 				local name = child:GetName()
-				if not ignoreFrameList[name] and (name or self.config.grabMinimapWithoutName) then
+				if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) then
 					if name then self.config.mbtnSettings[name].tstmp = t end
 
 					local btn = self.minimapButtons[child[0]]
@@ -127,6 +143,8 @@ function hidingBar:init()
 	self:applyLayout()
 	self:setBarPosition()
 	self:leave()
+
+	self:RegisterEvent("UI_SCALE_CHANGED")
 end
 
 
