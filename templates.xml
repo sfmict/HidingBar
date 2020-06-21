@@ -321,30 +321,28 @@
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
-						<Texture atlas="common-search-clearbutton" useAtlasSize="false" alpha="0.5" parentKey="texture">
-							<Size>
-								<AbsDimension x="10" y="10"/>
-							</Size>
+						<Texture file="Interface\FriendsFrame\ClearBroadcastIcon" alpha="0.5" parentKey="texture">
+							<Size x="17" y="17"/>
 							<Anchors>
-								<Anchor point="TOPLEFT" x="3" y="-3"/>
+								<Anchor point="CENTER"/>
 							</Anchors>
 						</Texture>
 					</Layer>
 				</Layers>
 				<Scripts>
 					<OnEnter>
-						self.texture:SetAlpha(1.0);
+						self.texture:SetAlpha(1.0)
 					</OnEnter>
 					<OnLeave>
-						self.texture:SetAlpha(0.5);
+						self.texture:SetAlpha(0.5)
 					</OnLeave>
 					<OnMouseDown>
 						if self:IsEnabled() then
-							self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 4, -4);
+							self.texture:SetPoint("CENTER", 1, -1)
 						end
 					</OnMouseDown>
 					<OnMouseUp>
-						self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 3, -3);
+						self.texture:SetPoint("CENTER")
 					</OnMouseUp>
 					<OnClick function="SearchBoxTemplateClearButton_OnClick"/>
 				</Scripts>
