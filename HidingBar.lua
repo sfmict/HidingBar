@@ -96,7 +96,7 @@ function hidingBar:init()
 			for i = 1, #ldbiTbl do
 				local button = ldbi:GetMinimapButton(ldbiTbl[i])
 				local name = button:GetName()
-				if name or self.config.grabMinimapWithoutName then
+				if self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) then
 					self.minimapButtons[button[0]] = button
 					self:setHooks(button)
 				end
