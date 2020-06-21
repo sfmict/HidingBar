@@ -1,1 +1,1 @@
-* Added ignore list for minimap buttons.
+* Fixed small ignore list bug.
