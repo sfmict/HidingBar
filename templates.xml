@@ -184,11 +184,7 @@
 			<Layer level="ARTWORK">
 				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
 					<Anchors>
-						<Anchor point="LEFT" relativePoint="RIGHT">
-							<Offset>
-								<AbsDimension x="1" y="0"/>
-							</Offset>
-						</Anchor>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="1"/>
 					</Anchors>
 				</FontString>
 			</Layer>
@@ -322,9 +318,7 @@
 				<Layers>
 					<Layer level="ARTWORK">
 						<Texture atlas="common-search-clearbutton" useAtlasSize="false" alpha="0.5" parentKey="texture">
-							<Size>
-								<AbsDimension x="10" y="10"/>
-							</Size>
+							<Size x="10" y="10"/>
 							<Anchors>
 								<Anchor point="TOPLEFT" x="3" y="-3"/>
 							</Anchors>
