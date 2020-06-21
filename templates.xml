@@ -334,16 +334,17 @@
 					</OnLeave>
 					<OnMouseDown>
 						if self:IsEnabled() then
-							self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 4, -4)
+							self.texture:SetPoint("TOPLEFT", 4, -4)
 						end
 					</OnMouseDown>
 					<OnMouseUp>
-						self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 3, -3)
+						self.texture:SetPoint("TOPLEFT", 3, -3)
 					</OnMouseUp>
 					<OnClick function="SearchBoxTemplateClearButton_OnClick"/>
 				</Scripts>
 			</Button>
 		</Frames>
+		<FontString inherits="GameFontHighlightSmall"/>
 		<Scripts>
 			<OnLoad>
 				self:SetTextInsets(0, 16, 0, 0)
