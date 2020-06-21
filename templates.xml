@@ -333,18 +333,18 @@
 				</Layers>
 				<Scripts>
 					<OnEnter>
-						self.texture:SetAlpha(1.0);
+						self.texture:SetAlpha(1.0)
 					</OnEnter>
 					<OnLeave>
-						self.texture:SetAlpha(0.5);
+						self.texture:SetAlpha(0.5)
 					</OnLeave>
 					<OnMouseDown>
 						if self:IsEnabled() then
-							self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 4, -4);
+							self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 4, -4)
 						end
 					</OnMouseDown>
 					<OnMouseUp>
-						self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 3, -3);
+						self.texture:SetPoint("TOPLEFT", self, "TOPLEFT", 3, -3)
 					</OnMouseUp>
 					<OnClick function="SearchBoxTemplateClearButton_OnClick"/>
 				</Scripts>

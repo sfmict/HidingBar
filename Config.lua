@@ -291,6 +291,7 @@ config:SetScript("OnShow", function(self)
 			self:addIgnoreName(text)
 			editBoxIgnore:SetText("")
 		end
+		EditBox_ClearFocus(editBoxIgnore)
 	end)
 
 	-- IGNORE SCROLL
