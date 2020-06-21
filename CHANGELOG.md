@@ -1,1 +1,1 @@
-* Fixed small ignore list bug.
+* Fixed initialize settings.

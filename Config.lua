@@ -330,7 +330,7 @@ config:SetScript("OnShow", function(self)
 	ignoreDescription:SetText(L["IGNORE_DESCRIPTION"])
 
 	-- INIT
-	self:initButtons()
+	C_Timer.After(.1, function() self:initButtons() end)
 
 	-- RESET ONSHOW
 	self:SetScript("OnShow", nil)
