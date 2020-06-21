@@ -1,2 +1,1 @@
-* Added ignore list for minimap buttons.
-* Fixed clearButton texture.
+* Fixed small ignore list bug.

@@ -184,11 +184,7 @@
 			<Layer level="ARTWORK">
 				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
 					<Anchors>
-						<Anchor point="LEFT" relativePoint="RIGHT">
-							<Offset>
-								<AbsDimension x="1" y="0"/>
-							</Offset>
-						</Anchor>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="1"/>
 					</Anchors>
 				</FontString>
 			</Layer>
@@ -348,6 +344,7 @@
 				</Scripts>
 			</Button>
 		</Frames>
+		<FontString inherits="GameFontHighlightSmall"/>
 		<Scripts>
 			<OnLoad>
 				self:SetTextInsets(0, 16, 0, 0)
