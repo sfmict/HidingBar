@@ -192,10 +192,10 @@ config:SetScript("OnShow", function(self)
 	buttonNumber.label:SetText(self.config.size)
 	buttonNumber:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value + .5)
+		slider:SetValue(value)
 		if self.config.size ~= value then
 			self.config.size = value
 			slider.label:SetText(value)
-			slider:SetValue(value)
 			self:applyLayout()
 			self:hidingBarUpdate()
 		end
@@ -212,10 +212,10 @@ config:SetScript("OnShow", function(self)
 	buttonSize.label:SetText(self.config.buttonSize)
 	buttonSize:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value + .5)
+		slider:SetValue(value)
 		if self.config.buttonSize ~= value then
 			self.config.buttonSize = value
 			slider.label:SetText(value)
-			slider:SetValue(value)
 			self:setButtonSize()
 			self:applyLayout()
 			self.hidingBar:setButtonSize()
