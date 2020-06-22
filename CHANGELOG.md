@@ -1,1 +1,1 @@
-* Fixed initialize settings.
+* Added button size option.

@@ -44,6 +44,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config = self.db.config
 		self.config.orientation = self.config.orientation or 0
 		self.config.size = self.config.size or 10
+		self.config.buttonSize = self.config.buttonSize or 32
 		self.config.anchor = self.config.anchor or "top"
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.ignoreMBtn = self.config.ignoreMBtn or {}
@@ -115,8 +116,6 @@ function hidingBar:init()
 						self:setHooks(child)
 					end
 
-					local maxSize = width > height and width or height
-					self.SetScale(child, 32 / maxSize)
 					self.SetAlpha(child, 1)
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
 					self.SetParent(child, self)
@@ -140,6 +139,7 @@ function hidingBar:init()
 	self.db.tstmp = t
 
 	self:sort()
+	self:setButtonSize()
 	self:applyLayout()
 	self:setBarPosition()
 	self:leave()
@@ -283,11 +283,23 @@ function hidingBar:sort()
 end
 
 
+function hidingBar:setButtonSize()
+	for _, btn in ipairs(self.createdButtons) do
+		btn:SetSize(self.config.buttonSize, self.config.buttonSize)
+	end
+	for _, btn in ipairs(self.minimapButtons) do
+		local width, height = btn:GetSize()
+		local maxSize = width > height and width or height
+		self.SetScale(btn, self.config.buttonSize / maxSize)
+	end
+end
+
+
 function hidingBar:setPointBtn(btn, offsetX, offsetY, order, orientation)
 	order = order - 1
 	local size = self.config.size
-	local x = order % size * 32 + offsetX
-	local y = -math.floor(order / size) * 32 - offsetY
+	local x = order % size * self.config.buttonSize + offsetX
+	local y = -math.floor(order / size) * self.config.buttonSize - offsetY
 	if orientation == 2 then x, y = -y, -x end
 	self.ClearAllPoints(btn)
 	local scale = btn:GetScale()
@@ -314,7 +326,7 @@ function hidingBar:applyLayout()
 		end
 	end
 	local line = math.ceil(i / self.config.size)
-	local offsetYm = line * 32 + offsetY
+	local offsetYm = line * self.config.buttonSize + offsetY
 	local j = 0
 	for _, btn in ipairs(self.minimapButtons) do
 		local name = btn:GetName()
@@ -334,8 +346,8 @@ function hidingBar:applyLayout()
 	local maxButtons = i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	line = line + math.ceil(j / self.config.size)
-	local width = maxButtons * 32 + offsetX * 2
-	local height = line * 32 + offsetY * 2
+	local width = maxButtons * self.config.buttonSize + offsetX * 2
+	local height = line * self.config.buttonSize + offsetY * 2
 	if orientation == 1 then
 		self:SetSize(width, height)
 	else

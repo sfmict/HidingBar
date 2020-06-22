@@ -24,9 +24,9 @@
 		<Layers>
 			<Layer level="ARTWORK">
 				<Texture parentKey="icon">
-					<Size x="30" y="30"/>
 					<Anchors>
-						<Anchor point="CENTER"/>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -39,7 +39,8 @@
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
 			</OnLoad>
 			<OnEnter>
-				self.icon:SetSize(32, 32)
+				self.icon:SetPoint("TOPLEFT")
+				self.icon:SetPoint("BOTTOMRIGHT")
 				if self.data.OnEnter then
 					self.data.OnEnter(self)
 				end
@@ -58,7 +59,8 @@
 				end
 			</OnEnter>
 			<OnLeave>
-				self.icon:SetSize(30, 30)
+				self.icon:SetPoint("TOPLEFT", 2, -2)
+				self.icon:SetPoint("BOTTOMRIGHT", -2, 2)
 				if self.data.OnLeave then
 					self.data.OnLeave(self)
 				end
@@ -96,13 +98,15 @@
 				hooksecurefunc(self, "SetChecked", self.updateChecked)
 			</OnLoad>
 			<OnEnter>
-				self.icon:SetSize(32, 32)
+				self.icon:SetPoint("TOPLEFT")
+				self.icon:SetPoint("BOTTOMRIGHT")
 				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
 				GameTooltip:SetText(self.name)
 				GameTooltip:Show()
 			</OnEnter>
 			<OnLeave>
-				self.icon:SetSize(30, 30)
+				self.icon:SetPoint("TOPLEFT", 2, -2)
+				self.icon:SetPoint("BOTTOMRIGHT", -2, 2)
 				GameTooltip:Hide()
 			</OnLeave>
 			<OnClick>
@@ -148,6 +152,8 @@
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 				self:RegisterForDrag("LeftButton")
+				self.icon:ClearAllPoints()
+				self.icon:SetPoint("CENTER")
 				self.icon:SetSize(18, 18)
 				self.updateChecked = function(self, checked)
 					if checked then
