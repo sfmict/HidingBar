@@ -19,7 +19,7 @@
 		</Backdrop>
 	</Frame>
 
-	<Button name="HidingBarAddonButtonTemplate" virtual="true">
+	<Button name="HidingBarAddonButtonTemplate" clipChildren="true"  virtual="true">
 		<Size x="32" y="32"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -33,7 +33,7 @@
 		</Layers>
 	</Button>
 
-	<Button name="HidingBarAddonCreatedButtonTemplate" inherits="HidingBarAddonButtonTemplate" clipChildren="true" virtual="true">
+	<Button name="HidingBarAddonCreatedButtonTemplate" inherits="HidingBarAddonButtonTemplate" virtual="true">
 		<Scripts>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
@@ -75,7 +75,7 @@
 		</Scripts>
 	</Button>
 
-	<CheckButton name="HidingBarAddonConfigButtonTemplate" inherits="HidingBarAddonButtonTemplate" clipChildren="true" movable="true" virtual="true">
+	<CheckButton name="HidingBarAddonConfigButtonTemplate" inherits="HidingBarAddonButtonTemplate" movable="true" virtual="true">
 		<CheckedTexture file="Interface/BUTTONS/UI-GroupLoot-Pass-Up">
 			<Size x="20" y="20"/>
 			<Anchors>
