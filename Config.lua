@@ -60,6 +60,17 @@ config:SetScript("OnShow", function(self)
 	description:SetJustifyH("LEFT")
 	description:SetText(L["SETTINGS_DESCRIPTION"])
 
+		-- LOCK
+	self.lock = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
+	self.lock:SetPoint("TOPLEFT", description, "TOPRIGHT", 30, -28)
+	self.lock.Text:SetText(L["Lock the bar's location"])
+	self.lock:SetChecked(self.config.lock)
+	self.lock:SetScript("OnClick", function(btn)
+		local checked = btn:GetChecked()
+		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+		self.config.lock = checked
+	end)
+
 	-- FADE
 	local fade = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
 	fade:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -12)
@@ -80,8 +91,9 @@ config:SetScript("OnShow", function(self)
 
 	-- FADE OPACITY
 	self.fadeOpacity = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
-	self.fadeOpacity:SetWidth(300)
+	-- self.fadeOpacity:SetWidth(300)
 	self.fadeOpacity:SetPoint("LEFT", fade, "RIGHT", 200, 0)
+	self.fadeOpacity:SetPoint("RIGHT", -30, 0)
 	self.fadeOpacity:SetMinMaxValues(0, .9)
 	self.fadeOpacity.text:SetText(L["Opacity"])
 	self.fadeOpacity:SetValue(self.config.fadeOpacity)
@@ -135,20 +147,9 @@ config:SetScript("OnShow", function(self)
 	end)
 	UIDropDownMenu_SetSelectedValue(orientationCombobox, self.config.orientation)
 
-	-- LOCK
-	self.lock = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
-	self.lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -15)
-	self.lock.Text:SetText(L["Lock the bar's location"])
-	self.lock:SetChecked(self.config.lock)
-	self.lock:SetScript("OnClick", function(btn)
-		local checked = btn:GetChecked()
-		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-		self.config.lock = checked
-	end)
-
 	-- GRAB
 	self.grab = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
-	self.grab:SetPoint("TOPLEFT", self.lock, "BOTTOMLEFT")
+	self.grab:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -15)
 	self.grab.Text:SetText(L["Grab addon buttons on minimap"])
 	self.grab:SetChecked(self.config.grabMinimap)
 	self.grab:SetScript("OnClick", function(btn)
@@ -182,19 +183,44 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- SLIDER NUMBER BUTTONS IN ROW
-	local buttonsSlider = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
-	buttonsSlider:SetPoint("TOPLEFT", self.grabWithoutName, "BOTTOMLEFT", -20, -20)
-	buttonsSlider:SetMinMaxValues(1, 30)
-	buttonsSlider.text:SetText(L["Number of buttons"])
-	buttonsSlider:SetValue(self.config.size)
-	buttonsSlider.label:SetText(self.config.size)
-	buttonsSlider:SetScript("OnValueChanged", function(slider, value)
+	local buttonNumber = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
+	buttonNumber:SetPoint("TOPLEFT", self.grabWithoutName, "BOTTOMLEFT", -20, -15)
+	buttonNumber:SetPoint("RIGHT", -30, 0)
+	buttonNumber:SetMinMaxValues(1, 30)
+	buttonNumber.text:SetText(L["Number of buttons"])
+	buttonNumber:SetValue(self.config.size)
+	buttonNumber.label:SetText(self.config.size)
+	buttonNumber:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value + .5)
-		config.config.size = value
-		slider.label:SetText(value)
-		slider:SetValue(value)
-		self:applyLayout()
-		self:hidingBarUpdate()
+		if self.config.size ~= value then
+			self.config.size = value
+			slider.label:SetText(value)
+			slider:SetValue(value)
+			self:applyLayout()
+			self:hidingBarUpdate()
+		end
+	end)
+
+	-- SLIDER BUTTONS SIZE
+	local buttonSize = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
+	buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -15)
+	buttonSize:SetPoint("RIGHT", -30, 0)
+	buttonSize:SetPoint("RIGHT", -30, 0)
+	buttonSize:SetMinMaxValues(16, 64)
+	buttonSize.text:SetText(L["Button Size"])
+	buttonSize:SetValue(self.config.buttonSize)
+	buttonSize.label:SetText(self.config.buttonSize)
+	buttonSize:SetScript("OnValueChanged", function(slider, value)
+		value = math.floor(value + .5)
+		if self.config.buttonSize ~= value then
+			self.config.buttonSize = value
+			slider.label:SetText(value)
+			slider:SetValue(value)
+			self:setButtonSize()
+			self:applyLayout()
+			self.hidingBar:setButtonSize()
+			self:hidingBarUpdate()
+		end
 	end)
 
 	-- BUTTONS TAB PANEL
@@ -306,7 +332,7 @@ config:SetScript("OnShow", function(self)
 		for i, btn in ipairs(scroll.buttons) do
 			local index = i + offset
 			if index <= numButtons then
-				btn:SetText(self.config.ignoreMBtn[index])
+				btn:SetText(self.config.ignoreMBtn[index]:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1"))
 				btn.removeButton:SetScript("OnClick", function()
 					self:removeIgnoreName(index)
 				end)
@@ -350,7 +376,7 @@ end
 
 function config:removeIgnoreName(index)
 	local name = self.config.ignoreMBtn[index]
-	StaticPopup_Show(self.addonName.."REMOVE_IGNORE_MBTN", NORMAL_FONT_COLOR_CODE..name..FONT_COLOR_CODE_CLOSE, nil, function()
+	StaticPopup_Show(self.addonName.."REMOVE_IGNORE_MBTN", NORMAL_FONT_COLOR_CODE..name:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1")..FONT_COLOR_CODE_CLOSE, nil, function()
 		for i = 1, #self.config.ignoreMBtn do
 			if name == self.config.ignoreMBtn[i] then
 				tremove(self.config.ignoreMBtn, i)
@@ -370,8 +396,11 @@ end
 
 
 function config:dragBtn(btn)
-	local x, y = btn:GetLeft() - btn.left, btn.top - btn:GetTop()
-	local row, column = math.floor(y / 32 + .5), math.floor(x / 32 + .5) + 1
+	local scale = btn:GetScale()
+	local x = btn:GetLeft() - self.buttonPanel:GetLeft() / scale
+	local y = (self.buttonPanel:GetTop() - btn.offset) / scale - btn:GetTop()
+	local buttonSize = self.config.buttonSize / scale
+	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
 	if row < 0 then row = 0 end
 	if row > btn.maxRow then row = btn.maxRow end
 	if column < 1 then column = 1 end
@@ -399,8 +428,6 @@ function config:dragStart(btn, offset)
 	if not btn.level then btn.level = btn:GetFrameLevel() end
 	btn:SetFrameLevel(btn.level + 2)
 	btn.offset = offset or 0
-	btn.left = self.buttonPanel:GetLeft()
-	btn.top = self.buttonPanel:GetTop() - btn.offset
 	btn.maxColumn = #btn.btnList
 	btn.maxRow = math.floor((btn.maxColumn - 1) / self.size)
 	if btn.maxColumn > self.size then btn.maxColumn = self.size end
@@ -490,7 +517,7 @@ do
 		btn.color = {icon:GetVertexColor()}
 		btn.btnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)
-		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * 32) end)
+		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * self.config.buttonSize) end)
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
 		btn.settings = self.config.mbtnSettings[name]
 		btn:SetChecked(btn.settings[1])
@@ -513,11 +540,23 @@ function config:initButtons()
 			self:createMButton(name, icon)
 		end
 	end
+	self:setButtonSize()
 	self:applyLayout()
 end
 
 
+function config:setButtonSize()
+	for _, button in ipairs(self.buttons) do
+		button:SetSize(self.config.buttonSize, self.config.buttonSize)
+	end
+	for _, button in ipairs(self.mbuttons) do
+		button:SetScale(self.config.buttonSize / button:GetWidth())
+	end
+end
+
+
 local function setPosAnimated(btn, elapsed)
+	local scale = btn:GetScale()
 	btn.timer = btn.timer - elapsed
 	if btn.timer <= 0 then
 		btn:SetPoint("TOPLEFT", btn.x, btn.y)
@@ -531,15 +570,16 @@ end
 
 function config:setPointBtn(btn, offsetX, offsetY, order, delay)
 	if btn.isDrag then return end
+	local scale = btn:GetScale()
 	order = order - 1
-	btn.x = order % self.size * 32 + offsetX
-	btn.y = -math.floor(order / self.size) * 32 - offsetY
+	btn.x = (order % self.size * self.config.buttonSize + offsetX) / scale
+	btn.y = (-math.floor(order / self.size) * self.config.buttonSize - offsetY) / scale
 
 	if delay then
 		btn.timer = delay
 		btn.delay = delay
-		btn.deltaX = btn.x - btn:GetLeft() + self.buttonPanel:GetLeft()
-		btn.deltaY = btn.y - btn:GetTop() + self.buttonPanel:GetTop()
+		btn.deltaX = btn.x - btn:GetLeft() + self.buttonPanel:GetLeft() / scale
+		btn.deltaY = btn.y - btn:GetTop() + self.buttonPanel:GetTop() / scale
 		btn:ClearAllPoints()
 		btn:SetScript("OnUpdate", setPosAnimated)
 	else
@@ -550,7 +590,7 @@ end
 
 
 function config:applyLayout()
-	local maxColumns = 17
+	local maxColumns = math.floor(560 / self.config.buttonSize)
 	self.size = self.config.size
 	if self.size > maxColumns then self.size = maxColumns end
 
@@ -558,13 +598,13 @@ function config:applyLayout()
 		self:setPointBtn(btn, 4, 4, i)
 	end
 	local rows = math.ceil(#self.buttons / self.size)
-	local offsetY = rows * 32 + 4
+	local offsetY = rows * self.config.buttonSize + 4
 	for i, btn in ipairs(self.mbuttons) do
 		self:setPointBtn(btn, 4, offsetY, i)
 	end
 
 	rows = rows + math.ceil(#self.mbuttons / self.size)
-	self.buttonPanel:SetSize(self.size * 32 + 8, rows * 32 + 8)
+	self.buttonPanel:SetSize(self.size * self.config.buttonSize + 8, rows * self.config.buttonSize + 8)
 end
 
 
