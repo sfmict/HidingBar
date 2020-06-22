@@ -547,7 +547,7 @@ end
 
 function config:setButtonSize()
 	for _, button in ipairs(self.buttons) do
-		button:SetSize(self.config.buttonSize, self.config.buttonSize)
+		button:SetScale(self.config.buttonSize / button:GetWidth())
 	end
 	for _, button in ipairs(self.mbuttons) do
 		button:SetScale(self.config.buttonSize / button:GetWidth())

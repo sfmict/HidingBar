@@ -285,7 +285,7 @@ end
 
 function hidingBar:setButtonSize()
 	for _, btn in ipairs(self.createdButtons) do
-		btn:SetSize(self.config.buttonSize, self.config.buttonSize)
+		btn:SetScale(self.config.buttonSize / btn:GetWidth())
 	end
 	for _, btn in ipairs(self.minimapButtons) do
 		local width, height = btn:GetSize()
