@@ -397,8 +397,8 @@ end
 
 function config:dragBtn(btn)
 	local scale = btn:GetScale()
-	local x = btn:GetLeft() - self.buttonPanel:GetLeft() / scale
-	local y = (self.buttonPanel:GetTop() - btn.offset) / scale - btn:GetTop()
+	local x = btn:GetLeft() - (self.buttonPanel:GetLeft() + 4) / scale
+	local y = (self.buttonPanel:GetTop() - 4 - btn.offset) / scale - btn:GetTop()
 	local buttonSize = self.config.buttonSize / scale
 	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
 	if row < 0 then row = 0 end
