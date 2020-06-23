@@ -192,10 +192,10 @@ config:SetScript("OnShow", function(self)
 	buttonNumber.label:SetText(self.config.size)
 	buttonNumber:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value + .5)
+		slider:SetValue(value)
 		if self.config.size ~= value then
 			self.config.size = value
 			slider.label:SetText(value)
-			slider:SetValue(value)
 			self:applyLayout()
 			self:hidingBarUpdate()
 		end
@@ -212,10 +212,10 @@ config:SetScript("OnShow", function(self)
 	buttonSize.label:SetText(self.config.buttonSize)
 	buttonSize:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value + .5)
+		slider:SetValue(value)
 		if self.config.buttonSize ~= value then
 			self.config.buttonSize = value
 			slider.label:SetText(value)
-			slider:SetValue(value)
 			self:setButtonSize()
 			self:applyLayout()
 			self.hidingBar:setButtonSize()
@@ -397,8 +397,8 @@ end
 
 function config:dragBtn(btn)
 	local scale = btn:GetScale()
-	local x = btn:GetLeft() - self.buttonPanel:GetLeft() / scale
-	local y = (self.buttonPanel:GetTop() - btn.offset) / scale - btn:GetTop()
+	local x = btn:GetLeft() - (self.buttonPanel:GetLeft() + 4) / scale
+	local y = (self.buttonPanel:GetTop() - 4 - btn.offset) / scale - btn:GetTop()
 	local buttonSize = self.config.buttonSize / scale
 	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
 	if row < 0 then row = 0 end
