@@ -533,7 +533,12 @@ function config:initButtons()
 	for _, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()
 		if name then
-			local icon = button.icon or button.Icon or _G[name.."icon"] or _G[name.."Icon"] or button.background or button.Background
+			local icon = button.icon
+						 or button.Icon
+						 or _G[name.."icon"]
+						 or _G[name.."Icon"]
+						 or button.background
+						 or button.Background
 			if not icon or not icon.GetTexture then
 				icon = self.noIcon
 			end
