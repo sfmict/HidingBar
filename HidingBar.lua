@@ -23,6 +23,7 @@ local ignoreFrameList = {
 	["QueueStatusMinimapButton"] = true,
 	["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
+	["MinimapBackdrop"] = true,
 }
 
 
@@ -105,10 +106,10 @@ function hidingBar:init()
 		end
 
 		for _, child in ipairs({Minimap:GetChildren()}) do
+			local name = child:GetName()
 			local width, height = child:GetSize()
-			if child:HasScript("OnClick") and child:GetScript("OnClick") and math.abs(width - height) < 5 then
-				local name = child:GetName()
-				if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) then
+			if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) and math.abs(width - height) < 5 then
+				if child:HasScript("OnClick") and child:GetScript("OnClick") then
 					if name then self.config.mbtnSettings[name].tstmp = t end
 
 					local btn = self.minimapButtons[child[0]]
@@ -124,6 +125,40 @@ function hidingBar:init()
 					self.HookScript(child, "OnEnter", function() self:enter() end)
 					self.HookScript(child, "OnLeave", function() self:leave() end)
 					tinsert(self.minimapButtons, child)
+				else
+					local mouseEnabled, clickable = {}
+					local function getMouseEnabled(frame)
+						for _, fchild in ipairs({frame:GetChildren()}) do
+							if fchild:IsMouseEnabled() then
+								tinsert(mouseEnabled, fchild)
+								if fchild:HasScript("OnClick") and fchild:GetScript("OnClick") then
+									clickable = true
+								end
+							end
+							getMouseEnabled(fchild)
+						end
+					end
+					getMouseEnabled(child)
+
+					if clickable then
+						if name then self.config.mbtnSettings[name].tstmp = t end
+
+						self:setHooks(child)
+						for _, frame in ipairs(mouseEnabled) do
+							frame:SetHitRectInsets(0, 0, 0, 0)
+							frame:HookScript("OnEnter", function() self:enter() end)
+							frame:HookScript("OnLeave", function() self:leave() end)
+						end
+						if child:IsMouseEnabled() then
+							self.SetHitRectInsets(child, 0, 0, 0, 0)
+							self.HookScript(child, "OnEnter", function() self:enter() end)
+							self.HookScript(child, "OnLeave", function() self:leave() end)
+						end
+
+						self.SetAlpha(child, 1)
+						self.SetParent(child, self)
+						tinsert(self.minimapButtons, child)
+					end
 				end
 			end
 		end
