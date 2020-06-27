@@ -22,7 +22,12 @@ local ignoreFrameList = {
 	["MiniMapBattlefieldFrame"] = true,
 	["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
+	["MinimapBackdrop"] = true,
 }
+
+
+local function enter() hidingBar:enter() end
+local function leave() hidingBar:leave() end
 
 
 hidingBar:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
@@ -104,10 +109,10 @@ function hidingBar:init()
 		end
 
 		for _, child in ipairs({Minimap:GetChildren()}) do
+			local name = child:GetName()
 			local width, height = child:GetSize()
-			if child:HasScript("OnClick") and child:GetScript("OnClick") and math.abs(width - height) < 5 then
-				local name = child:GetName()
-				if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) then
+			if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) and math.abs(width - height) < 5 then
+				if child:HasScript("OnClick") and child:GetScript("OnClick") then
 					if name then self.config.mbtnSettings[name].tstmp = t end
 
 					local btn = self.minimapButtons[child[0]]
@@ -120,9 +125,43 @@ function hidingBar:init()
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
 					self.SetParent(child, self)
 					self.SetScript(child, "OnUpdate", nil)
-					self.HookScript(child, "OnEnter", function() self:enter() end)
-					self.HookScript(child, "OnLeave", function() self:leave() end)
+					self.HookScript(child, "OnEnter", enter)
+					self.HookScript(child, "OnLeave", leave)
 					tinsert(self.minimapButtons, child)
+				else
+					local mouseEnabled, clickable = {}
+					local function getMouseEnabled(frame)
+						for _, fchild in ipairs({frame:GetChildren()}) do
+							if fchild:IsMouseEnabled() then
+								tinsert(mouseEnabled, fchild)
+								if fchild:HasScript("OnClick") and fchild:GetScript("OnClick") then
+									clickable = true
+								end
+							end
+							getMouseEnabled(fchild)
+						end
+					end
+					getMouseEnabled(child)
+
+					if clickable then
+						if name then self.config.mbtnSettings[name].tstmp = t end
+
+						self:setHooks(child)
+						for _, frame in ipairs(mouseEnabled) do
+							frame:SetHitRectInsets(0, 0, 0, 0)
+							frame:HookScript("OnEnter", enter)
+							frame:HookScript("OnLeave", leave)
+						end
+						if child:IsMouseEnabled() then
+							self.SetHitRectInsets(child, 0, 0, 0, 0)
+							self.HookScript(child, "OnEnter", enter)
+							self.HookScript(child, "OnLeave", leave)
+						end
+
+						self.SetAlpha(child, 1)
+						self.SetParent(child, self)
+						tinsert(self.minimapButtons, child)
+					end
 				end
 			end
 		end
@@ -217,8 +256,8 @@ function hidingBar:addButton(name, data, update)
 	if data.OnClick then
 		button:SetScript("OnClick", data.OnClick)
 	end
-	button:HookScript("OnEnter", function() self:enter() end)
-	button:HookScript("OnLeave", function() self:leave() end)
+	button:HookScript("OnEnter", enter)
+	button:HookScript("OnLeave", leave)
 	tinsert(self.createdButtons, button)
 	if update then
 		self:sort()
@@ -504,7 +543,7 @@ function hidingBar:enter()
 	end
 end
 hidingBar:SetScript("OnEnter", hidingBar.enter)
-hidingBar.drag:SetScript("OnEnter", function() hidingBar:enter() end)
+hidingBar.drag:SetScript("OnEnter", enter)
 
 
 function hidingBar:hideBar(elapsed)
@@ -528,4 +567,4 @@ function hidingBar:leave()
 	end
 end
 hidingBar:SetScript("OnLeave", hidingBar.leave)
-hidingBar.drag:SetScript("OnLeave", function() hidingBar:leave() end)
+hidingBar.drag:SetScript("OnLeave", leave)
