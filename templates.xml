@@ -289,6 +289,9 @@
 			</Anchors>
 		</HighlightTexture>
 		<Scripts>
+			<OnLoad>
+				self:SetFrameLevel(self:GetFrameLevel() + 1)
+			</OnLoad>
 			<OnDisable>
 				self.left:Hide()
 				self.right:Hide()
