@@ -27,6 +27,10 @@ local ignoreFrameList = {
 }
 
 
+local function enter() hidingBar:enter() end
+local function leave() hidingBar:leave() end
+
+
 hidingBar:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 hidingBar:RegisterEvent("ADDON_LOADED")
 
@@ -122,8 +126,8 @@ function hidingBar:init()
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
 					self.SetParent(child, self)
 					self.SetScript(child, "OnUpdate", nil)
-					self.HookScript(child, "OnEnter", function() self:enter() end)
-					self.HookScript(child, "OnLeave", function() self:leave() end)
+					self.HookScript(child, "OnEnter", enter)
+					self.HookScript(child, "OnLeave", leave)
 					tinsert(self.minimapButtons, child)
 				else
 					local mouseEnabled, clickable = {}
@@ -146,13 +150,13 @@ function hidingBar:init()
 						self:setHooks(child)
 						for _, frame in ipairs(mouseEnabled) do
 							frame:SetHitRectInsets(0, 0, 0, 0)
-							frame:HookScript("OnEnter", function() self:enter() end)
-							frame:HookScript("OnLeave", function() self:leave() end)
+							frame:HookScript("OnEnter", enter)
+							frame:HookScript("OnLeave", leave)
 						end
 						if child:IsMouseEnabled() then
 							self.SetHitRectInsets(child, 0, 0, 0, 0)
-							self.HookScript(child, "OnEnter", function() self:enter() end)
-							self.HookScript(child, "OnLeave", function() self:leave() end)
+							self.HookScript(child, "OnEnter", enter)
+							self.HookScript(child, "OnLeave", leave)
 						end
 
 						self.SetAlpha(child, 1)
@@ -253,8 +257,8 @@ function hidingBar:addButton(name, data, update)
 	if data.OnClick then
 		button:SetScript("OnClick", data.OnClick)
 	end
-	button:HookScript("OnEnter", function() self:enter() end)
-	button:HookScript("OnLeave", function() self:leave() end)
+	button:HookScript("OnEnter", enter)
+	button:HookScript("OnLeave", leave)
 	tinsert(self.createdButtons, button)
 	if update then
 		self:sort()
@@ -540,7 +544,7 @@ function hidingBar:enter()
 	end
 end
 hidingBar:SetScript("OnEnter", hidingBar.enter)
-hidingBar.drag:SetScript("OnEnter", function() hidingBar:enter() end)
+hidingBar.drag:SetScript("OnEnter", enter)
 
 
 function hidingBar:hideBar(elapsed)
@@ -564,4 +568,4 @@ function hidingBar:leave()
 	end
 end
 hidingBar:SetScript("OnLeave", hidingBar.leave)
-hidingBar.drag:SetScript("OnLeave", function() hidingBar:leave() end)
+hidingBar.drag:SetScript("OnLeave", leave)
