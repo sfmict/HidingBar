@@ -402,17 +402,17 @@ function hidingBar:setDragBarPosition()
 	self.drag:ClearAllPoints()
 	if self:IsShown() then
 		if anchor == "left" then
-			self.drag:SetPoint("TOPRIGHT", self, "TOPRIGHT", 4, 0)
-			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 4, 0)
+			self.drag:SetPoint("TOPLEFT", self, "TOPRIGHT")
+			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT")
 		elseif anchor == "right" then
-			self.drag:SetPoint("TOPLEFT", self, "TOPLEFT", -4, 0)
-			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", -4, 0)
+			self.drag:SetPoint("TOPRIGHT", self, "TOPLEFT")
+			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
 		elseif anchor == "top" then
-			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", 0, -4)
-			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, -4)
+			self.drag:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+			self.drag:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
 		else
-			self.drag:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 4)
-			self.drag:SetPoint("TOPRIGHT", self, "TOPRIGHT", 0, 4)
+			self.drag:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+			self.drag:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
 		end
 	else
 		if anchor == "left" then
