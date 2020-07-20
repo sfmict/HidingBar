@@ -21,6 +21,8 @@ L["Buttons"] = "Buttons"
 L["Ignore list"] = "Ignore list"
 L["BUTTON_PANEL_DESCRIPTION"] = "•|cffffd200LMB|r to enable / disable buttons or drag to reposition.\n•|cffffd200RMB|r on minimap buttons to add them to ignore list."
 L["IGNORE_DESCRIPTION"] = "You can specify a part of the name.\n\nFor example |cffffd200HidingBar|r will ignore:\n|cffffd200HidingBar1|r\n|cffffd200HidingBar2|r\n|cffffd200HidingBar3|r\n..."
+L["DataBroker Buttons"] = "DataBroker Buttons"
+L["Minimap Buttons"] = "Minimap Buttons"
 
 setmetatable(L, {__index = function(self, key)
 	self[key] = key or ""

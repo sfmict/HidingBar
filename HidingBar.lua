@@ -83,6 +83,12 @@ end
 function hidingBar:init()
 	local t = time()
 
+	local MSQ, MSQ_Version = LibStub("Masque", true)
+	if MSQ and MSQ_Version > 80200 then
+		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"])
+		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
+	end
+
 	local ldb = LibStub("LibDataBroker-1.1")
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
@@ -122,6 +128,11 @@ function hidingBar:init()
 						self:setHooks(child)
 					end
 
+					if self.MSQ_MButton then
+						self.MSQ_MButton:AddButton(child, {}, nil, true)
+					end
+
+					self.SetClipsChildren(child, true)
 					self.SetAlpha(child, 1)
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
 					self.SetParent(child, self)
@@ -157,6 +168,10 @@ function hidingBar:init()
 							self.SetHitRectInsets(child, 0, 0, 0, 0)
 							self.HookScript(child, "OnEnter", enter)
 							self.HookScript(child, "OnLeave", leave)
+						end
+
+						if self.MSQ_MButton then
+							self.MSQ_MButton:AddButton(child, {}, nil, true)
 						end
 
 						self.SetAlpha(child, 1)
@@ -266,6 +281,15 @@ function hidingBar:addButton(name, data, update)
 		self:leave()
 		config:createButton(name, button, update)
 	end
+
+	if self.MSQ_Button then
+		local buttonData = {
+			Icon = button.icon,
+			Highlight = button.highlight,
+		}
+		self.MSQ_Button:AddButton(button, buttonData, nil, true)
+	end
+
 	return button
 end
 

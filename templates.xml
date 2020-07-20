@@ -34,12 +34,14 @@
 	</Button>
 
 	<Button name="HidingBarAddonCreatedButtonTemplate" inherits="HidingBarAddonButtonTemplate" virtual="true">
+		<HighlightTexture parentKey="highlight" alpha=".1">
+			<Color r="1" g="1" b="1"/>
+		</HighlightTexture>
 		<Scripts>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
 			</OnLoad>
 			<OnEnter>
-				self.icon:SetSize(32, 32)
 				if self.data.OnEnter then
 					self.data.OnEnter(self)
 				end
@@ -58,7 +60,6 @@
 				end
 			</OnEnter>
 			<OnLeave>
-				self.icon:SetSize(30, 30)
 				if self.data.OnLeave then
 					self.data.OnLeave(self)
 				end

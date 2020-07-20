@@ -4,6 +4,7 @@
 ## Version: @project-version@
 ## Notes: Convenient hiding panel
 ## SavedVariables: HidingBarDB
+## OptionalDeps: Masque
 embeds.xml
 locales.xml
 templates.xml
