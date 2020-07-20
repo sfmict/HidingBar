@@ -83,8 +83,8 @@ end
 function hidingBar:init()
 	local t = time()
 
-	local MSQ, MSQ_Version = LibStub("Masque", true)
-	if MSQ and MSQ_Version > 80200 then
+	local MSQ = LibStub("Masque", true)
+	if MSQ then
 		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"])
 		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
 	end
