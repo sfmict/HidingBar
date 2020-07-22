@@ -2,7 +2,7 @@ local addon, L = ...
 local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFramePanelContainer)
 config.noIcon = config:CreateTexture()
 config.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
-config.noIcon:SetTexCoord(.05, .95, 0.05, .95)
+config.noIcon:SetTexCoord(.05, .95, .05, .95)
 config.noIcon:Hide()
 config.name = addon
 config.buttons, config.mbuttons = {}, {}
@@ -87,11 +87,11 @@ config:SetScript("OnShow", function(self)
 			UIFrameFadeRemoveFrame(self.hidingBar.drag)
 			self.hidingBar.drag:SetAlpha(1)
 		end
+		self.hidingBar:applyLayout()
 	end)
 
 	-- FADE OPACITY
 	self.fadeOpacity = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
-	-- self.fadeOpacity:SetWidth(300)
 	self.fadeOpacity:SetPoint("LEFT", fade, "RIGHT", 200, 0)
 	self.fadeOpacity:SetPoint("RIGHT", -30, 0)
 	self.fadeOpacity:SetMinMaxValues(0, .9)

@@ -1,1 +1,1 @@
-* Minor fixes.
+* Added experimental Masque support.

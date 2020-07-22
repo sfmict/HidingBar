@@ -82,6 +82,29 @@ end
 function hidingBar:init()
 	local t = time()
 
+	local MSQ = LibStub("Masque", true)
+	if MSQ then
+		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"])
+		self.MSQ_Button:SetCallback(function(group, skin, backdrop, shadow, gloss, colors, disabled)
+			if disabled or skin == "Default" then
+				for _, button in ipairs(self.createdButtons) do
+					button.MSQ = nil
+				end
+			else
+				for _, button in ipairs(self.createdButtons) do
+					button.MSQ = true
+				end
+			end
+			self:enter()
+			self:leave()
+		end)
+		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
+		self.MSQ_MButton:SetCallback(function()
+			self:enter()
+			self:leave()
+		end)
+	end
+
 	local ldb = LibStub("LibDataBroker-1.1")
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
@@ -93,6 +116,7 @@ function hidingBar:init()
 	for name, data in ldb:DataObjectIterator() do
 		self:ldb_add(nil, name, data)
 	end
+	if self.MSQ_Button then self.MSQ_Button:ReSkin() end
 
 	if self.config.grabMinimap then
 		local ldbi = LibStub("LibDBIcon-1.0", true)
@@ -121,6 +145,11 @@ function hidingBar:init()
 						self:setHooks(child)
 					end
 
+					if self.MSQ_MButton then
+						self.MSQ_MButton:AddButton(child, nil, nil, true)
+					end
+
+					self.SetClipsChildren(child, true)
 					self.SetAlpha(child, 1)
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
 					self.SetParent(child, self)
@@ -158,6 +187,11 @@ function hidingBar:init()
 							self.HookScript(child, "OnLeave", leave)
 						end
 
+						if self.MSQ_MButton then
+							self.MSQ_MButton:AddButton(child, nil, nil, true)
+						end
+
+						sekf.SetClipsChildren(child, true)
 						self.SetAlpha(child, 1)
 						self.SetParent(child, self)
 						tinsert(self.minimapButtons, child)
@@ -201,7 +235,11 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 		if key == "icon" then
 			button.icon:SetTexture(value)
 		elseif key == "iconCoords" then
-			button.icon:SetTexCoord(unpack(value))
+			if button.icon.MSQ_Coord then
+				button.icon:SetTexCoord(unpack(button.icon.MSQ_Coord))
+			else
+				button.icon:dSetTexCoord(unpack(value))
+			end
 		elseif key == "iconR" then
 			local _, g, b = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(value, g, b)
@@ -215,6 +253,36 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 			button.icon:SetDesaturated(value)
 		end
 	end
+end
+
+
+local function setTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+	self.MSQ_Coord = {ULx, ULy, LLx, LLy, URx, URy, LRx, LRy}
+	if not LRy then
+		ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
+	end
+
+	local data = self:GetParent().data
+	if data.iconCoords then
+		local cULx, cULy, cLLx, cLLy, cURx, cURy, cLRx, cLRy = unpack(data.iconCoords)
+		if not cLRy then
+			cULy, cLLx, cURx, cURy, cLRx, cLRy = cLLx, cULx, cULy, cLLx, cULy, cLLy
+		end
+		local top = cURx - cULx
+		local right = cLRy - cURy
+		local bottom = cLRx - cLLx
+		local left = cLLy - cULy
+		ULx = cULx + ULx * top
+		ULy = cULy + ULy * left
+		LLx = cLLx + LLx * bottom
+		LLy = cULy + LLy * left
+		URx = cULx + URx * top
+		URy = cURy + URy * right
+		LRx = cLLx + LRx * bottom
+		LRy = cURy + LRy * right
+	end
+
+	self:dSetTexCoord(ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 end
 
 
@@ -244,6 +312,8 @@ function hidingBar:addButton(name, data, update)
 			button.iconCoords = {unpack(data.iconCoords)}
 			button.icon:SetTexCoord(unpack(data.iconCoords))
 		end
+		button.icon.dSetTexCoord = button.icon.SetTexCoord
+		button.icon.SetTexCoord = setTexCoord
 		button.iconR = data.iconR
 		button.iconG = data.iconG
 		button.iconB = data.iconB
@@ -264,7 +334,17 @@ function hidingBar:addButton(name, data, update)
 		self:applyLayout()
 		self:leave()
 		config:createButton(name, button, update)
+		if self.MSQ_Button then self.MSQ_Button:ReSkin() end
 	end
+
+	if self.MSQ_Button then
+		local buttonData = {
+			Icon = button.icon,
+			Highlight = button.highlight,
+		}
+		self.MSQ_Button:AddButton(button, buttonData, nil, true)
+	end
+
 	return button
 end
 
@@ -401,17 +481,17 @@ function hidingBar:setDragBarPosition()
 	self.drag:ClearAllPoints()
 	if self:IsShown() then
 		if anchor == "left" then
-			self.drag:SetPoint("TOPRIGHT", self, "TOPRIGHT", 4, 0)
-			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 4, 0)
+			self.drag:SetPoint("TOPLEFT", self, "TOPRIGHT")
+			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT")
 		elseif anchor == "right" then
-			self.drag:SetPoint("TOPLEFT", self, "TOPLEFT", -4, 0)
-			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", -4, 0)
+			self.drag:SetPoint("TOPRIGHT", self, "TOPLEFT")
+			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
 		elseif anchor == "top" then
-			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", 0, -4)
-			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, -4)
+			self.drag:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+			self.drag:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
 		else
-			self.drag:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 4)
-			self.drag:SetPoint("TOPRIGHT", self, "TOPRIGHT", 0, 4)
+			self.drag:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+			self.drag:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
 		end
 	else
 		if anchor == "left" then
