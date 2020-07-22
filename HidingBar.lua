@@ -96,8 +96,14 @@ function hidingBar:init()
 					button.MSQ = true
 				end
 			end
+			self:enter()
+			self:leave()
 		end)
 		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
+		self.MSQ_MButton:SetCallback(function()
+			self:enter()
+			self:leave()
+		end)
 	end
 
 	local ldb = LibStub("LibDataBroker-1.1")
@@ -263,17 +269,21 @@ local function setTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 		if not cLRy then
 			cULy, cLLx, cURx, cURy, cLRx, cLRy = cLLx, cULx, cULy, cLLx, cULy, cLLy
 		end
-		ULx = cULx + ULx * (cURx - cULx)
-		ULy = cULy + ULy * (cLLy - cULy)
-		LLx = cLLx + LLx * (cLRx - cLLx)
-		LLy = cULy + LLy * (cLLy - cULy)
-		URx = cULx + URx * (cURx - cULx)
-		URy = cURy + URy * (cLRy - cLLy)
-		LRx = cLLx + LRx * (cLRx - cLLx)
-		LRy = cURy + LRy * (cLRy - cURy) 
+		local top = cURx - cULx
+		local right = cLRy - cURy
+		local bottom = cLRx - cLLx
+		local left = cLLy - cULy
+		ULx = cULx + ULx * top
+		ULy = cULy + ULy * left
+		LLx = cLLx + LLx * bottom
+		LLy = cULy + LLy * left
+		URx = cULx + URx * top
+		URy = cURy + URy * right
+		LRx = cLLx + LRx * bottom
+		LRy = cURy + LRy * right
 	end
 
-	self.dSetTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+	self:dSetTexCoord(ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 end
 
 
