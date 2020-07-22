@@ -34,14 +34,21 @@
 	</Button>
 
 	<Button name="HidingBarAddonCreatedButtonTemplate" inherits="HidingBarAddonButtonTemplate" virtual="true">
-		<HighlightTexture parentKey="highlight" alpha=".1">
-			<Color r="1" g="1" b="1"/>
-		</HighlightTexture>
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture parentKey="highlight" setAllPoints="true" hidden="true"/>
+			</Layer>
+		</Layers>
 		<Scripts>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
 			</OnLoad>
 			<OnEnter>
+				if not self.MSQ then
+					self.icon:SetSize(32, 32)
+				else
+					self.highlight:Show()
+				end
 				if self.data.OnEnter then
 					self.data.OnEnter(self)
 				end
@@ -60,6 +67,10 @@
 				end
 			</OnEnter>
 			<OnLeave>
+				if not self.MSQ then
+					self.icon:SetSize(30, 30)
+				end
+				self.highlight:Hide()
 				if self.data.OnLeave then
 					self.data.OnLeave(self)
 				end

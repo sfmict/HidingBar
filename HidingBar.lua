@@ -86,6 +86,17 @@ function hidingBar:init()
 	local MSQ = LibStub("Masque", true)
 	if MSQ then
 		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"])
+		self.MSQ_Button:SetCallback(function(group, skin, backdrop, shadow, gloss, colors, disabled)
+			if disabled or skin == "Default" then
+				for _, button in ipairs(self.createdButtons) do
+					button.MSQ = nil
+				end
+			else
+				for _, button in ipairs(self.createdButtons) do
+					button.MSQ = true
+				end
+			end
+		end)
 		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
 	end
 
@@ -100,6 +111,7 @@ function hidingBar:init()
 	for name, data in ldb:DataObjectIterator() do
 		self:ldb_add(nil, name, data)
 	end
+	if self.MSQ_Button then self.MSQ_Button:ReSkin() end
 
 	if self.config.grabMinimap then
 		local ldbi = LibStub("LibDBIcon-1.0", true)
@@ -129,7 +141,7 @@ function hidingBar:init()
 					end
 
 					if self.MSQ_MButton then
-						self.MSQ_MButton:AddButton(child, {}, nil, true)
+						self.MSQ_MButton:AddButton(child, nil, nil, true)
 					end
 
 					self.SetClipsChildren(child, true)
@@ -171,9 +183,10 @@ function hidingBar:init()
 						end
 
 						if self.MSQ_MButton then
-							self.MSQ_MButton:AddButton(child, {}, nil, true)
+							self.MSQ_MButton:AddButton(child, nil, nil, true)
 						end
 
+						sekf.SetClipsChildren(child, true)
 						self.SetAlpha(child, 1)
 						self.SetParent(child, self)
 						tinsert(self.minimapButtons, child)
@@ -217,7 +230,11 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 		if key == "icon" then
 			button.icon:SetTexture(value)
 		elseif key == "iconCoords" then
-			button.icon:SetTexCoord(unpack(value))
+			if button.icon.MSQ_Coord then
+				button.icon:SetTexCoord(unpack(button.icon.MSQ_Coord))
+			else
+				button.icon:dSetTexCoord(unpack(value))
+			end
 		elseif key == "iconR" then
 			local _, g, b = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(value, g, b)
@@ -231,6 +248,32 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 			button.icon:SetDesaturated(value)
 		end
 	end
+end
+
+
+local function setTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+	self.MSQ_Coord = {ULx, ULy, LLx, LLy, URx, URy, LRx, LRy}
+	if not LRy then
+		ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
+	end
+
+	local data = self:GetParent().data
+	if data.iconCoords then
+		local cULx, cULy, cLLx, cLLy, cURx, cURy, cLRx, cLRy = unpack(data.iconCoords)
+		if not cLRy then
+			cULy, cLLx, cURx, cURy, cLRx, cLRy = cLLx, cULx, cULy, cLLx, cULy, cLLy
+		end
+		ULx = cULx + ULx * (cURx - cULx)
+		ULy = cULy + ULy * (cLLy - cULy)
+		LLx = cLLx + LLx * (cLRx - cLLx)
+		LLy = cULy + LLy * (cLLy - cULy)
+		URx = cULx + URx * (cURx - cULx)
+		URy = cURy + URy * (cLRy - cLLy)
+		LRx = cLLx + LRx * (cLRx - cLLx)
+		LRy = cURy + LRy * (cLRy - cURy) 
+	end
+
+	self.dSetTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 end
 
 
@@ -260,6 +303,8 @@ function hidingBar:addButton(name, data, update)
 			button.iconCoords = {unpack(data.iconCoords)}
 			button.icon:SetTexCoord(unpack(data.iconCoords))
 		end
+		button.icon.dSetTexCoord = button.icon.SetTexCoord
+		button.icon.SetTexCoord = setTexCoord
 		button.iconR = data.iconR
 		button.iconG = data.iconG
 		button.iconB = data.iconB
@@ -280,6 +325,7 @@ function hidingBar:addButton(name, data, update)
 		self:applyLayout()
 		self:leave()
 		config:createButton(name, button, update)
+		if self.MSQ_Button then self.MSQ_Button:ReSkin() end
 	end
 
 	if self.MSQ_Button then
