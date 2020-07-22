@@ -100,7 +100,20 @@ function hidingBar:init()
 			self:leave()
 		end)
 		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
-		self.MSQ_MButton:SetCallback(function()
+		self.MSQ_MButton:SetCallback(function(group, skin, backdrop, shadow, gloss, colors, disabled)
+			if disabled then
+				for _, button in ipairs(self.minimapButtons) do
+					if button.__hb_data and button.__hb_background then
+						button.__hb_background:Show()
+					end
+				end
+			else
+				for _, button in ipairs(self.minimapButtons) do
+					if button.__hb_data and button.__hb_background then
+						button.__hb_background:Hide()
+					end
+				end
+			end
 			self:enter()
 			self:leave()
 		end)
@@ -147,7 +160,7 @@ function hidingBar:init()
 					end
 
 					if self.MSQ_MButton then
-						self.MSQ_MButton:AddButton(child, nil, nil, true)
+						self:setMButtonRegions(child)
 					end
 
 					self.SetClipsChildren(child, true)
@@ -201,6 +214,7 @@ function hidingBar:init()
 			end
 		end
 	end
+	if self.MSQ_MButton then self.MSQ_MButton:ReSkin() end
 
 	local tstmp = self.db.tstmp or t
 	local maxTime = 60 * 60 * 24 * 90 -- 90 days and remove
@@ -347,6 +361,38 @@ function hidingBar:addButton(name, data, update)
 	end
 
 	return button
+end
+
+
+function hidingBar:setMButtonRegions(btn)
+	local name, texture, layer
+	for _, region in ipairs({btn:GetRegions()}) do
+		if region:GetObjectType() == "Texture" then
+			name = region:GetDebugName():lower()
+			texture = region:GetTexture()
+			layer = region:GetDrawLayer()
+			if type(texture) == "string" and texture:find("MiniMap%-TrackingBorder") then
+				btn.__hb_border = region
+			end
+			if type(texture) == "string" and texture:find("UI%-Minimap%-Background") or name:find("background") then
+				btn.__hb_background = region
+			end
+			if name:find("icon") or type(texture) == "string" and texture:lower():find("icon") then
+				btn.__hb_icon = region
+			end
+			if name:find("highlight") or layer == "HIGHLIGHT" then
+				btn.__hb_highligt = region
+			end
+		end
+	end
+	if btn.__hb_border and btn.__hb_icon then
+		btn.__hb_data = {
+			Border = btn.__hb_border,
+			Icon = btn.__hb_icon,
+			Highlight = btn.__hb_highligt,
+		}
+	end
+	self.MSQ_MButton:AddButton(btn, btn.__hb_data, nil, true)
 end
 
 
