@@ -87,7 +87,7 @@ function hidingBar:init()
 	if MSQ then
 		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"])
 		self.MSQ_Button:SetCallback(function(group, skin, backdrop, shadow, gloss, colors, disabled)
-			if disabled or skin == "Default" then
+			if disabled then
 				for _, button in ipairs(self.createdButtons) do
 					button.MSQ = nil
 				end
@@ -99,18 +99,17 @@ function hidingBar:init()
 			self:enter()
 			self:leave()
 		end)
+		self.MSQ_MButton_Data = {}
 		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
 		self.MSQ_MButton:SetCallback(function(group, skin, backdrop, shadow, gloss, colors, disabled)
-			if disabled then
+			if not disabled then
 				for _, button in ipairs(self.minimapButtons) do
-					if button.__hb_data and button.__hb_background then
-						button.__hb_background:Show()
-					end
-				end
-			else
-				for _, button in ipairs(self.minimapButtons) do
-					if button.__hb_data and button.__hb_background then
-						button.__hb_background:Hide()
+					local data = self.MSQ_MButton_Data[button]
+					if data then
+						data._Border:Hide()
+						if data._Background then
+							data._Background:Hide()
+						end
 					end
 				end
 			end
@@ -213,8 +212,8 @@ function hidingBar:init()
 				end
 			end
 		end
+		if self.MSQ_MButton then self.MSQ_MButton:ReSkin() end
 	end
-	if self.MSQ_MButton then self.MSQ_MButton:ReSkin() end
 
 	local tstmp = self.db.tstmp or t
 	local maxTime = 60 * 60 * 24 * 90 -- 90 days and remove
@@ -365,34 +364,36 @@ end
 
 
 function hidingBar:setMButtonRegions(btn)
-	local name, texture, layer
+	local name, texture, layer, border, background, icon, highlight, data
 	for _, region in ipairs({btn:GetRegions()}) do
 		if region:GetObjectType() == "Texture" then
 			name = region:GetDebugName():lower()
 			texture = region:GetTexture()
 			layer = region:GetDrawLayer()
 			if type(texture) == "string" and texture:find("MiniMap%-TrackingBorder") then
-				btn.__hb_border = region
+				border = region
 			end
 			if type(texture) == "string" and texture:find("UI%-Minimap%-Background") or name:find("background") then
-				btn.__hb_background = region
+				background = region
 			end
 			if name:find("icon") or type(texture) == "string" and texture:lower():find("icon") then
-				btn.__hb_icon = region
+				icon = region
 			end
 			if name:find("highlight") or layer == "HIGHLIGHT" then
-				btn.__hb_highligt = region
+				highligt = region
 			end
 		end
 	end
-	if btn.__hb_border and btn.__hb_icon then
-		btn.__hb_data = {
-			Border = btn.__hb_border,
-			Icon = btn.__hb_icon,
-			Highlight = btn.__hb_highligt,
+	if border and icon then
+		data = {
+			_Border = border,
+			_Background = background,
+			Icon = icon,
+			Highlight = highligt,
 		}
+		self.MSQ_MButton_Data[btn] = data
 	end
-	self.MSQ_MButton:AddButton(btn, btn.__hb_data, nil, true)
+	self.MSQ_MButton:AddButton(btn, data, nil, true)
 end
 
 

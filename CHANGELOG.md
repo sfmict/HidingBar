@@ -1,1 +1,1 @@
-* Update Masque for minimap buttons.
+* Update Masque support.
