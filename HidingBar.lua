@@ -86,32 +86,25 @@ function hidingBar:init()
 	local MSQ = LibStub("Masque", true)
 	if MSQ then
 		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"])
-		self.MSQ_Button:SetCallback(function(group, skin, backdrop, shadow, gloss, colors, disabled)
-			if disabled then
-				for _, button in ipairs(self.createdButtons) do
-					button.MSQ = nil
-				end
-			else
-				for _, button in ipairs(self.createdButtons) do
-					button.MSQ = true
-				end
-			end
+		self.MSQ_Button:SetCallback(function()
 			self:enter()
 			self:leave()
 		end)
 		self.MSQ_MButton_Data = {}
-		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
-		self.MSQ_MButton:SetCallback(function(group, skin, backdrop, shadow, gloss, colors, disabled)
-			if not disabled then
-				for _, button in ipairs(self.minimapButtons) do
-					local data = self.MSQ_MButton_Data[button]
-					if data then
-						data._Border:Hide()
-						if data._Background then
-							data._Background:Hide()
-						end
-					end
+		function self:MSQ_MButton_Update(btn)
+			if not btn.__MSQ_Enabled then return end
+			local data = self.MSQ_MButton_Data[btn]
+			if data and data._Border then
+				data._Border:Hide()
+				if data._Background then
+					data._Background:Hide()
 				end
+			end
+		end
+		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
+		self.MSQ_MButton:SetCallback(function()
+			for _, btn in ipairs(self.minimapButtons) do
+				self:MSQ_MButton_Update(btn)
 			end
 			self:enter()
 			self:leave()
@@ -129,7 +122,6 @@ function hidingBar:init()
 	for name, data in ldb:DataObjectIterator() do
 		self:ldb_add(nil, name, data)
 	end
-	if self.MSQ_Button then self.MSQ_Button:ReSkin() end
 
 	if self.config.grabMinimap then
 		local ldbi = LibStub("LibDBIcon-1.0", true)
@@ -212,7 +204,6 @@ function hidingBar:init()
 				end
 			end
 		end
-		if self.MSQ_MButton then self.MSQ_MButton:ReSkin() end
 	end
 
 	local tstmp = self.db.tstmp or t
@@ -348,7 +339,6 @@ function hidingBar:addButton(name, data, update)
 		self:applyLayout()
 		self:leave()
 		config:createButton(name, button, update)
-		if self.MSQ_Button then self.MSQ_Button:ReSkin() end
 	end
 
 	if self.MSQ_Button then
@@ -394,6 +384,7 @@ function hidingBar:setMButtonRegions(btn)
 		self.MSQ_MButton_Data[btn] = data
 	end
 	self.MSQ_MButton:AddButton(btn, data, nil, true)
+	self:MSQ_MButton_Update(btn)
 end
 
 
