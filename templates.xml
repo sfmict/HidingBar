@@ -44,10 +44,10 @@
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
 			</OnLoad>
 			<OnEnter>
-				if not self.MSQ then
-					self.icon:SetSize(32, 32)
-				else
+				if self.__MSQ_Enabled then
 					self.highlight:Show()
+				else
+					self.icon:SetSize(32, 32)
 				end
 				if self.data.OnEnter then
 					self.data.OnEnter(self)
@@ -67,10 +67,10 @@
 				end
 			</OnEnter>
 			<OnLeave>
-				if not self.MSQ then
+				self.highlight:Hide()
+				if not self.__MSQ_Enabled then
 					self.icon:SetSize(30, 30)
 				end
-				self.highlight:Hide()
 				if self.data.OnLeave then
 					self.data.OnLeave(self)
 				end
