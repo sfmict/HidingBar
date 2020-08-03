@@ -90,18 +90,18 @@ function hidingBar:init()
 			self:enter()
 			self:leave()
 		end)
+		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
 		self.MSQ_MButton_Data = {}
 		function self:MSQ_MButton_Update(btn)
 			if not btn.__MSQ_Enabled then return end
 			local data = self.MSQ_MButton_Data[btn]
-			if data and data._Border then
+			if data then
 				data._Border:Hide()
 				if data._Background then
 					data._Background:Hide()
 				end
 			end
 		end
-		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
 		self.MSQ_MButton:SetCallback(function()
 			for _, btn in ipairs(self.minimapButtons) do
 				self:MSQ_MButton_Update(btn)
@@ -196,7 +196,7 @@ function hidingBar:init()
 							self.MSQ_MButton:AddButton(child, nil, nil, true)
 						end
 
-						sekf.SetClipsChildren(child, true)
+						self.SetClipsChildren(child, true)
 						self.SetAlpha(child, 1)
 						self.SetParent(child, self)
 						tinsert(self.minimapButtons, child)
@@ -262,10 +262,10 @@ end
 
 
 local function setTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
-	self.MSQ_Coord = {ULx, ULy, LLx, LLy, URx, URy, LRx, LRy}
 	if not LRy then
 		ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
 	end
+	self.MSQ_Coord = {ULx, ULy, LLx, LLy, URx, URy, LRx, LRy}
 
 	local data = self:GetParent().data
 	if data.iconCoords then
@@ -658,6 +658,7 @@ function hidingBar:enter()
 		self.drag:SetAlpha(1)
 		self:SetScript("OnUpdate", nil)
 		self:Show()
+		self:Raise()
 		self:setDragBarPosition()
 	end
 end
@@ -682,7 +683,7 @@ function hidingBar:leave()
 	self.isMouse = false
 	if not self.isDrag and self:IsShown() then
 		self.timer = .75
-		self:SetScript("OnUpdate", hidingBar.hideBar)
+		self:SetScript("OnUpdate", self.hideBar)
 	end
 end
 hidingBar:SetScript("OnLeave", hidingBar.leave)

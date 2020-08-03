@@ -1,1 +1,2 @@
-* Update Masque support.
+* Optimization Masque support.
+* Minor fixes.

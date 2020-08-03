@@ -537,6 +537,8 @@ function config:initButtons()
 						 or button.Icon
 						 or _G[name.."icon"]
 						 or _G[name.."Icon"]
+						 or button.texture
+						 or button.Texture
 						 or button.background
 						 or button.Background
 			if not icon or not icon.GetTexture then
