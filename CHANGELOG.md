@@ -1,2 +1,1 @@
-* Optimization Masque support.
-* Minor fixes.
+* Added support for Calendar, Tracker and Garrison buttons.
