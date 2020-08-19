@@ -8,6 +8,15 @@ config.name = addon
 config.buttons, config.mbuttons = {}, {}
 
 
+local function toHex(tbl)
+	local str = ""
+	for i = 1, #tbl do
+		str = str..("%02x"):format(math.floor(tbl[i] * 255 + .5))
+	end
+	return str
+end
+
+
 config:SetScript("OnShow", function(self)
 	self.addonName = ("%s_ADDON_"):format(addon:upper())
 	StaticPopupDialogs[self.addonName.."SET_GRAB"] = {
@@ -49,20 +58,103 @@ config:SetScript("OnShow", function(self)
 	title:SetJustifyH("LEFT")
 	title:SetText(L["%s Configuration"]:format(addon))
 
-	-- OPTION PANEL
-	local optionPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
-	optionPanel:SetPoint("TOPLEFT", 8, -40)
-	optionPanel:SetPoint("BOTTOMRIGHT", self, -8, 265)
+	-- GENERAL TAB PANEL
+	self.generalPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
+	self.generalPanel:SetPoint("TOPLEFT", 8, -58)
+	self.generalPanel:SetPoint("BOTTOMRIGHT", self, -8, 275)
+
+	self.tabGeneral = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
+	self.tabGeneral:SetPoint("BOTTOMLEFT", self.generalPanel, "TOPLEFT", 3, -1)
+	self.tabGeneral:SetText(L["General"])
+	self.tabGeneral:SetWidth(self.tabGeneral:GetTextWidth() + 48)
+	self.tabGeneral:Disable()
+	self.tabGeneral:SetScript("OnClick", function()
+		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+		self.generalPanel:Show()
+		self.minimapButtonsPanel:Hide()
+		self.tabGeneral:Disable()
+		self.tabMinimapButtons:Enable()
+	end)
 
 	-- DESCRIPTION
-	local description = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	local description = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	description:SetPoint("TOPLEFT", 8, -10)
 	description:SetJustifyH("LEFT")
-	description:SetText(L["SETTINGS_DESCRIPTION"])
+	description:SetText(L["SETTINGS_DESCRIPTION"]:format(toHex(self.config.lineColor)))
 
-		-- LOCK
-	self.lock = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
-	self.lock:SetPoint("TOPLEFT", description, "TOPRIGHT", 30, -28)
+	-- LINE COLOR
+	local lineColor = CreateFrame("BUTTON", nil, self.generalPanel, "HidingBarAddonColorButton")
+	lineColor:SetPoint("TOPRIGHT", -8, -8)
+	lineColor.normalTexture:SetVertexColor(unpack(self.config.lineColor))
+	local lineColorText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	lineColorText:SetPoint("RIGHT", lineColor, "LEFT")
+	lineColorText:SetText(L["Line"])
+
+	lineColor.swatchFunc = function()
+		self.config.lineColor = {ColorPickerFrame:GetColorRGB()}
+		self.hidingBar.drag.bg:SetColorTexture(ColorPickerFrame:GetColorRGB())
+		description:SetText(L["SETTINGS_DESCRIPTION"]:format(toHex(self.config.lineColor)))
+		lineColor.normalTexture:SetVertexColor(ColorPickerFrame:GetColorRGB())
+		self.hidingBar:enter()
+		self.hidingBar:leave()
+	end
+	lineColor.cancelFunc = function(color)
+		self.config.lineColor = {color.r, color.g, color.b}
+		self.hidingBar.drag.bg:SetColorTexture(color.r, color.g, color.b)
+		description:SetText(L["SETTINGS_DESCRIPTION"]:format(toHex(self.config.lineColor)))
+		lineColor.normalTexture:SetVertexColor(color.r, color.g, color.b)
+		self.hidingBar:enter()
+		self.hidingBar:leave()
+	end
+	lineColor:SetScript("OnClick", function(btn)
+		btn.r, btn.g, btn.b = unpack(self.config.lineColor)
+		OpenColorPicker(btn)
+	end)
+
+	-- BACKGROUND COLOR
+	local bgColor = CreateFrame("BUTTON", nil, self.generalPanel, "HidingBarAddonColorButton")
+	bgColor:SetPoint("TOPRIGHT", lineColor, "BOTTOMRIGHT", 0, 0)
+	bgColor.normalTexture:SetVertexColor(unpack(self.config.bgColor))
+	local bgColorText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	bgColorText:SetPoint("RIGHT", bgColor, "LEFT")
+	bgColorText:SetText(L["Background"])
+
+	bgColor.hasOpacity = true
+	bgColor.swatchFunc = function()
+		self.config.bgColor[1], self.config.bgColor[2], self.config.bgColor[3] = ColorPickerFrame:GetColorRGB()
+		self.hidingBar.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
+		bgColor.normalTexture:SetVertexColor(unpack(self.config.bgColor))
+		self.hidingBar:enter()
+		self.hidingBar:leave()
+	end
+	bgColor.opacityFunc = function()
+		self.config.bgColor[4] = OpacitySliderFrame:GetValue()
+		self.hidingBar.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
+		bgColor.normalTexture:SetVertexColor(unpack(self.config.bgColor))
+		self.hidingBar:enter()
+		self.hidingBar:leave()
+	end
+	bgColor.cancelFunc = function(color)
+		self.config.bgColor[1] = color.r
+		self.config.bgColor[2] = color.g
+		self.config.bgColor[3] = color.b
+		self.config.bgColor[4] = color.opacity
+		self.hidingBar.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
+		bgColor.normalTexture:SetVertexColor(unpack(self.config.bgColor))
+		self.hidingBar:enter()
+		self.hidingBar:leave()
+	end
+	bgColor:SetScript("OnClick", function(btn)
+		btn.r, btn.g, btn.b, btn.opacity = unpack(self.config.bgColor)
+		OpenColorPicker(btn)
+	end)
+
+	-- LOCK
+	self.lock = CreateFrame("CheckButton", nil, self.generalPanel, "HidingBarAddonCheckButtonTemplate")
+	self.lock:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -12)
 	self.lock.Text:SetText(L["Lock the bar's location"])
 	self.lock:SetChecked(self.config.lock)
 	self.lock:SetScript("OnClick", function(btn)
@@ -72,8 +164,8 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- FADE
-	local fade = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
-	fade:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -12)
+	local fade = CreateFrame("CheckButton", nil, self.generalPanel, "HidingBarAddonCheckButtonTemplate")
+	fade:SetPoint("TOPLEFT", self.lock, "BOTTOMLEFT", 0, 0)
 	fade.Text:SetText(L["Fade out yellow line"])
 	fade:SetChecked(self.config.fade)
 	fade:SetScript("OnClick", function(btn)
@@ -91,7 +183,7 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- FADE OPACITY
-	self.fadeOpacity = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
+	self.fadeOpacity = CreateFrame("SLIDER", nil, self.generalPanel, "HidingBarAddonSliderTemplate")
 	self.fadeOpacity:SetPoint("LEFT", fade, "RIGHT", 200, 0)
 	self.fadeOpacity:SetPoint("RIGHT", -30, 0)
 	self.fadeOpacity:SetMinMaxValues(0, .9)
@@ -109,12 +201,12 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- ORIENTATION TEXT
-	local orientationText = optionPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	local orientationText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	orientationText:SetPoint("TOPLEFT", fade, "BOTTOMLEFT", 0, -15)
 	orientationText:SetText(L["Orientation"]..":")
 
 	-- ORIENTATION COMBOBOX
-	local orientationCombobox = CreateFrame("FRAME", "MountsJournalModifier", optionPanel, "UIDropDownMenuTemplate")
+	local orientationCombobox = CreateFrame("FRAME", "MountsJournalModifier", self.generalPanel, "UIDropDownMenuTemplate")
 	orientationCombobox:SetPoint("LEFT", orientationText, "RIGHT", -5, 0)
 	UIDropDownMenu_SetWidth(orientationCombobox, 100)
 
@@ -147,44 +239,9 @@ config:SetScript("OnShow", function(self)
 	end)
 	UIDropDownMenu_SetSelectedValue(orientationCombobox, self.config.orientation)
 
-	-- GRAB
-	self.grab = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
-	self.grab:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -15)
-	self.grab.Text:SetText(L["Grab addon buttons on minimap"])
-	self.grab:SetChecked(self.config.grabMinimap)
-	self.grab:SetScript("OnClick", function(btn)
-		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
-			accept = function()
-				self.config.grabMinimap = not self.config.grabMinimap
-				ReloadUI()
-			end,
-			cancel = function()
-				btn:SetChecked(self.config.grabMinimap)
-			end,
-		})
-	end)
-
-	-- GRAB WITHOUT NAME
-	self.grabWithoutName = CreateFrame("CheckButton", nil, optionPanel, "HidingBarAddonCheckButtonTemplate")
-	self.grabWithoutName:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 20, 0)
-	self.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
-	self.grabWithoutName:SetEnabled(self.config.grabMinimap)
-	self.grabWithoutName:SetChecked(self.config.grabMinimapWithoutName)
-	self.grabWithoutName:SetScript("OnClick", function(btn)
-		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
-			accept = function()
-				self.config.grabMinimapWithoutName = not self.config.grabMinimapWithoutName
-				ReloadUI()
-			end,
-			cancel = function()
-				btn:SetChecked(self.config.grabMinimapWithoutName)
-			end,
-		})
-	end)
-
 	-- SLIDER NUMBER BUTTONS IN ROW
-	local buttonNumber = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
-	buttonNumber:SetPoint("TOPLEFT", self.grabWithoutName, "BOTTOMLEFT", -20, -15)
+	local buttonNumber = CreateFrame("SLIDER", nil, self.generalPanel, "HidingBarAddonSliderTemplate")
+	buttonNumber:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -25)
 	buttonNumber:SetPoint("RIGHT", -30, 0)
 	buttonNumber:SetMinMaxValues(1, 30)
 	buttonNumber.text:SetText(L["Number of buttons"])
@@ -202,7 +259,7 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- SLIDER BUTTONS SIZE
-	local buttonSize = CreateFrame("SLIDER", nil, optionPanel, "HidingBarAddonSliderTemplate")
+	local buttonSize = CreateFrame("SLIDER", nil, self.generalPanel, "HidingBarAddonSliderTemplate")
 	buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -15)
 	buttonSize:SetPoint("RIGHT", -30, 0)
 	buttonSize:SetPoint("RIGHT", -30, 0)
@@ -223,16 +280,124 @@ config:SetScript("OnShow", function(self)
 		end
 	end)
 
+	-- MINIMAP TAB PANEL
+	self.minimapButtonsPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
+	self.minimapButtonsPanel:SetPoint("TOPLEFT", 8, -58)
+	self.minimapButtonsPanel:SetPoint("BOTTOMRIGHT", self, -8, 275)
+	self.minimapButtonsPanel:Hide()
+
+	self.tabMinimapButtons = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
+	self.tabMinimapButtons:SetPoint("LEFT", self.tabGeneral, "RIGHT", -16, 0)
+	self.tabMinimapButtons:SetText(L["Minimap buttons"])
+	self.tabMinimapButtons:SetWidth(self.tabMinimapButtons:GetTextWidth() + 48)
+	self.tabMinimapButtons:SetScript("OnClick", function()
+		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+		self.generalPanel:Hide()
+		self.minimapButtonsPanel:Show()
+		self.tabGeneral:Enable()
+		self.tabMinimapButtons:Disable()
+	end)
+
+	-- GRAB DEFAULT BUTTONS
+	self.grabDefault = CreateFrame("CheckButton", nil, self.minimapButtonsPanel, "HidingBarAddonCheckButtonTemplate")
+	self.grabDefault:SetPoint("TOPLEFT", 8, -8)
+	self.grabDefault.Text:SetText(L["Grab default buttons on minimap"])
+	self.grabDefault:SetChecked(self.config.grabDefMinimap)
+	self.grabDefault:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabDefMinimap = not self.config.grabDefMinimap
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabDefMinimap)
+			end,
+		})
+	end)
+
+	-- GRAB ADDONS BUTTONS
+	self.grab = CreateFrame("CheckButton", nil, self.minimapButtonsPanel, "HidingBarAddonCheckButtonTemplate")
+	self.grab:SetPoint("TOPLEFT", self.grabDefault, "BOTTOMLEFT", 0, 0)
+	self.grab.Text:SetText(L["Grab addon buttons on minimap"])
+	self.grab:SetChecked(self.config.grabMinimap)
+	self.grab:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabMinimap = not self.config.grabMinimap
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabMinimap)
+			end,
+		})
+	end)
+
+	-- GRAB AFTER N SECOND
+	self.grabAfter = CreateFrame("CheckButton", nil, self.minimapButtonsPanel, "HidingBarAddonCheckButtonTemplate")
+	self.grabAfter:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 20, 0)
+	self.grabAfter.Text:SetText(L["Try to grab after"])
+	self.grabAfter:SetHitRectInsets(0, -self.grabAfter.Text:GetWidth(), 0, 0)
+	self.grabAfter:SetEnabled(self.config.grabMinimap)
+	self.grabAfter:SetChecked(self.config.grabMinimapAfter)
+	self.grabAfter:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabMinimapAfter = not self.config.grabMinimapAfter
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabMinimapAfter)
+			end,
+		})
+	end)
+
+	self.afterNumber = CreateFrame("EditBox", nil, self.minimapButtonsPanel, "HidingBarAddonNumberTextBox")
+	self.afterNumber:SetPoint("LEFT", self.grabAfter.Text, "RIGHT", 8, 0)
+	self.afterNumber:SetText(self.config.grabMinimapAfterN)
+	self.afterNumber:SetScript("OnTextChanged", function(editBox)
+		local n = tonumber(editBox:GetText())
+		if not n or n < 1 then
+			n = 1
+			editBox:SetText(n)
+		end
+		self.config.grabMinimapAfterN = n
+		if editBox:HasFocus() then
+			editBox:HighlightText()
+		end
+	end)
+
+	self.grabAfterTextSec = self.minimapButtonsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	self.grabAfterTextSec:SetPoint("LEFT", self.afterNumber, "RIGHT", 3, 0)
+	self.grabAfterTextSec:SetText(L["sec."])
+
+	-- GRAB WITHOUT NAME
+	self.grabWithoutName = CreateFrame("CheckButton", nil, self.minimapButtonsPanel, "HidingBarAddonCheckButtonTemplate")
+	self.grabWithoutName:SetPoint("TOPLEFT", self.grabAfter, "BOTTOMLEFT", 0, 0)
+	self.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
+	self.grabWithoutName:SetEnabled(self.config.grabMinimap)
+	self.grabWithoutName:SetChecked(self.config.grabMinimapWithoutName)
+	self.grabWithoutName:SetScript("OnClick", function(btn)
+		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
+			accept = function()
+				self.config.grabMinimapWithoutName = not self.config.grabMinimapWithoutName
+				ReloadUI()
+			end,
+			cancel = function()
+				btn:SetChecked(self.config.grabMinimapWithoutName)
+			end,
+		})
+	end)
+
 	-- BUTTONS TAB PANEL
 	self.buttonsTabPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
-	self.buttonsTabPanel:SetPoint("TOPLEFT", optionPanel, "BOTTOMLEFT", 0, -25)
+	self.buttonsTabPanel:SetPoint("TOPLEFT", self.generalPanel, "BOTTOMLEFT", 0, -25)
 	self.buttonsTabPanel:SetPoint("BOTTOMRIGHT", self, -8, 8)
 
 	local buttonsTabPanelScroll = CreateFrame("ScrollFrame", nil, self.buttonsTabPanel, "UIPanelScrollFrameTemplate")
 	buttonsTabPanelScroll:SetPoint("TOPLEFT", self.buttonsTabPanel, 4, -6)
 	buttonsTabPanelScroll:SetPoint("BOTTOMRIGHT", self.buttonsTabPanel, -26, 5)
 	buttonsTabPanelScroll.ScrollBar:SetBackdrop({bgFile='interface/buttons/white8x8'})
-	buttonsTabPanelScroll.ScrollBar:SetBackdropColor(0,0,0,.2)
+	buttonsTabPanelScroll.ScrollBar:SetBackdropColor(0, 0, 0, .2)
 	buttonsTabPanelScroll.child = CreateFrame("FRAME")
 	buttonsTabPanelScroll.child:SetSize(1, 1)
 	buttonsTabPanelScroll:SetScrollChild(buttonsTabPanelScroll.child)
@@ -260,10 +425,11 @@ config:SetScript("OnShow", function(self)
 	self.buttonPanel = CreateFrame("Frame", nil, buttonsTabPanelScroll.child, "HidingBarAddonPanel")
 	self.buttonPanel:SetPoint("TOPLEFT", buttonPanelDescription, "BOTTOMLEFT", 0, -5)
 	self.buttonPanel:SetSize(20, 20)
+	self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
 
 	-- IGNORE TAB PANEL
 	self.ignoreTabPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
-	self.ignoreTabPanel:SetPoint("TOPLEFT", optionPanel, "BOTTOMLEFT", 0, -25)
+	self.ignoreTabPanel:SetPoint("TOPLEFT", self.generalPanel, "BOTTOMLEFT", 0, -25)
 	self.ignoreTabPanel:SetPoint("BOTTOMRIGHT", self, -8, 8)
 	self.ignoreTabPanel:Hide()
 
@@ -356,7 +522,12 @@ config:SetScript("OnShow", function(self)
 	ignoreDescription:SetText(L["IGNORE_DESCRIPTION"])
 
 	-- INIT
-	C_Timer.After(.1, function() self:initButtons() end)
+	C_Timer.After(.1, function()
+		self:initButtons()
+		self:initMButtons()
+		self:setButtonSize()
+		self:applyLayout()
+	end)
 
 	-- RESET ONSHOW
 	self:SetScript("OnShow", nil)
@@ -495,6 +666,8 @@ end
 
 
 do
+	local buttonsByName = {}
+
 	local function btnClick(self, button)
 		if button == "LeftButton" then
 			self.settings[1] = self:GetChecked()
@@ -508,7 +681,7 @@ do
 	end
 
 	function config:createMButton(name, icon)
-		if type(name) ~= "string" then return end
+		if type(name) ~= "string" or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.name = name
 		btn.title = name:gsub("LibDBIcon10_", "")
@@ -521,6 +694,7 @@ do
 		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
 		btn.settings = self.config.mbtnSettings[name]
 		btn:SetChecked(btn.settings[1])
+		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 	end
 end
@@ -530,6 +704,10 @@ function config:initButtons()
 	for _, button in ipairs(self.hidingBar.createdButtons) do
 		self:createButton(button.name, button)
 	end
+end
+
+
+function config:initMButtons()
 	for _, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()
 		if name then
@@ -547,8 +725,6 @@ function config:initButtons()
 			self:createMButton(name, icon)
 		end
 	end
-	self:setButtonSize()
-	self:applyLayout()
 end
 
 

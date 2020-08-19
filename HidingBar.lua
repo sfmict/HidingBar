@@ -13,7 +13,6 @@ hidingBar.drag:SetSize(4, 4)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
-hidingBar.drag.bg:SetColorTexture(.8, .6, 0)
 hidingBar.createdButtons, hidingBar.minimapButtons = {}, {}
 local createdButtonsByName = {}
 
@@ -79,15 +78,23 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.db = HidingBarDB
 		self.db.config = self.db.config or {}
 		self.config = self.db.config
+		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.orientation = self.config.orientation or 0
 		self.config.size = self.config.size or 10
 		self.config.buttonSize = self.config.buttonSize or 32
 		self.config.anchor = self.config.anchor or "top"
-		self.config.fadeOpacity = self.config.fadeOpacity or .2
+		if self.config.grabMinimap == nil then
+			self.config.grabMinimap = true
+		end
+		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
 		self.config.ignoreMBtn = self.config.ignoreMBtn or {}
+		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
+		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
 		self.config.mbtnSettings = setmetatable(self.config.mbtnSettings or {}, meta)
 
+		self.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.drag.bg:SetColorTexture(unpack(self.config.lineColor))
 		config.hidingBar = self
 		config.config = self.config
 
@@ -178,183 +185,138 @@ function hidingBar:init()
 			end
 		end
 
-		for _, child in ipairs({Minimap:GetChildren()}) do
-			local name = child:GetName()
-			local width, height = child:GetSize()
-			if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) and math.abs(width - height) < 5 then
-				if child:HasScript("OnClick") and child:GetScript("OnClick") then
-					if name then self.config.mbtnSettings[name].tstmp = t end
+		self:grabMinimapAddonsButtons(t)
 
-					local btn = self.minimapButtons[child[0]]
-					self.minimapButtons[child[0]] = nil
-					if not btn or btn ~= child then
-						self:setHooks(child)
-					end
+		if self.config.grabMinimapAfter then
+			C_Timer.After(tonumber(self.config.grabMinimapAfterN) or 1, function()
+				self:grabMinimapAddonsButtons(t)
+				self:sort()
+				self:setButtonSize()
+				self:applyLayout()
 
-					if self.MSQ_MButton then
-						self:setMButtonRegions(child)
-					end
-
-					self.SetClipsChildren(child, true)
-					self.SetAlpha(child, 1)
-					self.SetHitRectInsets(child, 0, 0, 0, 0)
-					self.SetParent(child, self)
-					self.SetScript(child, "OnUpdate", nil)
-					self.HookScript(child, "OnEnter", enter)
-					self.HookScript(child, "OnLeave", leave)
-					tinsert(self.minimapButtons, child)
-				else
-					local mouseEnabled, clickable = {}
-					local function getMouseEnabled(frame)
-						for _, fchild in ipairs({frame:GetChildren()}) do
-							if fchild:IsMouseEnabled() then
-								tinsert(mouseEnabled, fchild)
-								if fchild:HasScript("OnClick") and fchild:GetScript("OnClick") then
-									clickable = true
-								end
-							end
-							getMouseEnabled(fchild)
-						end
-					end
-					getMouseEnabled(child)
-
-					if clickable then
-						if name then self.config.mbtnSettings[name].tstmp = t end
-
-						self:setHooks(child)
-						for _, frame in ipairs(mouseEnabled) do
-							frame:SetHitRectInsets(0, 0, 0, 0)
-							frame:HookScript("OnEnter", enter)
-							frame:HookScript("OnLeave", leave)
-						end
-						if child:IsMouseEnabled() then
-							self.SetHitRectInsets(child, 0, 0, 0, 0)
-							self.HookScript(child, "OnEnter", enter)
-							self.HookScript(child, "OnLeave", leave)
-						end
-
-						self.SetClipsChildren(child, true)
-						self.SetAlpha(child, 1)
-						self.SetHitRectInsets(child, 0, 0, 0, 0)
-						self.SetParent(child, self)
-						tinsert(self.minimapButtons, child)
-					end
+				if config.buttonPanel then
+					config:initMButtons()
+					config:sort(config.mbuttons)
+					config:setButtonSize()
+					config:applyLayout()
 				end
+			end)
+		end
+	end
+
+	if self.config.grabDefMinimap then
+		-- CALENDAR BUTTON
+		if self:ignoreCheck("GameTimeFrame") then
+			self.config.mbtnSettings["GameTimeFrame"].tstmp = t
+			local GameTimeFrame = GameTimeFrame
+			local normalTexture = GameTimeFrame:GetNormalTexture()
+			normalTexture:SetTexCoord(0, .375, 0, .75)
+			local pushedTexture = GameTimeFrame:GetPushedTexture()
+			pushedTexture:SetTexCoord(.5, .875, 0, .75)
+			local highlightTexture = GameTimeFrame:GetHighlightTexture()
+			highlightTexture:SetTexCoord(0, 1, 0, .9375)
+			local text = select(5, GameTimeFrame:GetRegions())
+			text:SetPoint("CENTER", 0, -1)
+			GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
+			GameTimeCalendarInvitesTexture:SetPoint("CENTER")
+			GameTimeCalendarInvitesGlow.Show = void
+			GameTimeCalendarInvitesGlow:Hide()
+			self:setHooks(GameTimeFrame)
+
+			if self.MSQ_MButton then
+				GameTimeFrame.icon = GameTimeFrame:CreateTexture(nil, "BACKGROUND")
+				GameTimeFrame.icon:SetTexture(normalTexture:GetTexture())
+				GameTimeFrame.icon:SetTexCoord(normalTexture:GetTexCoord())
+				GameTimeFrame.data = {iconCoords = {.0859375, .296875, .156255, .59375}}
+				GameTimeFrame.icon.dSetTexCoord = GameTimeFrame.icon.SetTexCoord
+				GameTimeFrame.icon.SetTexCoord = setTexCoord
+				GameTimeFrame.icon:SetAllPoints()
+				GameTimeFrame.icon:SetPoint(normalTexture:GetPoint())
+				local data = {
+					_Pushed = GameTimeFrame:GetPushedTexture(),
+					Icon = GameTimeFrame.icon,
+					Highlight = GameTimeFrame:GetHighlightTexture(),
+				}
+				self.MSQ_MButton_Data[GameTimeFrame] = data
+				self.MSQ_MButton:AddButton(GameTimeFrame, data, nil, true)
+				self:MSQ_MButton_Update(GameTimeFrame)
 			end
-		end
-	end
 
-	-- CALENDAR BUTTON
-	if self:ignoreCheck("GameTimeFrame") then
-		self.config.mbtnSettings["GameTimeFrame"].tstmp = t
-		local GameTimeFrame = GameTimeFrame
-		local normalTexture = GameTimeFrame:GetNormalTexture()
-		normalTexture:SetTexCoord(0, .375, 0, .75)
-		local pushedTexture = GameTimeFrame:GetPushedTexture()
-		pushedTexture:SetTexCoord(.5, .875, 0, .75)
-		local highlightTexture = GameTimeFrame:GetHighlightTexture()
-		highlightTexture:SetTexCoord(0, 1, 0, .9375)
-		local text = select(5, GameTimeFrame:GetRegions())
-		text:SetPoint("CENTER", 0, -1)
-		GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
-		GameTimeCalendarInvitesTexture:SetPoint("CENTER")
-		GameTimeCalendarInvitesGlow.Show = void
-		GameTimeCalendarInvitesGlow:Hide()
-		self:setHooks(GameTimeFrame)
-
-		if self.MSQ_MButton then
-			GameTimeFrame.icon = GameTimeFrame:CreateTexture(nil, "BACKGROUND")
-			GameTimeFrame.icon:SetTexture(normalTexture:GetTexture())
-			GameTimeFrame.icon:SetTexCoord(normalTexture:GetTexCoord())
-			GameTimeFrame.data = {iconCoords = {.0859375, .296875, .156255, .59375}}
-			GameTimeFrame.icon.dSetTexCoord = GameTimeFrame.icon.SetTexCoord
-			GameTimeFrame.icon.SetTexCoord = setTexCoord
-			GameTimeFrame.icon:SetAllPoints()
-			GameTimeFrame.icon:SetPoint(normalTexture:GetPoint())
-			local data = {
-				_Pushed = GameTimeFrame:GetPushedTexture(),
-				Icon = GameTimeFrame.icon,
-				Highlight = GameTimeFrame:GetHighlightTexture(),
-			}
-			self.MSQ_MButton_Data[GameTimeFrame] = data
-			self.MSQ_MButton:AddButton(GameTimeFrame, data, nil, true)
-			self:MSQ_MButton_Update(GameTimeFrame)
+			self.SetClipsChildren(GameTimeFrame, true)
+			self.SetAlpha(GameTimeFrame, 1)
+			self.SetHitRectInsets(GameTimeFrame, 0, 0, 0, 0)
+			self.SetParent(GameTimeFrame, self)
+			self.SetScript(GameTimeFrame, "OnUpdate", nil)
+			self.HookScript(GameTimeFrame, "OnEnter", enter)
+			self.HookScript(GameTimeFrame, "OnLeave", leave)
+			tinsert(self.minimapButtons, GameTimeFrame)
 		end
 
-		self.SetClipsChildren(GameTimeFrame, true)
-		self.SetAlpha(GameTimeFrame, 1)
-		self.SetHitRectInsets(GameTimeFrame, 0, 0, 0, 0)
-		self.SetParent(GameTimeFrame, self)
-		self.SetScript(GameTimeFrame, "OnUpdate", nil)
-		self.HookScript(GameTimeFrame, "OnEnter", enter)
-		self.HookScript(GameTimeFrame, "OnLeave", leave)
-		tinsert(self.minimapButtons, GameTimeFrame)
-	end
+		-- TRACKING BUTTON
+		if self:ignoreCheck("MiniMapTracking") then
+			local MiniMapTracking = MiniMapTracking
+			self.config.mbtnSettings["MiniMapTracking"].tstmp = t
+			local icon = MiniMapTrackingIcon
+			hooksecurefunc(icon, "SetPoint", function(icon)
+				icon:ClearAllPoints()
+				self.SetPoint(icon, "CENTER")
+			end)
+			self:setHooks(MiniMapTracking)
 
-	-- TRACKING BUTTON
-	if self:ignoreCheck("MiniMapTracking") then
-		local MiniMapTracking = MiniMapTracking
-		self.config.mbtnSettings["MiniMapTracking"].tstmp = t
-		local icon = MiniMapTrackingIcon
-		hooksecurefunc(icon, "SetPoint", function(icon)
-			icon:ClearAllPoints()
-			self.SetPoint(icon, "CENTER")
-		end)
-		self:setHooks(MiniMapTracking)
-
-		if self.MSQ_MButton then
-			local data = {
-				_Border = MiniMapTrackingButtonBorder,
-				_Background = MiniMapTrackingBackground,
-				Icon = icon,
-				Highlight = MiniMapTrackingButton:GetHighlightTexture()
-			}
-			self.MSQ_MButton_Data[MiniMapTrackingButton] = data
-			self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, nil, true)
-			self:MSQ_MButton_Update(MiniMapTrackingButton)
-		end
-
-		self.SetClipsChildren(MiniMapTracking, true)
-		self.SetAlpha(MiniMapTracking, 1)
-		self.SetHitRectInsets(MiniMapTracking, 0, 0, 0, 0)
-		self.SetParent(MiniMapTracking, self)
-		self.SetScript(MiniMapTracking, "OnUpdate", nil)
-		MiniMapTrackingButton:HookScript("OnMouseDown", function()
-			icon:SetScale(.9)
-		end)
-		MiniMapTrackingButton:HookScript("OnMouseUp", function()
-			icon:SetScale(1)
-		end)
-		MiniMapTrackingButton:HookScript("OnEnter", enter)
-		MiniMapTrackingButton:HookScript("OnLeave", leave)
-		tinsert(self.minimapButtons, MiniMapTracking)
-	end
-
-	-- GARRISON BUTTON
-	if self:ignoreCheck("GarrisonLandingPageMinimapButton") then
-		local garrison = GarrisonLandingPageMinimapButton
-		self:setHooks(garrison)
-		garrison.show = garrison:IsShown()
-		garrison.Show = function(garrison)
-			garrison.show = true
-			self:applyLayout()
-		end
-		garrison.gShow = function(garrison)
-			if garrison.show and not self.config.mbtnSettings[garrison:GetName()][1] then
-				self.Show(garrison)
-				return true
+			if self.MSQ_MButton then
+				local data = {
+					_Border = MiniMapTrackingButtonBorder,
+					_Background = MiniMapTrackingBackground,
+					Icon = icon,
+					Highlight = MiniMapTrackingButton:GetHighlightTexture()
+				}
+				self.MSQ_MButton_Data[MiniMapTrackingButton] = data
+				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, nil, true)
+				self:MSQ_MButton_Update(MiniMapTrackingButton)
 			end
-			self.Hide(garrison)
+
+			self.SetClipsChildren(MiniMapTracking, true)
+			self.SetAlpha(MiniMapTracking, 1)
+			self.SetHitRectInsets(MiniMapTracking, 0, 0, 0, 0)
+			self.SetParent(MiniMapTracking, self)
+			self.SetScript(MiniMapTracking, "OnUpdate", nil)
+			MiniMapTrackingButton:HookScript("OnMouseDown", function()
+				icon:SetScale(.9)
+			end)
+			MiniMapTrackingButton:HookScript("OnMouseUp", function()
+				icon:SetScale(1)
+			end)
+			MiniMapTrackingButton:HookScript("OnEnter", enter)
+			MiniMapTrackingButton:HookScript("OnLeave", leave)
+			tinsert(self.minimapButtons, MiniMapTracking)
 		end
 
-		self.SetClipsChildren(garrison, true)
-		self.SetAlpha(garrison, 1)
-		self.SetHitRectInsets(garrison, 0, 0, 0, 0)
-		self.SetParent(garrison, self)
-		self.SetScript(garrison, "OnUpdate", nil)
-		self.HookScript(garrison, "OnEnter", enter)
-		self.HookScript(garrison, "OnLeave", leave)
-		tinsert(self.minimapButtons, garrison)
+		-- GARRISON BUTTON
+		if self:ignoreCheck("GarrisonLandingPageMinimapButton") then
+			local garrison = GarrisonLandingPageMinimapButton
+			self:setHooks(garrison)
+			garrison.show = garrison:IsShown()
+			garrison.Show = function(garrison)
+				garrison.show = true
+				self:applyLayout()
+			end
+			garrison.gShow = function(garrison)
+				if garrison.show and not self.config.mbtnSettings[garrison:GetName()][1] then
+					self.Show(garrison)
+					return true
+				end
+				self.Hide(garrison)
+			end
+
+			self.SetClipsChildren(garrison, true)
+			self.SetAlpha(garrison, 1)
+			self.SetHitRectInsets(garrison, 0, 0, 0, 0)
+			self.SetParent(garrison, self)
+			self.SetScript(garrison, "OnUpdate", nil)
+			self.HookScript(garrison, "OnEnter", enter)
+			self.HookScript(garrison, "OnLeave", leave)
+			tinsert(self.minimapButtons, garrison)
+		end
 	end
 
 	local tstmp = self.db.tstmp or t
@@ -471,6 +433,74 @@ function hidingBar:addButton(name, data, update)
 	end
 
 	return button
+end
+
+
+function hidingBar:grabMinimapAddonsButtons(t)
+	for _, child in ipairs({Minimap:GetChildren()}) do
+		local name = child:GetName()
+		local width, height = child:GetSize()
+		if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) and math.abs(width - height) < 5 then
+			if child:HasScript("OnClick") and child:GetScript("OnClick") then
+				if name then self.config.mbtnSettings[name].tstmp = t end
+
+				local btn = self.minimapButtons[child[0]]
+				self.minimapButtons[child[0]] = nil
+				if not btn or btn ~= child then
+					self:setHooks(child)
+				end
+
+				if self.MSQ_MButton then
+					self:setMButtonRegions(child)
+				end
+
+				self.SetClipsChildren(child, true)
+				self.SetAlpha(child, 1)
+				self.SetHitRectInsets(child, 0, 0, 0, 0)
+				self.SetParent(child, self)
+				self.SetScript(child, "OnUpdate", nil)
+				self.HookScript(child, "OnEnter", enter)
+				self.HookScript(child, "OnLeave", leave)
+				tinsert(self.minimapButtons, child)
+			else
+				local mouseEnabled, clickable = {}
+				local function getMouseEnabled(frame)
+					for _, fchild in ipairs({frame:GetChildren()}) do
+						if fchild:IsMouseEnabled() then
+							tinsert(mouseEnabled, fchild)
+							if fchild:HasScript("OnClick") and fchild:GetScript("OnClick") then
+								clickable = true
+							end
+						end
+						getMouseEnabled(fchild)
+					end
+				end
+				getMouseEnabled(child)
+
+				if clickable then
+					if name then self.config.mbtnSettings[name].tstmp = t end
+
+					self:setHooks(child)
+					for _, frame in ipairs(mouseEnabled) do
+						frame:SetHitRectInsets(0, 0, 0, 0)
+						frame:HookScript("OnEnter", enter)
+						frame:HookScript("OnLeave", leave)
+					end
+					if child:IsMouseEnabled() then
+						self.SetHitRectInsets(child, 0, 0, 0, 0)
+						self.HookScript(child, "OnEnter", enter)
+						self.HookScript(child, "OnLeave", leave)
+					end
+
+					self.SetClipsChildren(child, true)
+					self.SetAlpha(child, 1)
+					self.SetHitRectInsets(child, 0, 0, 0, 0)
+					self.SetParent(child, self)
+					tinsert(self.minimapButtons, child)
+				end
+			end
+		end
+	end
 end
 
 
