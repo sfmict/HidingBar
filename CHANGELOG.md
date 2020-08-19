@@ -1,2 +1,2 @@
-* Optimization Masque support.
-* Minor fixes.
+* Added option to grab after n seconds
+* Added color settings.

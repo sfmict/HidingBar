@@ -13,7 +13,6 @@ hidingBar.drag:SetSize(4, 4)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
-hidingBar.drag.bg:SetColorTexture(.8, .6, 0)
 hidingBar.createdButtons, hidingBar.minimapButtons = {}, {}
 local createdButtonsByName = {}
 
@@ -26,8 +25,39 @@ local ignoreFrameList = {
 }
 
 
+local function void() end
 local function enter() hidingBar:enter() end
 local function leave() hidingBar:leave() end
+
+
+local function setTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+	if not LRy then
+		ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
+	end
+	self.MSQ_Coord = {ULx, ULy, LLx, LLy, URx, URy, LRx, LRy}
+
+	local data = self:GetParent().data
+	if data.iconCoords then
+		local cULx, cULy, cLLx, cLLy, cURx, cURy, cLRx, cLRy = unpack(data.iconCoords)
+		if not cLRy then
+			cULy, cLLx, cURx, cURy, cLRx, cLRy = cLLx, cULx, cULy, cLLx, cULy, cLLy
+		end
+		local top = cURx - cULx
+		local right = cLRy - cURy
+		local bottom = cLRx - cLLx
+		local left = cLLy - cULy
+		ULx = cULx + ULx * top
+		ULy = cULy + ULy * left
+		LLx = cLLx + LLx * bottom
+		LLy = cULy + LLy * left
+		URx = cULx + URx * top
+		URy = cURy + URy * right
+		LRx = cLLx + LRx * bottom
+		LRy = cURy + LRy * right
+	end
+
+	self:dSetTexCoord(ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+end
 
 
 hidingBar:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
@@ -47,15 +77,23 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.db = HidingBarDB
 		self.db.config = self.db.config or {}
 		self.config = self.db.config
+		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.orientation = self.config.orientation or 0
 		self.config.size = self.config.size or 10
 		self.config.buttonSize = self.config.buttonSize or 32
 		self.config.anchor = self.config.anchor or "top"
-		self.config.fadeOpacity = self.config.fadeOpacity or .2
+		if self.config.grabMinimap == nil then
+			self.config.grabMinimap = true
+		end
+		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
 		self.config.ignoreMBtn = self.config.ignoreMBtn or {}
+		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
+		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
 		self.config.mbtnSettings = setmetatable(self.config.mbtnSettings or {}, meta)
 
+		self.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.drag.bg:SetColorTexture(unpack(self.config.lineColor))
 		config.hidingBar = self
 		config.config = self.config
 
@@ -91,16 +129,26 @@ function hidingBar:init()
 		end)
 		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
 		self.MSQ_MButton_Data = {}
+
 		function self:MSQ_MButton_Update(btn)
+			if btn:GetName() == "MiniMapTracking" then
+				btn = MiniMapTrackingButton
+			end
 			if not btn.__MSQ_Enabled then return end
 			local data = self.MSQ_MButton_Data[btn]
 			if data then
-				data._Border:Hide()
+				if data._Border then
+					data._Border:Hide()
+				end
 				if data._Background then
 					data._Background:Hide()
 				end
+				if data._Pushed then
+					data._Pushed:SetAlpha(0)
+				end
 			end
 		end
+
 		self.MSQ_MButton:SetCallback(function()
 			for _, btn in ipairs(self.minimapButtons) do
 				self:MSQ_MButton_Update(btn)
@@ -136,72 +184,22 @@ function hidingBar:init()
 			end
 		end
 
-		for _, child in ipairs({Minimap:GetChildren()}) do
-			local name = child:GetName()
-			local width, height = child:GetSize()
-			if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) and math.abs(width - height) < 5 then
-				if child:HasScript("OnClick") and child:GetScript("OnClick") then
-					if name then self.config.mbtnSettings[name].tstmp = t end
+		self:grabMinimapAddonsButtons(t)
 
-					local btn = self.minimapButtons[child[0]]
-					self.minimapButtons[child[0]] = nil
-					if not btn or btn ~= child then
-						self:setHooks(child)
-					end
+		if self.config.grabMinimapAfter then
+			C_Timer.After(tonumber(self.config.grabMinimapAfterN) or 1, function()
+				self:grabMinimapAddonsButtons(t)
+				self:sort()
+				self:setButtonSize()
+				self:applyLayout()
 
-					if self.MSQ_MButton then
-						self:setMButtonRegions(child)
-					end
-
-					self.SetClipsChildren(child, true)
-					self.SetAlpha(child, 1)
-					self.SetHitRectInsets(child, 0, 0, 0, 0)
-					self.SetParent(child, self)
-					self.SetScript(child, "OnUpdate", nil)
-					self.HookScript(child, "OnEnter", enter)
-					self.HookScript(child, "OnLeave", leave)
-					tinsert(self.minimapButtons, child)
-				else
-					local mouseEnabled, clickable = {}
-					local function getMouseEnabled(frame)
-						for _, fchild in ipairs({frame:GetChildren()}) do
-							if fchild:IsMouseEnabled() then
-								tinsert(mouseEnabled, fchild)
-								if fchild:HasScript("OnClick") and fchild:GetScript("OnClick") then
-									clickable = true
-								end
-							end
-							getMouseEnabled(fchild)
-						end
-					end
-					getMouseEnabled(child)
-
-					if clickable then
-						if name then self.config.mbtnSettings[name].tstmp = t end
-
-						self:setHooks(child)
-						for _, frame in ipairs(mouseEnabled) do
-							frame:SetHitRectInsets(0, 0, 0, 0)
-							frame:HookScript("OnEnter", enter)
-							frame:HookScript("OnLeave", leave)
-						end
-						if child:IsMouseEnabled() then
-							self.SetHitRectInsets(child, 0, 0, 0, 0)
-							self.HookScript(child, "OnEnter", enter)
-							self.HookScript(child, "OnLeave", leave)
-						end
-
-						if self.MSQ_MButton then
-							self.MSQ_MButton:AddButton(child, nil, nil, true)
-						end
-
-						self.SetClipsChildren(child, true)
-						self.SetAlpha(child, 1)
-						self.SetParent(child, self)
-						tinsert(self.minimapButtons, child)
-					end
+				if config.buttonPanel then
+					config:initMButtons()
+					config:sort(config.mbuttons)
+					config:setButtonSize()
+					config:applyLayout()
 				end
-			end
+			end)
 		end
 	end
 
@@ -257,36 +255,6 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 			button.icon:SetDesaturated(value)
 		end
 	end
-end
-
-
-local function setTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
-	if not LRy then
-		ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
-	end
-	self.MSQ_Coord = {ULx, ULy, LLx, LLy, URx, URy, LRx, LRy}
-
-	local data = self:GetParent().data
-	if data.iconCoords then
-		local cULx, cULy, cLLx, cLLy, cURx, cURy, cLRx, cLRy = unpack(data.iconCoords)
-		if not cLRy then
-			cULy, cLLx, cURx, cURy, cLRx, cLRy = cLLx, cULx, cULy, cLLx, cULy, cLLy
-		end
-		local top = cURx - cULx
-		local right = cLRy - cURy
-		local bottom = cLRx - cLLx
-		local left = cLLy - cULy
-		ULx = cULx + ULx * top
-		ULy = cULy + ULy * left
-		LLx = cLLx + LLx * bottom
-		LLy = cULy + LLy * left
-		URx = cULx + URx * top
-		URy = cURy + URy * right
-		LRx = cLLx + LRx * bottom
-		LRy = cURy + LRy * right
-	end
-
-	self:dSetTexCoord(ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 end
 
 
@@ -352,6 +320,74 @@ function hidingBar:addButton(name, data, update)
 end
 
 
+function hidingBar:grabMinimapAddonsButtons(t)
+	for _, child in ipairs({Minimap:GetChildren()}) do
+		local name = child:GetName()
+		local width, height = child:GetSize()
+		if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) and math.abs(width - height) < 5 then
+			if child:HasScript("OnClick") and child:GetScript("OnClick") then
+				if name then self.config.mbtnSettings[name].tstmp = t end
+
+				local btn = self.minimapButtons[child[0]]
+				self.minimapButtons[child[0]] = nil
+				if not btn or btn ~= child then
+					self:setHooks(child)
+				end
+
+				if self.MSQ_MButton then
+					self:setMButtonRegions(child)
+				end
+
+				self.SetClipsChildren(child, true)
+				self.SetAlpha(child, 1)
+				self.SetHitRectInsets(child, 0, 0, 0, 0)
+				self.SetParent(child, self)
+				self.SetScript(child, "OnUpdate", nil)
+				self.HookScript(child, "OnEnter", enter)
+				self.HookScript(child, "OnLeave", leave)
+				tinsert(self.minimapButtons, child)
+			else
+				local mouseEnabled, clickable = {}
+				local function getMouseEnabled(frame)
+					for _, fchild in ipairs({frame:GetChildren()}) do
+						if fchild:IsMouseEnabled() then
+							tinsert(mouseEnabled, fchild)
+							if fchild:HasScript("OnClick") and fchild:GetScript("OnClick") then
+								clickable = true
+							end
+						end
+						getMouseEnabled(fchild)
+					end
+				end
+				getMouseEnabled(child)
+
+				if clickable then
+					if name then self.config.mbtnSettings[name].tstmp = t end
+
+					self:setHooks(child)
+					for _, frame in ipairs(mouseEnabled) do
+						frame:SetHitRectInsets(0, 0, 0, 0)
+						frame:HookScript("OnEnter", enter)
+						frame:HookScript("OnLeave", leave)
+					end
+					if child:IsMouseEnabled() then
+						self.SetHitRectInsets(child, 0, 0, 0, 0)
+						self.HookScript(child, "OnEnter", enter)
+						self.HookScript(child, "OnLeave", leave)
+					end
+
+					self.SetClipsChildren(child, true)
+					self.SetAlpha(child, 1)
+					self.SetHitRectInsets(child, 0, 0, 0, 0)
+					self.SetParent(child, self)
+					tinsert(self.minimapButtons, child)
+				end
+			end
+		end
+	end
+end
+
+
 function hidingBar:setMButtonRegions(btn)
 	local name, texture, layer, border, background, icon, highlight, data
 	for _, region in ipairs({btn:GetRegions()}) do
@@ -387,7 +423,6 @@ function hidingBar:setMButtonRegions(btn)
 end
 
 
-local function void() end
 function hidingBar:setHooks(btn)
 	btn.CreateAnimationGroup = function(self, ...)
 		local animationGroup = getmetatable(self).__index.CreateAnimationGroup(self, ...)
@@ -402,6 +437,14 @@ function hidingBar:setHooks(btn)
 	btn.ClearAllPoints = void
 	btn.StartMoving = void
 	btn.SetParent = void
+	btn.gShow = function(btn)
+		local name = btn:GetName()
+		if not (name and self.config.mbtnSettings[name][1]) then
+			self.Show(btn)
+			return true
+		end
+		self.Hide(btn)
+	end
 	btn.Show = void
 	btn.Hide = void
 	btn.SetShown = void
@@ -486,13 +529,9 @@ function hidingBar:applyLayout()
 	local offsetYm = line * self.config.buttonSize + offsetY
 	local j = 0
 	for _, btn in ipairs(self.minimapButtons) do
-		local name = btn:GetName()
-		if not name or not self.config.mbtnSettings[name][1] then
+		if btn:gShow() then
 			j = j + 1
 			self:setPointBtn(btn, offsetX, offsetYm, j, orientation)
-			self.Show(btn)
-		else
-			self.Hide(btn)
 		end
 	end
 
