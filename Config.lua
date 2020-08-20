@@ -8,6 +8,17 @@ config.name = addon
 config.buttons, config.mbuttons = {}, {}
 
 
+config.optionsPanelBackdrop = {
+	bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+	edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+	tile = true,
+	tileEdge = true,
+	tileSize = 14,
+	edgeSize = 14,
+	insets = {left = 4, right = 4, top = 4, bottom = 4}
+}
+
+
 local function toHex(tbl)
 	local str = ""
 	for i = 1, #tbl do
@@ -396,8 +407,10 @@ config:SetScript("OnShow", function(self)
 	local buttonsTabPanelScroll = CreateFrame("ScrollFrame", nil, self.buttonsTabPanel, "UIPanelScrollFrameTemplate")
 	buttonsTabPanelScroll:SetPoint("TOPLEFT", self.buttonsTabPanel, 4, -6)
 	buttonsTabPanelScroll:SetPoint("BOTTOMRIGHT", self.buttonsTabPanel, -26, 5)
-	buttonsTabPanelScroll.ScrollBar:SetBackdrop({bgFile='interface/buttons/white8x8'})
-	buttonsTabPanelScroll.ScrollBar:SetBackdropColor(0, 0, 0, .2)
+	buttonsTabPanelScroll.ScrollBar.bg = buttonsTabPanelScroll.ScrollBar:CreateTexture(nil, "BACKGROUND")
+	buttonsTabPanelScroll.ScrollBar.bg:SetAllPoints()
+	buttonsTabPanelScroll.ScrollBar.bg:SetTexture("interface/buttons/white8x8")
+	buttonsTabPanelScroll.ScrollBar.bg:SetVertexColor(0, 0, 0, .2)
 	buttonsTabPanelScroll.child = CreateFrame("FRAME")
 	buttonsTabPanelScroll.child:SetSize(1, 1)
 	buttonsTabPanelScroll:SetScrollChild(buttonsTabPanelScroll.child)
