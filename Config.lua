@@ -99,6 +99,7 @@ config:SetScript("OnShow", function(self)
 	lineColor.normalTexture:SetVertexColor(unpack(self.config.lineColor))
 	local lineColorText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	lineColorText:SetPoint("RIGHT", lineColor, "LEFT")
+	lineColorText:SetJustifyH("RIGHT")
 	lineColorText:SetText(L["Line"])
 
 	lineColor.swatchFunc = function()
@@ -128,6 +129,7 @@ config:SetScript("OnShow", function(self)
 	bgColor.normalTexture:SetVertexColor(unpack(self.config.bgColor))
 	local bgColorText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	bgColorText:SetPoint("RIGHT", bgColor, "LEFT")
+	bgColorText:SetJustifyH("RIGHT")
 	bgColorText:SetText(L["Background"])
 
 	bgColor.hasOpacity = true
