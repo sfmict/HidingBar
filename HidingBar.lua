@@ -465,13 +465,13 @@ function hidingBar:grabMinimapAddonsButtons(t)
 			else
 				local mouseEnabled, clickable = {}
 				local function getMouseEnabled(frame)
-					for _, fchild in ipairs({frame:GetChildren()}) do
-						if fchild:IsMouseEnabled() then
-							tinsert(mouseEnabled, fchild)
-							if fchild:HasScript("OnClick") and fchild:GetScript("OnClick") then
-								clickable = true
-							end
+					if frame:IsMouseEnabled() then
+						tinsert(mouseEnabled, frame)
+						if frame:HasScript("OnClick") and frame:GetScript("OnClick") then
+							clickable = true
 						end
+					end
+					for _, fchild in ipairs({frame:GetChildren()}) do
 						getMouseEnabled(fchild)
 					end
 				end
@@ -485,11 +485,6 @@ function hidingBar:grabMinimapAddonsButtons(t)
 						frame:SetHitRectInsets(0, 0, 0, 0)
 						frame:HookScript("OnEnter", enter)
 						frame:HookScript("OnLeave", leave)
-					end
-					if child:IsMouseEnabled() then
-						self.SetHitRectInsets(child, 0, 0, 0, 0)
-						self.HookScript(child, "OnEnter", enter)
-						self.HookScript(child, "OnLeave", leave)
 					end
 
 					self.SetClipsChildren(child, true)
