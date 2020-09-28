@@ -239,14 +239,25 @@
 		</Scripts>
 	</Slider>
 
-	<EditBox name="HidingBarAddonNumberTextBox" inherits="InputBoxTemplate" numeric="true" letters="1" multiLine="false" autoFocus="false" virtual="true">
-		<Size x="15" y="22"/>
+	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate" multiLine="false" autoFocus="false" virtual="true">
 		<FontString inherits="GameFontHighlightSmall" justifyH="CENTER"/>
 		<Scripts>
-			<OnLoad>self:SetTextInsets(-5, 0, 0, 0)</OnLoad>
+			<OnLoad>
+				self:SetBackdrop(HidingBarConfigAddon.editBoxBackdrop)
+				self:SetBackdropColor(0, 0, 0, .5)
+				self:SetBackdropBorderColor(.3, .3, .3, .8)
+			</OnLoad>
 			<OnEditFocusGained>self:HighlightText()</OnEditFocusGained>
 			<OnEnterPressed function="EditBox_ClearFocus"/>
 		</Scripts>
+	</EditBox>
+
+	<EditBox name="HidingBarAddonNumberTextBox" inherits="HidingBarAddonEditBoxTemplate" numeric="true" letters="1" virtual="true">
+		<Size x="15" y="18"/>
+	</EditBox>
+
+	<EditBox name="HidingBarAddonDecimalTextBox" inherits="HidingBarAddonEditBoxTemplate" letters="4" virtual="true">
+		<Size x="32" y="18"/>
 	</EditBox>
 
 	<Button name="HidingBarAddonTabTemplate" virtual="true">
@@ -392,6 +403,17 @@
 
 	<Button name="HidingBarAddonIgnoreButtonTemplate" virtual="true">
 		<Size x="305" y="18"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="highlight" file="Interface/QuestFrame/UI-QuestLogTitleHighlight" alphaMode="ADD" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="1"/>
+						<Anchor point="BOTTOMRIGHT" x="-22" y="1"/>
+					</Anchors>
+					<Color r=".196" g=".388" b=".8"/>
+				</Texture>
+			</Layer>
+		</Layers>
 		<Frames>
 			<Button parentKey="removeButton" alpha="0">
 				<Size x="16" y="16"/>
@@ -413,10 +435,12 @@
 					<OnEnter>
 						self.icon:SetVertexColor(1, 1, 1)
 						self:SetAlpha(1)
+						self:GetParent().highlight:Show()
 					</OnEnter>
 					<OnLeave>
 						self.icon:SetVertexColor(.7, .7, .7)
 						self:SetAlpha(0)
+						self:GetParent().highlight:Hide()
 					</OnLeave>
 					<OnMouseDown>self.icon:SetScale(.9)</OnMouseDown>
 					<OnMouseUp>self.icon:SetScale(1)</OnMouseUp>
@@ -431,15 +455,9 @@
 		</ButtonText>
 		<NormalFont style="GameFontHighlight"/>
 		<DisabledFont style="GameFontDisableSmall"/>
-		<HighlightTexture file="Interface/QuestFrame/UI-QuestLogTitleHighlight" alphaMode="ADD">
-			<Anchors>
-				<Anchor point="TOPLEFT" x="0" y="1"/>
-				<Anchor point="BOTTOMRIGHT" x="-22" y="1"/>
-			</Anchors>
-			<Color r=".196" g=".388" b=".8"/>
-		</HighlightTexture>
 		<Scripts>
 			<OnEnter>
+				self.highlight:Show()
 				self.removeButton:SetAlpha(1)
 				if self.text:GetStringWidth() > self.text:GetWidth() then
 					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", -305, 0)
@@ -448,6 +466,7 @@
 				end
 			</OnEnter>
 			<OnLeave>
+				self.highlight:Hide()
 				self.removeButton:SetAlpha(0)
 				GameTooltip:Hide()
 			</OnLeave>

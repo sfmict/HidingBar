@@ -8,6 +8,13 @@ config.name = addon
 config.buttons, config.mbuttons = {}, {}
 
 
+config.editBoxBackdrop = {
+	bgFile = "Interface/ChatFrame/ChatFrameBackground",
+	edgeFile = "Interface/ChatFrame/ChatFrameBackground",
+	tile = true, edgeSize = 1, tileSize = 5,
+}
+
+
 local function toHex(tbl)
 	local str = ""
 	for i = 1, #tbl do
@@ -18,6 +25,9 @@ end
 
 
 config:SetScript("OnShow", function(self)
+	self:SetScript("OnShow", nil)
+
+	-- DIALOGS
 	self.addonName = ("%s_ADDON_"):format(addon:upper())
 	StaticPopupDialogs[self.addonName.."SET_GRAB"] = {
 		text = addon..": "..L["RELOAD_INTERFACE_QUESTION"],
@@ -77,10 +87,11 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- DESCRIPTION
+	local hexColor = toHex(self.config.lineColor)
 	local description = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	description:SetPoint("TOPLEFT", 8, -10)
 	description:SetJustifyH("LEFT")
-	description:SetText(L["SETTINGS_DESCRIPTION"]:format(toHex(self.config.lineColor)))
+	description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
 
 	-- LINE COLOR
 	local lineColor = CreateFrame("BUTTON", nil, self.generalPanel, "HidingBarAddonColorButton")
@@ -88,12 +99,15 @@ config:SetScript("OnShow", function(self)
 	lineColor.normalTexture:SetVertexColor(unpack(self.config.lineColor))
 	local lineColorText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	lineColorText:SetPoint("RIGHT", lineColor, "LEFT")
+	lineColorText:SetJustifyH("RIGHT")
 	lineColorText:SetText(L["Line"])
 
 	lineColor.swatchFunc = function()
 		self.config.lineColor = {ColorPickerFrame:GetColorRGB()}
 		self.hidingBar.drag.bg:SetColorTexture(ColorPickerFrame:GetColorRGB())
-		description:SetText(L["SETTINGS_DESCRIPTION"]:format(toHex(self.config.lineColor)))
+		local hexColor = toHex(self.config.lineColor)
+		description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		lineColor.normalTexture:SetVertexColor(ColorPickerFrame:GetColorRGB())
 		self.hidingBar:enter()
 		self.hidingBar:leave()
@@ -101,7 +115,9 @@ config:SetScript("OnShow", function(self)
 	lineColor.cancelFunc = function(color)
 		self.config.lineColor = {color.r, color.g, color.b}
 		self.hidingBar.drag.bg:SetColorTexture(color.r, color.g, color.b)
-		description:SetText(L["SETTINGS_DESCRIPTION"]:format(toHex(self.config.lineColor)))
+		local hexColor = toHex(self.config.lineColor)
+		description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		lineColor.normalTexture:SetVertexColor(color.r, color.g, color.b)
 		self.hidingBar:enter()
 		self.hidingBar:leave()
@@ -113,10 +129,11 @@ config:SetScript("OnShow", function(self)
 
 	-- BACKGROUND COLOR
 	local bgColor = CreateFrame("BUTTON", nil, self.generalPanel, "HidingBarAddonColorButton")
-	bgColor:SetPoint("TOPRIGHT", lineColor, "BOTTOMRIGHT", 0, 0)
+	bgColor:SetPoint("TOPRIGHT", lineColor, "BOTTOMRIGHT", 0, 1)
 	bgColor.normalTexture:SetVertexColor(unpack(self.config.bgColor))
 	local bgColorText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	bgColorText:SetPoint("RIGHT", bgColor, "LEFT")
+	bgColorText:SetJustifyH("RIGHT")
 	bgColorText:SetText(L["Background"])
 
 	bgColor.hasOpacity = true
@@ -152,62 +169,9 @@ config:SetScript("OnShow", function(self)
 		OpenColorPicker(btn)
 	end)
 
-	-- LOCK
-	self.lock = CreateFrame("CheckButton", nil, self.generalPanel, "HidingBarAddonCheckButtonTemplate")
-	self.lock:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -12)
-	self.lock.Text:SetText(L["Lock the bar's location"])
-	self.lock:SetChecked(self.config.lock)
-	self.lock:SetScript("OnClick", function(btn)
-		local checked = btn:GetChecked()
-		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-		self.config.lock = checked
-	end)
-
-	-- FADE
-	local fade = CreateFrame("CheckButton", nil, self.generalPanel, "HidingBarAddonCheckButtonTemplate")
-	fade:SetPoint("TOPLEFT", self.lock, "BOTTOMLEFT", 0, 0)
-	fade.Text:SetText(L["Fade out yellow line"])
-	fade:SetChecked(self.config.fade)
-	fade:SetScript("OnClick", function(btn)
-		local checked = btn:GetChecked()
-		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-		self.config.fade = checked
-		self.fadeOpacity:SetEnabled(checked)
-		if checked then
-			UIFrameFadeOut(self.hidingBar.drag, 1.5, self.hidingBar.drag:GetAlpha(), self.config.fadeOpacity)
-		else
-			UIFrameFadeRemoveFrame(self.hidingBar.drag)
-			self.hidingBar.drag:SetAlpha(1)
-		end
-		self.hidingBar:applyLayout()
-	end)
-
-	-- FADE OPACITY
-	self.fadeOpacity = CreateFrame("SLIDER", nil, self.generalPanel, "HidingBarAddonSliderTemplate")
-	self.fadeOpacity:SetPoint("LEFT", fade, "RIGHT", 200, 0)
-	self.fadeOpacity:SetPoint("RIGHT", -30, 0)
-	self.fadeOpacity:SetMinMaxValues(0, .9)
-	self.fadeOpacity.text:SetText(L["Opacity"])
-	self.fadeOpacity:SetValue(self.config.fadeOpacity)
-	self.fadeOpacity.label:SetText(self.config.fadeOpacity)
-	self.fadeOpacity:SetEnabled(self.config.fade)
-	self.fadeOpacity:SetScript("OnValueChanged", function(slider, value)
-		value = math.floor(value * 10 + .5) / 10
-		config.config.fadeOpacity = value
-		slider.label:SetText(value)
-		slider:SetValue(value)
-		UIFrameFadeRemoveFrame(self.hidingBar.drag)
-		self.hidingBar.drag:SetAlpha(value)
-	end)
-
-	-- ORIENTATION TEXT
-	local orientationText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	orientationText:SetPoint("TOPLEFT", fade, "BOTTOMLEFT", 0, -15)
-	orientationText:SetText(L["Orientation"]..":")
-
 	-- ORIENTATION COMBOBOX
-	local orientationCombobox = CreateFrame("FRAME", "MountsJournalModifier", self.generalPanel, "UIDropDownMenuTemplate")
-	orientationCombobox:SetPoint("LEFT", orientationText, "RIGHT", -5, 0)
+	local orientationCombobox = CreateFrame("FRAME", "HidingBarAddonOrientation", self.generalPanel, "UIDropDownMenuTemplate")
+	orientationCombobox:SetPoint("TOPRIGHT", bgColor, "BOTTOMRIGHT", 13, 0)
 	UIDropDownMenu_SetWidth(orientationCombobox, 100)
 
 	local function orientationChange(btn)
@@ -239,9 +203,143 @@ config:SetScript("OnShow", function(self)
 	end)
 	UIDropDownMenu_SetSelectedValue(orientationCombobox, self.config.orientation)
 
+	-- ORIENTATION TEXT
+	local orientationText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	orientationText:SetPoint("RIGHT", orientationCombobox, "LEFT", 10, 0)
+	orientationText:SetText(L["Orientation"])
+
+	-- LOCK
+	self.lock = CreateFrame("CheckButton", nil, self.generalPanel, "HidingBarAddonCheckButtonTemplate")
+	self.lock:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -14)
+	self.lock.Text:SetText(L["Lock the bar's location"])
+	self.lock:SetChecked(self.config.lock)
+	self.lock:SetScript("OnClick", function(btn)
+		local checked = btn:GetChecked()
+		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+		self.config.lock = checked
+	end)
+
+	-- FADE
+	self.fade = CreateFrame("CheckButton", nil, self.generalPanel, "HidingBarAddonCheckButtonTemplate")
+	self.fade:SetPoint("TOPLEFT", self.lock, "BOTTOMLEFT", 0, 0)
+	self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+	self.fade:SetChecked(self.config.fade)
+	self.fade:SetScript("OnClick", function(btn)
+		local checked = btn:GetChecked()
+		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+		self.config.fade = checked
+		self.fadeOpacity:SetEnabled(checked)
+		if checked then
+			UIFrameFadeOut(self.hidingBar.drag, 1.5, self.hidingBar.drag:GetAlpha(), self.config.fadeOpacity)
+		else
+			UIFrameFadeRemoveFrame(self.hidingBar.drag)
+			self.hidingBar.drag:SetAlpha(1)
+		end
+		self.hidingBar:applyLayout()
+	end)
+
+	-- FADE OPACITY
+	self.fadeOpacity = CreateFrame("SLIDER", nil, self.generalPanel, "HidingBarAddonSliderTemplate")
+	self.fadeOpacity:SetPoint("LEFT", self.fade, "RIGHT", 200, 0)
+	self.fadeOpacity:SetPoint("RIGHT", -30, 0)
+	self.fadeOpacity:SetMinMaxValues(0, .9)
+	self.fadeOpacity.text:SetText(L["Opacity"])
+	self.fadeOpacity:SetValue(self.config.fadeOpacity)
+	self.fadeOpacity.label:SetText(self.config.fadeOpacity)
+	self.fadeOpacity:SetEnabled(self.config.fade)
+	self.fadeOpacity:SetScript("OnValueChanged", function(slider, value)
+		value = math.floor(value * 10 + .5) / 10
+		config.config.fadeOpacity = value
+		slider.label:SetText(value)
+		slider:SetValue(value)
+		UIFrameFadeRemoveFrame(self.hidingBar.drag)
+		self.hidingBar.drag:SetAlpha(value)
+	end)
+
+	-- SHOW HANDLER TEXT
+	local showHandlerText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	showHandlerText:SetPoint("TOPLEFT", self.fade, "BOTTOMLEFT", 0, -15)
+	showHandlerText:SetText(L["Show on"])
+
+	-- SHOW HANDLER
+	local showHandlerCombobox = CreateFrame("FRAME", "HidingBarAddonShowHandler", self.generalPanel, "UIDropDownMenuTemplate")
+	showHandlerCombobox:SetPoint("LEFT", showHandlerText, "RIGHT", -10, 0)
+	UIDropDownMenu_SetWidth(showHandlerCombobox, 100)
+
+	local function updateShowHandler(btn)
+		UIDropDownMenu_SetSelectedValue(showHandlerCombobox, btn.value)
+		self.config.showHandler = btn.value
+		self.hidingBar.drag:setShowHandler()
+	end
+
+	UIDropDownMenu_Initialize(showHandlerCombobox, function(self, level)
+		local info = UIDropDownMenu_CreateInfo()
+
+		info.checked = nil
+		info.text = L["Hover"]
+		info.value = 0
+		info.func = updateShowHandler
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Click"]
+		info.value = 1
+		info.func = updateShowHandler
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Hover or Click"]
+		info.value = 2
+		info.func = updateShowHandler
+		UIDropDownMenu_AddButton(info)
+	end)
+	UIDropDownMenu_SetSelectedValue(showHandlerCombobox, self.config.showHandler)
+
+	-- DELAY TO SHOW
+	local delayToShowText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	delayToShowText:SetPoint("LEFT", showHandlerCombobox, "RIGHT", -5, 0)
+	delayToShowText:SetText(L["Delay to show"])
+
+	local delayToShowEditBox = CreateFrame("EditBox", nil, self.generalPanel, "HidingBarAddonDecimalTextBox")
+	delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
+	delayToShowEditBox:SetNumber(self.config.showDelay)
+	delayToShowEditBox:SetCursorPosition(0)
+	delayToShowEditBox:SetScript("OnTextChanged", function(editBox)
+		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
+		if int == "" and dec ~= "" then int = "0" end
+		local decimalText = int..dec
+		editBox:SetNumber(decimalText)
+		self.config.showDelay = tonumber(decimalText) or 0
+	end)
+	delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
+		editBox:SetNumber(self.config.showDelay)
+		editBox:HighlightText(0, 0)
+	end)
+
+	-- DELAY TO HIDE
+	local delayToHideText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	delayToHideText:SetPoint("LEFT", delayToShowEditBox, "RIGHT", 10, 0)
+	delayToHideText:SetText(L["Delay to hide"])
+
+	local delayToHideEditBox = CreateFrame("EditBox", nil, self.generalPanel, "HidingBarAddonDecimalTextBox")
+	delayToHideEditBox:SetPoint("LEFT", delayToHideText, "RIGHT", 2, 0)
+	delayToHideEditBox:SetNumber(self.config.hideDelay)
+	delayToHideEditBox:SetCursorPosition(0)
+	delayToHideEditBox:SetScript("OnTextChanged", function(editBox)
+		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
+		if int == "" and dec ~= "" then int = "0" end
+		local decimalText = int..dec
+		editBox:SetNumber(decimalText)
+		self.config.hideDelay = tonumber(decimalText) or 0
+	end)
+	delayToHideEditBox:SetScript("OnEditFocusLost", function(editBox)
+		editBox:SetNumber(self.config.hideDelay)
+		editBox:HighlightText(0, 0)
+	end)
+
 	-- SLIDER NUMBER BUTTONS IN ROW
 	local buttonNumber = CreateFrame("SLIDER", nil, self.generalPanel, "HidingBarAddonSliderTemplate")
-	buttonNumber:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -25)
+	buttonNumber:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -25)
 	buttonNumber:SetPoint("RIGHT", -30, 0)
 	buttonNumber:SetMinMaxValues(1, 30)
 	buttonNumber.text:SetText(L["Number of buttons"])
@@ -335,7 +433,7 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	self.afterNumber = CreateFrame("EditBox", nil, self.minimapButtonsPanel, "HidingBarAddonNumberTextBox")
-	self.afterNumber:SetPoint("LEFT", self.grabAfter.Text, "RIGHT", 8, 0)
+	self.afterNumber:SetPoint("LEFT", self.grabAfter.Text, "RIGHT", 3, 0)
 	self.afterNumber:SetText(self.config.grabMinimapAfterN)
 	self.afterNumber:SetScript("OnTextChanged", function(editBox)
 		local n = tonumber(editBox:GetText())
@@ -511,9 +609,6 @@ config:SetScript("OnShow", function(self)
 		self:setButtonSize()
 		self:applyLayout()
 	end)
-
-	-- RESET ONSHOW
-	self:SetScript("OnShow", nil)
 end)
 
 
