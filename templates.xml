@@ -10,8 +10,7 @@
 	<Frame name="HidingBarAddonOptionsPanel" inherits="BackdropTemplate" virtual="true">
 		<Scripts>
 			<OnLoad>
-				self.backdropInfo = HidingBarConfigAddon.optionsPanelBackdrop
-				self:ApplyBackdrop()
+				self:SetBackdrop(HidingBarConfigAddon.optionsPanelBackdrop)
 				self:SetBackdropColor(.1, .1, .1, .3)
 				self:SetBackdropBorderColor(.5, .5, .5)
 			</OnLoad>
@@ -240,7 +239,7 @@
 		</Scripts>
 	</Slider>
 
-	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate" multiLine="false" autoFocus="false" virtual="true">
+	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate,BackdropTemplate" multiLine="false" autoFocus="false" virtual="true">
 		<FontString inherits="GameFontHighlightSmall" justifyH="CENTER"/>
 		<Scripts>
 			<OnLoad>
