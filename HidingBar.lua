@@ -6,9 +6,8 @@ hidingBar.cover:Hide()
 hidingBar.cover:SetAllPoints()
 hidingBar.cover:EnableMouse(true)
 hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
-hidingBar.drag = CreateFrame("FRAME", nil, UIParent)
+hidingBar.drag = CreateFrame("BUTTON", nil, UIParent)
 hidingBar.drag:SetFrameStrata("DIALOG")
-hidingBar.drag:EnableMouse(true)
 hidingBar.drag:SetSize(4, 4)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
@@ -78,8 +77,11 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.db = HidingBarDB
 		self.db.config = self.db.config or {}
 		self.config = self.db.config
-		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.orientation = self.config.orientation or 0
+		self.config.fadeOpacity = self.config.fadeOpacity or .2
+		self.config.showHandler = self.config.showHandler or 0
+		self.config.showDelay = self.config.showDelay or 0
+		self.config.hideDelay = self.config.hideDelay or .75
 		self.config.size = self.config.size or 10
 		self.config.buttonSize = self.config.buttonSize or 32
 		self.config.anchor = self.config.anchor or "top"
@@ -98,6 +100,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		config.hidingBar = self
 		config.config = self.config
 
+		self.drag:setShowHandler()
 		C_Timer.After(0, function() self:init() end)
 	end
 end
@@ -774,7 +777,7 @@ end
 
 
 hidingBar.drag:SetScript("OnMouseDown", function(_, button)
-	if button == "LeftButton" and not hidingBar.config.lock then
+	if button == "LeftButton" and not hidingBar.config.lock and hidingBar:IsShown() then
 		hidingBar.isDrag = true
 		hidingBar.cover:Show()
 		hidingBar:SetScript("OnUpdate", hidingBar.dragBar)
@@ -812,7 +815,6 @@ function hidingBar:enter()
 	end
 end
 hidingBar:SetScript("OnEnter", hidingBar.enter)
-hidingBar.drag:SetScript("OnEnter", enter)
 
 
 function hidingBar:hideBar(elapsed)
@@ -831,9 +833,58 @@ end
 function hidingBar:leave()
 	self.isMouse = false
 	if not self.isDrag and self:IsShown() then
-		self.timer = .75
+		self.timer = self.config.hideDelay
 		self:SetScript("OnUpdate", self.hideBar)
 	end
 end
 hidingBar:SetScript("OnLeave", hidingBar.leave)
-hidingBar.drag:SetScript("OnLeave", leave)
+
+
+function hidingBar.drag:hoverHandler()
+	if hidingBar.config.fade then
+		UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), 1)
+	end
+end
+
+
+function hidingBar.drag:showBarDelay(elapsed)
+	self.timer = self.timer - elapsed
+	if self.timer <= 0 then
+		self:SetScript("OnUpdate", nil)
+		hidingBar:enter()
+	end
+end
+
+
+function hidingBar.drag:showOnHoverWithDelay()
+	if hidingBar:IsShown() or hidingBar.config.showDelay == 0 then
+		hidingBar:enter()
+	else
+		self:hoverHandler()
+		self.timer = hidingBar.config.showDelay
+		self:SetScript("OnUpdate", self.showBarDelay)
+	end
+end
+
+
+function hidingBar.drag:setShowHandler()
+	if hidingBar.config.showHandler == 2 then
+		self:SetScript("OnEnter", self.showOnHoverWithDelay)
+		self:SetScript("OnClick", enter)
+	elseif hidingBar.config.showHandler == 1 then
+		self:SetScript("OnEnter", self.hoverHandler)
+		self:SetScript("OnClick", enter)
+	else
+		self:SetScript("OnEnter", self.showOnHoverWithDelay)
+		self:SetScript("OnClick", nil)
+	end
+end
+
+
+hidingBar.drag:SetScript("OnLeave", function(self)
+	self:SetScript("OnUpdate", nil)
+	if hidingBar.config.fade and not hidingBar:IsShown() then
+		UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), hidingBar.config.fadeOpacity)
+	end
+	hidingBar:leave()
+end)
