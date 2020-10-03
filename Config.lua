@@ -315,12 +315,14 @@ config:SetScript("OnShow", function(self)
 	delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
 	delayToShowEditBox:SetNumber(self.config.showDelay)
 	delayToShowEditBox:SetCursorPosition(0)
-	delayToShowEditBox:SetScript("OnTextChanged", function(editBox)
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		self.config.showDelay = tonumber(decimalText) or 0
+	delayToShowEditBox:SetScript("OnTextChanged", function(editBox, userInput)
+		if userInput then
+			local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
+			if int == "" and dec ~= "" then int = "0" end
+			local decimalText = int..dec
+			editBox:SetNumber(decimalText)
+			self.config.showDelay = tonumber(decimalText) or 0
+		end
 	end)
 	delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
 		editBox:SetNumber(self.config.showDelay)
@@ -336,12 +338,14 @@ config:SetScript("OnShow", function(self)
 	delayToHideEditBox:SetPoint("LEFT", delayToHideText, "RIGHT", 2, 0)
 	delayToHideEditBox:SetNumber(self.config.hideDelay)
 	delayToHideEditBox:SetCursorPosition(0)
-	delayToHideEditBox:SetScript("OnTextChanged", function(editBox)
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		self.config.hideDelay = tonumber(decimalText) or 0
+	delayToHideEditBox:SetScript("OnTextChanged", function(editBox, userInput)
+		if userInput then
+			local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
+			if int == "" and dec ~= "" then int = "0" end
+			local decimalText = int..dec
+			editBox:SetNumber(decimalText)
+			self.config.hideDelay = tonumber(decimalText) or 0
+		end
 	end)
 	delayToHideEditBox:SetScript("OnEditFocusLost", function(editBox)
 		editBox:SetNumber(self.config.hideDelay)
@@ -463,14 +467,12 @@ config:SetScript("OnShow", function(self)
 	self.afterNumber = CreateFrame("EditBox", nil, self.minimapButtonsPanel, "HidingBarAddonNumberTextBox")
 	self.afterNumber:SetPoint("LEFT", self.grabAfter.Text, "RIGHT", 3, 0)
 	self.afterNumber:SetText(self.config.grabMinimapAfterN)
-	self.afterNumber:SetScript("OnTextChanged", function(editBox)
-		local n = tonumber(editBox:GetText())
-		if not n or n < 1 then
-			n = 1
+	self.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
+		if userInput then
+			local n = tonumber(editBox:GetText()) or 1
+			if n < 1 then n = 1 end
 			editBox:SetText(n)
-		end
-		self.config.grabMinimapAfterN = n
-		if editBox:HasFocus() then
+			self.config.grabMinimapAfterN = n
 			editBox:HighlightText()
 		end
 	end)

@@ -89,7 +89,7 @@ function hidingBar:ADDON_LOADED(addonName)
 			self.config.grabMinimap = true
 		end
 		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
-		self.config.ignoreMBtn = self.config.ignoreMBtn or {}
+		self.config.ignoreMBtn = self.config.ignoreMBtn or {"GatherMatePin"}
 		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
 		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
