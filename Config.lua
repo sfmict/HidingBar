@@ -228,6 +228,7 @@ config:SetScript("OnShow", function(self)
 		local checked = btn:GetChecked()
 		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 		self.config.lock = checked
+		self.hidingBar.drag:refreshShown()
 	end)
 
 	-- FADE
@@ -301,6 +302,12 @@ config:SetScript("OnShow", function(self)
 		info.checked = nil
 		info.text = L["Hover or Click"]
 		info.value = 2
+		info.func = updateShowHandler
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Allways"]
+		info.value = 3
 		info.func = updateShowHandler
 		UIDropDownMenu_AddButton(info)
 	end)

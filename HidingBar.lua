@@ -100,7 +100,6 @@ function hidingBar:ADDON_LOADED(addonName)
 		config.hidingBar = self
 		config.config = self.config
 
-		self.drag:setShowHandler()
 		C_Timer.After(0, function() self:init() end)
 	end
 end
@@ -332,11 +331,12 @@ function hidingBar:init()
 	end
 	self.db.tstmp = t
 
+	self.drag:setShowHandler()
 	self:sort()
 	self:setButtonSize()
 	self:applyLayout()
 	self:setBarPosition()
-	self:leave()
+	self:setDragBarPosition()
 
 	self:RegisterEvent("UI_SCALE_CHANGED")
 end
@@ -649,9 +649,9 @@ function hidingBar:applyLayout()
 		end
 	end
 
-	local shown = i + j ~= 0
-	self.drag:SetShown(shown)
-	if not shown then self:Hide() end
+	self.shown = i + j ~= 0
+	if not self.shown then self:Hide() end
+	self.drag:refreshShown()
 
 	local maxButtons = i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
@@ -776,7 +776,7 @@ function hidingBar:dragBar()
 end
 
 
-hidingBar.drag:SetScript("OnMouseDown", function(_, button)
+hidingBar.drag:SetScript("OnMouseDown", function(self, button)
 	if button == "LeftButton" and not hidingBar.config.lock and hidingBar:IsShown() then
 		hidingBar.isDrag = true
 		hidingBar.cover:Show()
@@ -784,6 +784,7 @@ hidingBar.drag:SetScript("OnMouseDown", function(_, button)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
 			hidingBar.config.lock = not hidingBar.config.lock
+			self:refreshShown()
 			if config.lock then config.lock:SetChecked(hidingBar.config.lock) end
 		end
 		if IsShiftKeyDown() then
@@ -803,9 +804,9 @@ hidingBar.drag:SetScript("OnMouseUp", function(_, button)
 end)
 
 
-function hidingBar:enter()
+function hidingBar:enter(force)
 	self.isMouse = true
-	if not self.isDrag then
+	if not self.isDrag and self.shown and (self.config.showHandler ~= 3 or force) then
 		UIFrameFadeRemoveFrame(self.drag)
 		self.drag:SetAlpha(1)
 		self:SetScript("OnUpdate", nil)
@@ -832,12 +833,23 @@ end
 
 function hidingBar:leave()
 	self.isMouse = false
-	if not self.isDrag and self:IsShown() then
+	if not self.isDrag and self:IsShown() and self.config.showHandler ~= 3 then
 		self.timer = self.config.hideDelay
 		self:SetScript("OnUpdate", self.hideBar)
 	end
 end
 hidingBar:SetScript("OnLeave", hidingBar.leave)
+
+
+function hidingBar.drag:refreshShown()
+	if hidingBar.config.showHandler ~= 3 then
+		hidingBar:leave()
+		self:SetShown(hidingBar.shown)
+	else
+		hidingBar:enter(true)
+		self:SetShown(not hidingBar.config.lock and hidingBar.shown)
+	end
+end
 
 
 function hidingBar.drag:hoverHandler()
@@ -868,7 +880,10 @@ end
 
 
 function hidingBar.drag:setShowHandler()
-	if hidingBar.config.showHandler == 2 then
+	if hidingBar.config.showHandler == 3 then
+		self:SetScript("OnEnter", nil)
+		self:SetScript("OnClick", nil)
+	elseif hidingBar.config.showHandler == 2 then
 		self:SetScript("OnEnter", self.showOnHoverWithDelay)
 		self:SetScript("OnClick", enter)
 	elseif hidingBar.config.showHandler == 1 then
@@ -878,6 +893,8 @@ function hidingBar.drag:setShowHandler()
 		self:SetScript("OnEnter", self.showOnHoverWithDelay)
 		self:SetScript("OnClick", nil)
 	end
+
+	self:refreshShown()
 end
 
 
