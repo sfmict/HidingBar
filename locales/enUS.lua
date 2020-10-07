@@ -33,6 +33,7 @@ L["Show on"] = "Show on"
 L["Hover"] = "Hover"
 L["Click"] = "Click"
 L["Hover or Click"] = "Hover or Click"
+L["Allways"] = "Always"
 L["Delay to show"] = "Delay to show"
 L["Delay to hide"] = "Delay to hide"
 
