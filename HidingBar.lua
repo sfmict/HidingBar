@@ -393,10 +393,10 @@ function hidingBar:setMButtonRegions(btn)
 			name = region:GetDebugName():lower()
 			texture = region:GetTexture()
 			layer = region:GetDrawLayer()
-			if type(texture) == "string" and texture:find("MiniMap%-TrackingBorder") then
+			if texture == 136430 or type(texture) == "string" and texture:find("MiniMap%-TrackingBorder") then
 				border = region
 			end
-			if type(texture) == "string" and texture:find("UI%-Minimap%-Background") or name:find("background") then
+			if texture == 136467 or type(texture) == "string" and texture:find("UI%-Minimap%-Background") or name:find("background") then
 				background = region
 			end
 			if name:find("icon") or type(texture) == "string" and texture:lower():find("icon") then
