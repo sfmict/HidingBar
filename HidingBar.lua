@@ -840,8 +840,14 @@ hidingBar:SetScript("OnLeave", hidingBar.leave)
 
 function hidingBar:refreshShown()
 	if self.config.showHandler ~= 3 then
-		self:enter()
-		self:leave()
+		if self:IsShown() then
+			self:leave()
+		else
+			self:setDragBarPosition()
+			if self.config.fade then
+				UIFrameFadeOut(self.drag, 1.5, self.drag:GetAlpha(), self.config.fadeOpacity)
+			end
+		end
 		self.drag:SetShown(self.shown)
 	else
 		self:enter(true)
