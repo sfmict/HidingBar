@@ -7,14 +7,14 @@
 		</Layers>
 	</Frame>
 
-	<Frame name="HidingBarAddonOptionsPanel" virtual="true">
-		<Backdrop bgFile="Interface/ChatFrame/ChatFrameBackground" edgeFile="Interface/Tooltips/UI-Tooltip-border" tile="true">
-			<EdgeSize val="14"/>
-			<TileSize val="14"/>
-			<BackgroundInsets left="4" right="4" top="4" bottom="4"/>
-			<Color r=".1" g=".1" b=".1" a=".3"/>
-			<BorderColor r=".5" g=".5" b=".5"/>
-		</Backdrop>
+	<Frame name="HidingBarAddonOptionsPanel" inherits="BackdropTemplate" virtual="true">
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop(HidingBarConfigAddon.optionsPanelBackdrop)
+				self:SetBackdropColor(.1, .1, .1, .3)
+				self:SetBackdropBorderColor(.5, .5, .5)
+			</OnLoad>
+		</Scripts>
 	</Frame>
 
 	<Button name="HidingBarAddonColorButton" virtual="true">
@@ -239,7 +239,7 @@
 		</Scripts>
 	</Slider>
 
-	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate" multiLine="false" autoFocus="false" virtual="true">
+	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate,BackdropTemplate" multiLine="false" autoFocus="false" virtual="true">
 		<FontString inherits="GameFontHighlightSmall" justifyH="CENTER"/>
 		<Scripts>
 			<OnLoad>

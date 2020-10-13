@@ -1,1 +1,1 @@
-* Added option "Always" to "Show on".
+* Update to Shadowlands.

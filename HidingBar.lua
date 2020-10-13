@@ -89,7 +89,7 @@ function hidingBar:ADDON_LOADED(addonName)
 			self.config.grabMinimap = true
 		end
 		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
-		self.config.ignoreMBtn = self.config.ignoreMBtn or {}
+		self.config.ignoreMBtn = self.config.ignoreMBtn or {"GatherMatePin"}
 		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
 		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
@@ -651,19 +651,16 @@ function hidingBar:applyLayout()
 
 	self.shown = i + j ~= 0
 	if not self.shown then self:Hide() end
-	self.drag:refreshShown()
+	self:refreshShown()
 
 	local maxButtons = i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	line = line + math.ceil(j / self.config.size)
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
-	if orientation == 1 then
-		self:SetSize(width, height)
-	else
-		self:SetSize(height, width)
-	end
-	return self:GetSize()
+	if orientation == 2 then width, height = height, width end
+	self:SetSize(width, height)
+	return width, height
 end
 
 
@@ -776,7 +773,7 @@ function hidingBar:dragBar()
 end
 
 
-hidingBar.drag:SetScript("OnMouseDown", function(self, button)
+hidingBar.drag:SetScript("OnMouseDown", function(_, button)
 	if button == "LeftButton" and not hidingBar.config.lock and hidingBar:IsShown() then
 		hidingBar.isDrag = true
 		hidingBar.cover:Show()
@@ -784,7 +781,7 @@ hidingBar.drag:SetScript("OnMouseDown", function(self, button)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
 			hidingBar.config.lock = not hidingBar.config.lock
-			self:refreshShown()
+			hidingBar:refreshShown()
 			if config.lock then config.lock:SetChecked(hidingBar.config.lock) end
 		end
 		if IsShiftKeyDown() then
@@ -841,13 +838,20 @@ end
 hidingBar:SetScript("OnLeave", hidingBar.leave)
 
 
-function hidingBar.drag:refreshShown()
-	if hidingBar.config.showHandler ~= 3 then
-		hidingBar:leave()
-		self:SetShown(hidingBar.shown)
+function hidingBar:refreshShown()
+	if self.config.showHandler ~= 3 then
+		if self:IsShown() then
+			self:leave()
+		else
+			self:setDragBarPosition()
+			if self.config.fade then
+				UIFrameFadeOut(self.drag, 1.5, self.drag:GetAlpha(), self.config.fadeOpacity)
+			end
+		end
+		self.drag:SetShown(self.shown)
 	else
-		hidingBar:enter(true)
-		self:SetShown(not hidingBar.config.lock and hidingBar.shown)
+		self:enter(true)
+		self.drag:SetShown(not self.config.lock and self.shown)
 	end
 end
 
@@ -894,7 +898,7 @@ function hidingBar.drag:setShowHandler()
 		self:SetScript("OnClick", nil)
 	end
 
-	self:refreshShown()
+	hidingBar:refreshShown()
 end
 
 
