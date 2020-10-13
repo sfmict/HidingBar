@@ -651,19 +651,16 @@ function hidingBar:applyLayout()
 
 	self.shown = i + j ~= 0
 	if not self.shown then self:Hide() end
-	self.drag:refreshShown()
+	self:refreshShown()
 
 	local maxButtons = i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	line = line + math.ceil(j / self.config.size)
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
-	if orientation == 1 then
-		self:SetSize(width, height)
-	else
-		self:SetSize(height, width)
-	end
-	return self:GetSize()
+	if orientation == 2 then width, height = height, width end
+	self:SetSize(width, height)
+	return width, height
 end
 
 
@@ -784,7 +781,7 @@ hidingBar.drag:SetScript("OnMouseDown", function(self, button)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
 			hidingBar.config.lock = not hidingBar.config.lock
-			self:refreshShown()
+			hidingBar:refreshShown()
 			if config.lock then config.lock:SetChecked(hidingBar.config.lock) end
 		end
 		if IsShiftKeyDown() then
@@ -841,13 +838,14 @@ end
 hidingBar:SetScript("OnLeave", hidingBar.leave)
 
 
-function hidingBar.drag:refreshShown()
-	if hidingBar.config.showHandler ~= 3 then
-		hidingBar:leave()
-		self:SetShown(hidingBar.shown)
+function hidingBar:refreshShown()
+	if self.config.showHandler ~= 3 then
+		self:enter()
+		self:leave()
+		self.drag:SetShown(self.shown)
 	else
-		hidingBar:enter(true)
-		self:SetShown(not hidingBar.config.lock and hidingBar.shown)
+		self:enter(true)
+		self.drag:SetShown(not self.config.lock and self.shown)
 	end
 end
 
@@ -894,7 +892,7 @@ function hidingBar.drag:setShowHandler()
 		self:SetScript("OnClick", nil)
 	end
 
-	self:refreshShown()
+	hidingBar:refreshShown()
 end
 
 

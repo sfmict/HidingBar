@@ -40,14 +40,13 @@ config:SetScript("OnShow", function(self)
 
 	-- DIALOGS
 	self.addonName = ("%s_ADDON_"):format(addon:upper())
-	StaticPopupDialogs[self.addonName.."SET_GRAB"] = {
+	StaticPopupDialogs[self.addonName.."GET_RELOAD"] = {
 		text = addon..": "..L["RELOAD_INTERFACE_QUESTION"],
-		button1 = ACCEPT,
-		button2 = CANCEL,
+		button1 = YES,
+		button2 = NO,
 		hideOnEscape = 1,
 		whileDead = 1,
-		OnAccept = function(_, data) data.accept() end,
-		OnCancel = function(self) self.data.cancel() end,
+		OnAccept = function() ReloadUI() end,
 	}
 	StaticPopupDialogs[self.addonName.."ADD_IGNORE_MBTN"] = {
 		text = addon..": "..L["ADD_IGNORE_MBTN_QUESTION"],
@@ -55,7 +54,7 @@ config:SetScript("OnShow", function(self)
 		button2 = CANCEL,
 		hideOnEscape = 1,
 		whileDead = 1,
-		OnAccept = function(_, cb) cb() end,
+		OnAccept = function(self, cb) self:Hide() cb() end,
 	}
 	StaticPopupDialogs[self.addonName.."REMOVE_IGNORE_MBTN"] = {
 		text = addon..": "..L["REMOVE_IGNORE_MBTN_QUESTION"],
@@ -63,7 +62,7 @@ config:SetScript("OnShow", function(self)
 		button2 = CANCEL,
 		hideOnEscape = 1,
 		whileDead = 1,
-		OnAccept = function(_, cb) cb() end,
+		OnAccept = function(self, cb) self:Hide() cb() end,
 	}
 
 	-- ADDON INFO
@@ -228,7 +227,7 @@ config:SetScript("OnShow", function(self)
 		local checked = btn:GetChecked()
 		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 		self.config.lock = checked
-		self.hidingBar.drag:refreshShown()
+		self.hidingBar:refreshShown()
 	end)
 
 	-- FADE
@@ -424,15 +423,8 @@ config:SetScript("OnShow", function(self)
 	self.grabDefault.Text:SetText(L["Grab default buttons on minimap"])
 	self.grabDefault:SetChecked(self.config.grabDefMinimap)
 	self.grabDefault:SetScript("OnClick", function(btn)
-		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
-			accept = function()
-				self.config.grabDefMinimap = not self.config.grabDefMinimap
-				ReloadUI()
-			end,
-			cancel = function()
-				btn:SetChecked(self.config.grabDefMinimap)
-			end,
-		})
+		self.config.grabDefMinimap = btn:GetChecked()
+		StaticPopup_Show(self.addonName.."GET_RELOAD")
 	end)
 
 	-- GRAB ADDONS BUTTONS
@@ -441,15 +433,11 @@ config:SetScript("OnShow", function(self)
 	self.grab.Text:SetText(L["Grab addon buttons on minimap"])
 	self.grab:SetChecked(self.config.grabMinimap)
 	self.grab:SetScript("OnClick", function(btn)
-		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
-			accept = function()
-				self.config.grabMinimap = not self.config.grabMinimap
-				ReloadUI()
-			end,
-			cancel = function()
-				btn:SetChecked(self.config.grabMinimap)
-			end,
-		})
+		local checked = btn:GetChecked()
+		self.config.grabMinimap = checked
+		self.grabAfter:SetEnabled(checked)
+		self.grabWithoutName:SetEnabled(checked)
+		StaticPopup_Show(self.addonName.."GET_RELOAD")
 	end)
 
 	-- GRAB AFTER N SECOND
@@ -457,18 +445,10 @@ config:SetScript("OnShow", function(self)
 	self.grabAfter:SetPoint("TOPLEFT", self.grab, "BOTTOMLEFT", 20, 0)
 	self.grabAfter.Text:SetText(L["Try to grab after"])
 	self.grabAfter:SetHitRectInsets(0, -self.grabAfter.Text:GetWidth(), 0, 0)
-	self.grabAfter:SetEnabled(self.config.grabMinimap)
 	self.grabAfter:SetChecked(self.config.grabMinimapAfter)
 	self.grabAfter:SetScript("OnClick", function(btn)
-		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
-			accept = function()
-				self.config.grabMinimapAfter = not self.config.grabMinimapAfter
-				ReloadUI()
-			end,
-			cancel = function()
-				btn:SetChecked(self.config.grabMinimapAfter)
-			end,
-		})
+		self.config.grabMinimapAfter = btn:GetChecked()
+		StaticPopup_Show(self.addonName.."GET_RELOAD")
 	end)
 
 	self.afterNumber = CreateFrame("EditBox", nil, self.minimapButtonsPanel, "HidingBarAddonNumberTextBox")
@@ -488,6 +468,16 @@ config:SetScript("OnShow", function(self)
 	self.grabAfterTextSec:SetPoint("LEFT", self.afterNumber, "RIGHT", 3, 0)
 	self.grabAfterTextSec:SetText(L["sec."])
 
+	self.grabAfter:HookScript("OnEnable", function(btn)
+		self.afterNumber:Enable()
+		self.grabAfterTextSec:SetTextColor(btn.Text:GetTextColor())
+	end)
+	self.grabAfter:HookScript("OnDisable", function(btn)
+		self.afterNumber:Disable()
+		self.grabAfterTextSec:SetTextColor(btn.Text:GetTextColor())
+	end)
+	self.grabAfter:SetEnabled(self.config.grabMinimap)
+
 	-- GRAB WITHOUT NAME
 	self.grabWithoutName = CreateFrame("CheckButton", nil, self.minimapButtonsPanel, "HidingBarAddonCheckButtonTemplate")
 	self.grabWithoutName:SetPoint("TOPLEFT", self.grabAfter, "BOTTOMLEFT", 0, 0)
@@ -495,15 +485,8 @@ config:SetScript("OnShow", function(self)
 	self.grabWithoutName:SetEnabled(self.config.grabMinimap)
 	self.grabWithoutName:SetChecked(self.config.grabMinimapWithoutName)
 	self.grabWithoutName:SetScript("OnClick", function(btn)
-		StaticPopup_Show(self.addonName.."SET_GRAB", nil, nil, {
-			accept = function()
-				self.config.grabMinimapWithoutName = not self.config.grabMinimapWithoutName
-				ReloadUI()
-			end,
-			cancel = function()
-				btn:SetChecked(self.config.grabMinimapWithoutName)
-			end,
-		})
+		self.config.grabMinimapWithoutName = btn:GetChecked()
+		StaticPopup_Show(self.addonName.."GET_RELOAD")
 	end)
 
 	-- BUTTONS TAB PANEL
@@ -672,6 +655,7 @@ function config:removeIgnoreName(index)
 			end
 		end
 		self.ignoreScroll:update()
+		StaticPopup_Show(self.addonName.."GET_RELOAD")
 	end)
 end
 
@@ -793,6 +777,7 @@ do
 			self:SetChecked(not self:GetChecked())
 			StaticPopup_Show(config.addonName.."ADD_IGNORE_MBTN", NORMAL_FONT_COLOR_CODE..self.name..FONT_COLOR_CODE_CLOSE, nil, function()
 				config:addIgnoreName(self.name)
+				StaticPopup_Show(config.addonName.."GET_RELOAD")
 			end)
 		end
 	end
