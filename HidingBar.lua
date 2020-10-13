@@ -773,7 +773,7 @@ function hidingBar:dragBar()
 end
 
 
-hidingBar.drag:SetScript("OnMouseDown", function(self, button)
+hidingBar.drag:SetScript("OnMouseDown", function(_, button)
 	if button == "LeftButton" and not hidingBar.config.lock and hidingBar:IsShown() then
 		hidingBar.isDrag = true
 		hidingBar.cover:Show()
