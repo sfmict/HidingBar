@@ -17,9 +17,26 @@
 		</Scripts>
 	</Frame>
 
-	<Button name="HidingBarAddonColorButton" virtual="true">
-		<Size x="30" y="22"/>
-		<NormalTexture parentKey="normalTexture" file="Interface/ChatFrame/ChatFrameColorSwatch"/>
+	<Button name="HidingBarAddonColorButton" inherits="BackdropTemplate" virtual="true">
+		<Size x="25" y="18"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="color">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop(HidingBarConfigAddon.colorButtonBackdrop)
+				self:SetBackdropBorderColor(.3, .3, .3, .8)
+			</OnLoad>
+			<OnEnter>self:SetBackdropBorderColor(.5, .5, .5, .8)</OnEnter>
+			<OnLeave>self:SetBackdropBorderColor(.3, .3, .3, .8)</OnLeave>
+		</Scripts>
 	</Button>
 
 	<Button name="HidingBarAddonButtonTemplate" clipChildren="true"  virtual="true">
@@ -249,6 +266,8 @@
 			</OnLoad>
 			<OnEditFocusGained>self:HighlightText()</OnEditFocusGained>
 			<OnEnterPressed function="EditBox_ClearFocus"/>
+			<OnEnter>self:SetBackdropBorderColor(.5, .5, .5, .8)</OnEnter>
+			<OnLeave>self:SetBackdropBorderColor(.3, .3, .3, .8)</OnLeave>
 		</Scripts>
 	</EditBox>
 

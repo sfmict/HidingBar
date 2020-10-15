@@ -1,1 +1,2 @@
-* Update to Shadowlands.
+* Updated configuration menu.
+* Added option "Line width".
