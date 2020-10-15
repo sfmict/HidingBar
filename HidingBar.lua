@@ -78,6 +78,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config = self.db.config
 		self.config.orientation = self.config.orientation or 0
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
+		self.config.lineWidth = self.config.lineWidth or 4
 		self.config.showHandler = self.config.showHandler or 0
 		self.config.showDelay = self.config.showDelay or 0
 		self.config.hideDelay = self.config.hideDelay or .75
@@ -88,13 +89,14 @@ function hidingBar:ADDON_LOADED(addonName)
 			self.config.grabMinimap = true
 		end
 		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
-		self.config.ignoreMBtn = self.config.ignoreMBtn or {}
+		self.config.ignoreMBtn = self.config.ignoreMBtn or {"GatherMatePin"}
 		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
 		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
 		self.config.mbtnSettings = setmetatable(self.config.mbtnSettings or {}, meta)
 
 		self.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
 		self.drag.bg:SetColorTexture(unpack(self.config.lineColor))
 		config.hidingBar = self
 		config.config = self.config
@@ -111,7 +113,7 @@ end
 
 
 function hidingBar:ignoreCheck(name)
-	if not name then return true end
+	if not name then return self.config.grabMinimapWithoutName end
 	for i = 1, #self.config.ignoreMBtn do
 		if name:find(self.config.ignoreMBtn[i]) then return end
 	end
@@ -178,8 +180,7 @@ function hidingBar:init()
 			local ldbiTbl = ldbi:GetButtonList()
 			for i = 1, #ldbiTbl do
 				local button = ldbi:GetMinimapButton(ldbiTbl[i])
-				local name = button:GetName()
-				if self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) then
+				if self:ignoreCheck(button:GetName()) then
 					self.minimapButtons[button[0]] = button
 					self:setHooks(button)
 				end
@@ -327,7 +328,7 @@ function hidingBar:grabMinimapAddonsButtons(t)
 	for _, child in ipairs({Minimap:GetChildren()}) do
 		local name = child:GetName()
 		local width, height = child:GetSize()
-		if not ignoreFrameList[name] and self:ignoreCheck(name) and (name or self.config.grabMinimapWithoutName) and math.abs(width - height) < 5 then
+		if not ignoreFrameList[name] and self:ignoreCheck(name) and math.abs(width - height) < 5 then
 			if child:HasScript("OnClick") and child:GetScript("OnClick") then
 				if name then self.config.mbtnSettings[name].tstmp = t end
 
@@ -435,13 +436,14 @@ function hidingBar:setHooks(btn)
 	btn.ClearAllPoints = void
 	btn.StartMoving = void
 	btn.SetParent = void
-	btn.gShow = function(btn)
+	btn.IsShown = function(btn)
 		local name = btn:GetName()
 		if not (name and self.config.mbtnSettings[name][1]) then
 			self.Show(btn)
 			return true
 		end
 		self.Hide(btn)
+		return false
 	end
 	btn.Show = void
 	btn.Hide = void
@@ -527,7 +529,7 @@ function hidingBar:applyLayout()
 	local offsetYm = line * self.config.buttonSize + offsetY
 	local j = 0
 	for _, btn in ipairs(self.minimapButtons) do
-		if btn:gShow() then
+		if btn:IsShown() then
 			j = j + 1
 			self:setPointBtn(btn, offsetX, offsetYm, j, orientation)
 		end
@@ -535,19 +537,16 @@ function hidingBar:applyLayout()
 
 	self.shown = i + j ~= 0
 	if not self.shown then self:Hide() end
-	self.drag:refreshShown()
+	self:refreshShown()
 
 	local maxButtons = i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	line = line + math.ceil(j / self.config.size)
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
-	if orientation == 1 then
-		self:SetSize(width, height)
-	else
-		self:SetSize(height, width)
-	end
-	return self:GetSize()
+	if orientation == 2 then width, height = height, width end
+	self:SetSize(width, height)
+	return width, height
 end
 
 
@@ -660,7 +659,7 @@ function hidingBar:dragBar()
 end
 
 
-hidingBar.drag:SetScript("OnMouseDown", function(self, button)
+hidingBar.drag:SetScript("OnMouseDown", function(_, button)
 	if button == "LeftButton" and not hidingBar.config.lock and hidingBar:IsShown() then
 		hidingBar.isDrag = true
 		hidingBar.cover:Show()
@@ -668,7 +667,7 @@ hidingBar.drag:SetScript("OnMouseDown", function(self, button)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
 			hidingBar.config.lock = not hidingBar.config.lock
-			self:refreshShown()
+			hidingBar:refreshShown()
 			if config.lock then config.lock:SetChecked(hidingBar.config.lock) end
 		end
 		if IsShiftKeyDown() then
@@ -725,13 +724,20 @@ end
 hidingBar:SetScript("OnLeave", hidingBar.leave)
 
 
-function hidingBar.drag:refreshShown()
-	if hidingBar.config.showHandler ~= 3 then
-		hidingBar:leave()
-		self:SetShown(hidingBar.shown)
+function hidingBar:refreshShown()
+	if self.config.showHandler ~= 3 then
+		if self:IsShown() then
+			self:leave()
+		else
+			self:setDragBarPosition()
+			if self.config.fade then
+				UIFrameFadeOut(self.drag, 1.5, self.drag:GetAlpha(), self.config.fadeOpacity)
+			end
+		end
+		self.drag:SetShown(self.shown)
 	else
-		hidingBar:enter(true)
-		self:SetShown(not hidingBar.config.lock and hidingBar.shown)
+		self:enter(true)
+		self.drag:SetShown(not self.config.lock and self.shown)
 	end
 end
 
@@ -778,7 +784,7 @@ function hidingBar.drag:setShowHandler()
 		self:SetScript("OnClick", nil)
 	end
 
-	self:refreshShown()
+	hidingBar:refreshShown()
 end
 
 

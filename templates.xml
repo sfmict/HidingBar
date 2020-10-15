@@ -7,19 +7,36 @@
 		</Layers>
 	</Frame>
 
-	<Frame name="HidingBarAddonOptionsPanel" virtual="true">
-		<Backdrop bgFile="Interface/ChatFrame/ChatFrameBackground" edgeFile="Interface/Tooltips/UI-Tooltip-border" tile="true">
-			<EdgeSize val="14"/>
-			<TileSize val="14"/>
-			<BackgroundInsets left="4" right="4" top="4" bottom="4"/>
-			<Color r=".1" g=".1" b=".1" a=".3"/>
-			<BorderColor r=".5" g=".5" b=".5"/>
-		</Backdrop>
+	<Frame name="HidingBarAddonOptionsPanel" inherits="BackdropTemplate" virtual="true">
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop(HidingBarConfigAddon.optionsPanelBackdrop)
+				self:SetBackdropColor(.1, .1, .1, .3)
+				self:SetBackdropBorderColor(.5, .5, .5)
+			</OnLoad>
+		</Scripts>
 	</Frame>
 
-	<Button name="HidingBarAddonColorButton" virtual="true">
-		<Size x="30" y="22"/>
-		<NormalTexture parentKey="normalTexture" file="Interface/ChatFrame/ChatFrameColorSwatch"/>
+	<Button name="HidingBarAddonColorButton" inherits="BackdropTemplate" virtual="true">
+		<Size x="25" y="18"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="color">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-2"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="2"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop(HidingBarConfigAddon.colorButtonBackdrop)
+				self:SetBackdropBorderColor(.3, .3, .3, .8)
+			</OnLoad>
+			<OnEnter>self:SetBackdropBorderColor(.5, .5, .5, .8)</OnEnter>
+			<OnLeave>self:SetBackdropBorderColor(.3, .3, .3, .8)</OnLeave>
+		</Scripts>
 	</Button>
 
 	<Button name="HidingBarAddonButtonTemplate" clipChildren="true"  virtual="true">
@@ -239,7 +256,7 @@
 		</Scripts>
 	</Slider>
 
-	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate" multiLine="false" autoFocus="false" virtual="true">
+	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate,BackdropTemplate" multiLine="false" autoFocus="false" virtual="true">
 		<FontString inherits="GameFontHighlightSmall" justifyH="CENTER"/>
 		<Scripts>
 			<OnLoad>
@@ -249,6 +266,8 @@
 			</OnLoad>
 			<OnEditFocusGained>self:HighlightText()</OnEditFocusGained>
 			<OnEnterPressed function="EditBox_ClearFocus"/>
+			<OnEnter>self:SetBackdropBorderColor(.5, .5, .5, .8)</OnEnter>
+			<OnLeave>self:SetBackdropBorderColor(.3, .3, .3, .8)</OnLeave>
 		</Scripts>
 	</EditBox>
 

@@ -1,1 +1,2 @@
-* Updated Masque support.
+* Updated configuration menu.
+* Added option "Line width".
