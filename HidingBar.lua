@@ -8,7 +8,6 @@ hidingBar.cover:EnableMouse(true)
 hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag = CreateFrame("BUTTON", nil, UIParent)
 hidingBar.drag:SetFrameStrata("DIALOG")
-hidingBar.drag:SetSize(4, 4)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
@@ -329,7 +328,7 @@ function hidingBar:grabMinimapAddonsButtons(t)
 		local name = child:GetName()
 		local width, height = child:GetSize()
 		if not ignoreFrameList[name] and self:ignoreCheck(name) and math.abs(width - height) < 5 then
-			if child:HasScript("OnClick") and child:GetScript("OnClick") then
+			if child:HasScript("OnClick") and (child:GetScript("OnClick") or child:HasScript("OnMouseUp") and child:GetScript("OnMouseUp")) then
 				if name then self.config.mbtnSettings[name].tstmp = t end
 
 				local btn = self.minimapButtons[child[0]]
@@ -429,8 +428,20 @@ function hidingBar:setHooks(btn)
 		return animationGroup
 	end
 	for _, animationGroup in ipairs({btn:GetAnimationGroups()}) do
-		animationGroup:Stop()
-		animationGroup.Play = void
+		local disable
+		for _, animation in ipairs({animationGroup:GetAnimations()}) do
+			if animation:GetTarget() == btn then
+				local animType = animation:GetObjectType()
+				if animType ~= "Animation" and animType ~= "Rotation" then
+					disable = true
+					break
+				end
+			end
+		end
+		if disable then
+			animationGroup:Stop()
+			animationGroup.Play = void
+		end
 	end
 	btn.SetHitRectInsets = void
 	btn.ClearAllPoints = void
