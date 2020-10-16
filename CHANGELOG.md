@@ -1,2 +1,1 @@
-* Updated configuration menu.
-* Added option "Line width".
+* Updated grab of addons buttons.
