@@ -384,26 +384,30 @@ function hidingBar:init()
 			local mail = MiniMapMailFrame
 			proxyMail.show = mail:IsShown()
 			self:setHooks(mail)
-			mail.Show = function()
-				fprint("show")
+			self.SetParent(mail, self)
+			self.Hide(mail)
+			mail:UnregisterAllEvents()
+			proxyMail:SetScript("OnEvent", mail:GetScript("OnEvent"))
+			proxyMail:SetScript("OnEnter", mail:GetScript("OnEnter"))
+			proxyMail:SetScript("OnLeave", mail:GetScript("OnLeave"))
+			proxyMail:RegisterEvent("UPDATE_PENDING_MAIL")
+
+			proxyMail.Show = function(proxyMail)
 				proxyMail.show = true
 				self:applyLayout()
 			end
-			mail.Hide = function()
+			proxyMail.Hide = function(proxyMail)
 				proxyMail.show = false
 				self:applyLayout()
 			end
-			self.Hide(mail)
 			proxyMail.IsShown = function(proxyMail)
 				if proxyMail.show and not self.config.mbtnSettings[proxyMail:GetName()][1] then
-					proxyMail:Show()
+					self.Show(proxyMail)
 					return true
 				end
-				proxyMail:Hide()
+				self.Hide(proxyMail)
 				return false
 			end
-			proxyMail:SetScript("OnEnter", mail:GetScript("OnEnter"))
-			proxyMail:SetScript("OnLeave", mail:GetScript("OnLeave"))
 
 			if self.MSQ_MButton then
 				local data = {
@@ -416,7 +420,6 @@ function hidingBar:init()
 				self:MSQ_MButton_Update(proxyMail)
 			end
 
-			self.SetParent(mail, self)
 			proxyMail:SetClipsChildren(true)
 			proxyMail:HookScript("OnEnter", enter)
 			proxyMail:HookScript("OnLeave", leave)
