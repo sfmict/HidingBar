@@ -7,7 +7,6 @@ hidingBar.cover:SetAllPoints()
 hidingBar.cover:EnableMouse(true)
 hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag = CreateFrame("BUTTON", nil, UIParent)
-hidingBar.drag:SetFrameStrata("DIALOG")
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
@@ -77,6 +76,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.db.config = self.db.config or {}
 		self.config = self.db.config
 		self.config.orientation = self.config.orientation or 0
+		self.config.frameStrata = self.config.frameStrata or 0
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.lineWidth = self.config.lineWidth or 4
 		self.config.showHandler = self.config.showHandler or 0
@@ -95,9 +95,11 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
 		self.config.mbtnSettings = setmetatable(self.config.mbtnSettings or {}, meta)
 
+		self:setFrameStrata()
 		self.bg:SetVertexColor(unpack(self.config.bgColor))
 		self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
 		self.drag.bg:SetColorTexture(unpack(self.config.lineColor))
+
 		config.hidingBar = self
 		config.config = self.config
 
@@ -126,12 +128,12 @@ function hidingBar:init()
 
 	local MSQ = LibStub("Masque", true)
 	if MSQ then
-		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"])
+		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
 		self.MSQ_Button:SetCallback(function()
 			self:enter()
 			self:leave()
 		end)
-		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"])
+		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
 		self.MSQ_MButton_Data = {}
 
 		function self:MSQ_MButton_Update(btn)
@@ -724,6 +726,27 @@ function hidingBar:applyLayout()
 	if orientation == 2 then width, height = height, width end
 	self:SetSize(width, height)
 	return width, height
+end
+
+
+function hidingBar:setFrameStrata()
+	local strata
+	if self.config.frameStrata == 5 then
+		strata = "TOOLTIP"
+	elseif self.config.frameStrata == 4 then
+		strata = "FULLSCREEN_DIALOG"
+	elseif self.config.frameStrata == 3 then
+		strata = "FULLSCREEN"
+	elseif self.config.frameStrata == 2 then
+		strata = "DIALOG"
+	elseif self.config.frameStrata == 1 then
+		strata = "HIGH"
+	else
+		strata = "MEDIUM"
+	end
+
+	self:SetFrameStrata(strata)
+	self.drag:SetFrameStrata(strata)
 end
 
 
