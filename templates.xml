@@ -7,7 +7,7 @@
 		</Layers>
 	</Frame>
 
-	<Frame name="HidingBarAddonOptionsPanel" inherits="BackdropTemplate" virtual="true">
+	<Frame name="HidingBarAddonOptionsPanel" virtual="true">
 		<Scripts>
 			<OnLoad>
 				self:SetBackdrop(HidingBarConfigAddon.optionsPanelBackdrop)
@@ -17,7 +17,7 @@
 		</Scripts>
 	</Frame>
 
-	<Button name="HidingBarAddonColorButton" inherits="BackdropTemplate" virtual="true">
+	<Button name="HidingBarAddonColorButton" virtual="true">
 		<Size x="25" y="18"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -256,7 +256,7 @@
 		</Scripts>
 	</Slider>
 
-	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate,BackdropTemplate" multiLine="false" autoFocus="false" virtual="true">
+	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate" multiLine="false" autoFocus="false" virtual="true">
 		<FontString inherits="GameFontHighlightSmall" justifyH="CENTER"/>
 		<Scripts>
 			<OnLoad>
