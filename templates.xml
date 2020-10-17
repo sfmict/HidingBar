@@ -283,21 +283,21 @@
 		<Size x="115" y="24"/>
 		<Layers>
 			<Layer level="BORDER">
-				<Texture parentKey="leftDisabled" file="Interface\OptionsFrame\UI-OptionsFrame-ActiveTab" hidden="true">
+				<Texture parentKey="leftDisabled" file="Interface/OptionsFrame/UI-OptionsFrame-ActiveTab" hidden="true">
 					<Size x="20" y="24"/>
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" x="0" y="-3"/>
 					</Anchors>
 					<TexCoords left="0" right=".15625" top="0" bottom="1"/>
 				</Texture>
-				<Texture parentKey="rightDisabled" file="Interface\OptionsFrame\UI-OptionsFrame-ActiveTab" hidden="true">
+				<Texture parentKey="rightDisabled" file="Interface/OptionsFrame/UI-OptionsFrame-ActiveTab" hidden="true">
 					<Size x="20" y="24"/>
 					<Anchors>
 						<Anchor point="BOTTOMRIGHT" x="0" y="-3"/>
 					</Anchors>
 					<TexCoords left=".84375" right="1" top="0" bottom="1"/>
 				</Texture>
-				<Texture parentKey="middleDisabled" file="Interface\OptionsFrame\UI-OptionsFrame-ActiveTab" hidden="true">
+				<Texture parentKey="middleDisabled" file="Interface/OptionsFrame/UI-OptionsFrame-ActiveTab" hidden="true">
 					<Size x="88" y="24"/>
 					<Anchors>
 						<Anchor point="LEFT" relativeKey="$parent.leftDisabled" relativePoint="RIGHT"/>
@@ -305,21 +305,21 @@
 					</Anchors>
 					<TexCoords left=".15625" right=".84375" top="0" bottom="1"/>
 				</Texture>
-				<Texture parentKey="left" file="Interface\OptionsFrame\UI-OptionsFrame-InActiveTab">
+				<Texture parentKey="left" file="Interface/OptionsFrame/UI-OptionsFrame-InActiveTab">
 					<Size x="20" y="24"/>
 					<Anchors>
 						<Anchor point="TOPLEFT"/>
 					</Anchors>
 					<TexCoords left="0" right=".15625" top="0" bottom="1"/>
 				</Texture>
-				<Texture parentKey="right" file="Interface\OptionsFrame\UI-OptionsFrame-InActiveTab">
+				<Texture parentKey="right" file="Interface/OptionsFrame/UI-OptionsFrame-InActiveTab">
 					<Size x="20" y="24"/>
 					<Anchors>
 						<Anchor point="TOPRIGHT"/>
 					</Anchors>
 					<TexCoords left=".84375" right="1" top="0" bottom="1"/>
 				</Texture>
-				<Texture parentKey="middle" file="Interface\OptionsFrame\UI-OptionsFrame-InActiveTab">
+				<Texture parentKey="middle" file="Interface/OptionsFrame/UI-OptionsFrame-InActiveTab">
 					<Size x="88" y="24"/>
 					<Anchors>
 						<Anchor point="LEFT" relativeKey="$parent.left" relativePoint="RIGHT"/>
@@ -337,7 +337,7 @@
 		<NormalFont style="GameFontNormalSmall"/>
 		<HighlightFont style="GameFontHighlightSmall"/>
 		<DisabledFont style="GameFontHighlightSmall"/>
-		<HighlightTexture name="$parentHighlightTexture" file="Interface\PaperDollInfoFrame\UI-Character-Tab-Highlight" alphaMode="ADD">
+		<HighlightTexture name="$parentHighlightTexture" file="Interface/PaperDollInfoFrame/UI-Character-Tab-Highlight" alphaMode="ADD">
 			<Anchors>
 				<Anchor point="LEFT" x="10" y="-4"/>
 				<Anchor point="RIGHT" x="-10" y="-4"/>
@@ -441,7 +441,7 @@
 				</Anchors>
 				<Layers>
 					<Layer level="BACKGROUND">
-						<Texture parentKey="icon" file="Interface\BUTTONS\UI-GroupLoot-Pass-Up">
+						<Texture parentKey="icon" file="Interface/BUTTONS/UI-GroupLoot-Pass-Up">
 							<Size x="16" y="16"/>
 							<Anchors>
 								<Anchor point="CENTER"/>
@@ -504,4 +504,32 @@
 			</Slider>
 		</Frames>
 	</ScrollFrame>
+
+	<Button name="HidingBarAddonMailTemplate" virtual="true">
+		<Size x="32" y="32"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="icon" file="Interface/Icons/INV_Letter_15">
+					<Size x="18" y="18"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="1">
+				<Texture parentKey="border" file ="Interface/Minimap/MiniMap-TrackingBorder">
+					<Size x="54" y="54"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" y="-1"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<HighlightTexture parentKey="highlight" file="Interface/Minimap/UI-Minimap-ZoomButton-Highlight" alphaMode="ADD">
+			<Size x="32" y="32"/>
+			<Anchors>
+				<Anchor point="CENTER" y="-1"/>
+			</Anchors>
+		</HighlightTexture>
+	</Button>
 </Ui>

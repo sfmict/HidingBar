@@ -703,6 +703,7 @@ function config:addIgnoreName(name)
 	tinsert(self.config.ignoreMBtn, name)
 	sort(self.config.ignoreMBtn)
 	self.ignoreScroll:update()
+	StaticPopup_Show(config.addonName.."GET_RELOAD")
 end
 
 
@@ -838,7 +839,6 @@ do
 			self:SetChecked(not self:GetChecked())
 			StaticPopup_Show(config.addonName.."ADD_IGNORE_MBTN", NORMAL_FONT_COLOR_CODE..self.name..FONT_COLOR_CODE_CLOSE, nil, function()
 				config:addIgnoreName(self.name)
-				StaticPopup_Show(config.addonName.."GET_RELOAD")
 			end)
 		end
 	end

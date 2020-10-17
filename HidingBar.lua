@@ -8,6 +8,7 @@ hidingBar.cover:EnableMouse(true)
 hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag = CreateFrame("BUTTON", nil, UIParent)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
+hidingBar.drag:SetFrameLevel(hidingBar:GetFrameLevel())
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
 hidingBar.createdButtons, hidingBar.minimapButtons = {}, {}
@@ -258,8 +259,8 @@ function hidingBar:init()
 
 		-- TRACKING BUTTON
 		if self:ignoreCheck("MiniMapTracking") then
-			local MiniMapTracking = MiniMapTracking
 			self.config.mbtnSettings["MiniMapTracking"].tstmp = t
+			local MiniMapTracking = MiniMapTracking
 			local icon = MiniMapTrackingIcon
 			hooksecurefunc(icon, "SetPoint", function(icon)
 				icon:ClearAllPoints()
@@ -272,7 +273,7 @@ function hidingBar:init()
 					_Border = MiniMapTrackingButtonBorder,
 					_Background = MiniMapTrackingBackground,
 					Icon = icon,
-					Highlight = MiniMapTrackingButton:GetHighlightTexture()
+					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
 				}
 				self.MSQ_MButton_Data[MiniMapTrackingButton] = data
 				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, nil, true)
@@ -297,12 +298,16 @@ function hidingBar:init()
 
 		-- GARRISON BUTTON
 		if self:ignoreCheck("GarrisonLandingPageMinimapButton") then
-			local garrison = GarrisonLandingPageMinimapButton
 			self.config.mbtnSettings["GarrisonLandingPageMinimapButton"].tstmp = t
+			local garrison = GarrisonLandingPageMinimapButton
 			garrison.show = garrison:IsShown()
 			self:setHooks(garrison)
 			garrison.Show = function(garrison)
 				garrison.show = true
+				self:applyLayout()
+			end
+			garrison.Hide = function(garrison)
+				garrison.show = false
 				self:applyLayout()
 			end
 			garrison.IsShown = function(garrison)
@@ -326,8 +331,8 @@ function hidingBar:init()
 
 		-- QUEUE STATUS
 		if self:ignoreCheck("QueueStatusMinimapButton") then
-			local queue = QueueStatusMinimapButton
 			self.config.mbtnSettings["QueueStatusMinimapButton"].tstmp = t
+			local queue = QueueStatusMinimapButton
 			QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
 			queue.show = queue:IsShown()
 			self:setHooks(queue)
@@ -355,7 +360,7 @@ function hidingBar:init()
 				local data = {
 					_Border = QueueStatusMinimapButtonBorder,
 					Icon = queue.Eye.texture,
-					Highlight = queue:GetHighlightTexture()
+					Highlight = queue:GetHighlightTexture(),
 				}
 				self.MSQ_MButton_Data[queue] = data
 				self.MSQ_MButton:AddButton(queue, data, nil, true)
@@ -370,6 +375,52 @@ function hidingBar:init()
 			self.HookScript(queue, "OnEnter", enter)
 			self.HookScript(queue, "OnLeave", leave)
 			tinsert(self.minimapButtons, queue)
+		end
+
+		-- MAIL
+		if self:ignoreCheck("HidingBarAddonMail") then
+			self.config.mbtnSettings["HidingBarAddonMail"].tstmp = t
+			local proxyMail = CreateFrame("BUTTON", "HidingBarAddonMail", self, "HidingBarAddonMailTemplate")
+			local mail = MiniMapMailFrame
+			proxyMail.show = mail:IsShown()
+			self:setHooks(mail)
+			mail.Show = function()
+				fprint("show")
+				proxyMail.show = true
+				self:applyLayout()
+			end
+			mail.Hide = function()
+				proxyMail.show = false
+				self:applyLayout()
+			end
+			self.Hide(mail)
+			proxyMail.IsShown = function(proxyMail)
+				if proxyMail.show and not self.config.mbtnSettings[proxyMail:GetName()][1] then
+					proxyMail:Show()
+					return true
+				end
+				proxyMail:Hide()
+				return false
+			end
+			proxyMail:SetScript("OnEnter", mail:GetScript("OnEnter"))
+			proxyMail:SetScript("OnLeave", mail:GetScript("OnLeave"))
+
+			if self.MSQ_MButton then
+				local data = {
+					_Border = proxyMail.border,
+					Icon = proxyMail.icon,
+					Highlight = proxyMail.highlight,
+				}
+				self.MSQ_MButton_Data[proxyMail] = data
+				self.MSQ_MButton:AddButton(proxyMail, data, nil, true)
+				self:MSQ_MButton_Update(proxyMail)
+			end
+
+			self.SetParent(mail, self)
+			proxyMail:SetClipsChildren(true)
+			proxyMail:HookScript("OnEnter", enter)
+			proxyMail:HookScript("OnLeave", leave)
+			tinsert(self.minimapButtons, proxyMail)
 		end
 	end
 
