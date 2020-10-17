@@ -296,8 +296,9 @@ function hidingBar:init()
 		-- GARRISON BUTTON
 		if self:ignoreCheck("GarrisonLandingPageMinimapButton") then
 			local garrison = GarrisonLandingPageMinimapButton
-			self:setHooks(garrison)
+			self.config.mbtnSettings["GarrisonLandingPageMinimapButton"].tstmp = t
 			garrison.show = garrison:IsShown()
+			self:setHooks(garrison)
 			garrison.Show = function(garrison)
 				garrison.show = true
 				self:applyLayout()
@@ -319,6 +320,54 @@ function hidingBar:init()
 			self.HookScript(garrison, "OnEnter", enter)
 			self.HookScript(garrison, "OnLeave", leave)
 			tinsert(self.minimapButtons, garrison)
+		end
+
+		-- QUEUE STATUS
+		if self:ignoreCheck("QueueStatusMinimapButton") then
+			local queue = QueueStatusMinimapButton
+			self.config.mbtnSettings["QueueStatusMinimapButton"].tstmp = t
+			QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
+			queue.show = queue:IsShown()
+			self:setHooks(queue)
+			queue.Show = function(queue)
+				queue.show = true
+				self:applyLayout()
+			end
+			queue.Hide = function(queue)
+				queue.show = false
+				if QueueStatusMinimapButtonDropDown == UIDROPDOWNMENU_OPEN_MENU then
+					CloseDropDownMenus()
+				end
+				self:applyLayout()
+			end
+			queue.IsShown = function(queue)
+				if queue.show and not self.config.mbtnSettings[queue:GetName()][1] then
+					self.Show(queue)
+					return true
+				end
+				self.Hide(queue)
+				return false
+			end
+
+			if self.MSQ_MButton then
+				local data = {
+					_Border = QueueStatusMinimapButtonBorder,
+					Icon = queue.Eye.texture,
+					Highlight = queue:GetHighlightTexture()
+				}
+				self.MSQ_MButton_Data[queue] = data
+				self.MSQ_MButton:AddButton(queue, data, nil, true)
+				self:MSQ_MButton_Update(queue)
+			end
+
+			self.SetClipsChildren(queue, true)
+			self.SetAlpha(queue, 1)
+			self.SetHitRectInsets(queue, 0, 0, 0, 0)
+			self.SetParent(queue, self)
+			self.SetScript(queue, "OnUpdate", nil)
+			self.HookScript(queue, "OnEnter", enter)
+			self.HookScript(queue, "OnLeave", leave)
+			tinsert(self.minimapButtons, queue)
 		end
 	end
 
