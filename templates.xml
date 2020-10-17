@@ -1,5 +1,5 @@
 <Ui>
-	<Frame name="HidingBarAddonPanel" enableMouse="true" frameStrata="DIALOG" virtual="true">
+	<Frame name="HidingBarAddonPanel" enableMouse="true" frameLevel="100" virtual="true">
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="bg" setAllPoints="true" file="Interface/ChatFrame/ChatFrameBackground"/>

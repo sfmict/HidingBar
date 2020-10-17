@@ -234,6 +234,35 @@ config:SetScript("OnShow", function(self)
 	end)
 	UIDropDownMenu_SetSelectedValue(orientationCombobox, self.config.orientation)
 
+	-- FRAME STARTA TEXT
+	local fsText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	fsText:SetPoint("LEFT", orientationCombobox, "RIGHT", -5, 0)
+	fsText:SetText(L["Panel level"])
+
+	-- FRAME STRATA COMBOBOX
+	local fsCombobox =  CreateFrame("FRAME", "HidingBarAddonFrameStrata", self.generalPanel, "UIDropDownMenuTemplate")
+	fsCombobox:SetPoint("LEFT", fsText, "RIGHT", -12, 0)
+	UIDropDownMenu_SetWidth(fsCombobox, 100)
+
+	local function fsChange(btn)
+		UIDropDownMenu_SetSelectedValue(fsCombobox, btn.value)
+		self.config.frameStrata = btn.value
+		self.hidingBar:setFrameStrata()
+	end
+
+	UIDropDownMenu_Initialize(fsCombobox, function(self, level)
+		local info = UIDropDownMenu_CreateInfo()
+
+		for i, v in ipairs({"MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP"}) do
+			info.checked = nil
+			info.text = v
+			info.value = i - 1
+			info.func = fsChange
+			UIDropDownMenu_AddButton(info)
+		end
+	end)
+	UIDropDownMenu_SetSelectedValue(fsCombobox, self.config.frameStrata)
+
 	-- LOCK
 	self.lock = CreateFrame("CheckButton", nil, self.generalPanel, "HidingBarAddonCheckButtonTemplate")
 	self.lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -7)
