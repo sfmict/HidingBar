@@ -1,2 +1,1 @@
-* Added "Queue status" to grab default buttons.
-* Added "Panel level" option.
+* Added "Mail" to grab default buttons.

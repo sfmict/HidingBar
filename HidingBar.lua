@@ -77,7 +77,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.db.config = self.db.config or {}
 		self.config = self.db.config
 		self.config.orientation = self.config.orientation or 0
-		self.config.frameStrata = self.config.frameStrata or 0
+		self.config.frameStrata = self.config.frameStrata or 2
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.lineWidth = self.config.lineWidth or 4
 		self.config.showHandler = self.config.showHandler or 0
