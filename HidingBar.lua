@@ -335,6 +335,7 @@ function hidingBar:init()
 			local queue = QueueStatusMinimapButton
 			QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
 			queue.show = queue:IsShown()
+			queue.icon = queue.Eye.texture
 			self:setHooks(queue)
 			queue.Show = function(queue)
 				queue.show = true
@@ -359,7 +360,7 @@ function hidingBar:init()
 			if self.MSQ_MButton then
 				local data = {
 					_Border = QueueStatusMinimapButtonBorder,
-					Icon = queue.Eye.texture,
+					Icon = queue.icon,
 					Highlight = queue:GetHighlightTexture(),
 				}
 				self.MSQ_MButton_Data[queue] = data
@@ -367,6 +368,7 @@ function hidingBar:init()
 				self:MSQ_MButton_Update(queue)
 			end
 
+			queue.icon:SetTexCoord(0, .125, 0, .25)
 			self.SetClipsChildren(queue, true)
 			self.SetAlpha(queue, 1)
 			self.SetHitRectInsets(queue, 0, 0, 0, 0)

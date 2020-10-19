@@ -516,7 +516,7 @@
 					</Anchors>
 				</Texture>
 			</Layer>
-			<Layer level="OVERLAY" textureSubLevel="1">
+			<Layer level="OVERLAY">
 				<Texture parentKey="border" file ="Interface/Minimap/MiniMap-TrackingBorder">
 					<Size x="54" y="54"/>
 					<Anchors>
