@@ -90,6 +90,7 @@ function hidingBar:ADDON_LOADED(addonName)
 			self.config.grabMinimap = true
 		end
 		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
+		self.config.mbtnPosition = self.config.mbtnPosition or 0
 		self.config.ignoreMBtn = self.config.ignoreMBtn or {"GatherMatePin"}
 		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
 		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
@@ -557,7 +558,7 @@ function hidingBar:grabMinimapAddonsButtons(t)
 
 				local btn = self.minimapButtons[child[0]]
 				self.minimapButtons[child[0]] = nil
-				if not btn or btn ~= child then
+				if btn ~= child then
 					self:setHooks(child)
 				end
 
@@ -760,13 +761,13 @@ function hidingBar:applyLayout()
 			btn:Hide()
 		end
 	end
-	local line = math.ceil(i / self.config.size)
-	local offsetYm = line * self.config.buttonSize + offsetY
+	local followed = self.config.mbtnPosition == 1
+	local orderDelta = followed and i or math.ceil(i / self.config.size) * self.config.size
 	local j = 0
 	for _, btn in ipairs(self.minimapButtons) do
 		if btn:IsShown() then
 			j = j + 1
-			self:setPointBtn(btn, offsetX, offsetYm, j, orientation)
+			self:setPointBtn(btn, offsetX, offsetY, j + orderDelta, orientation)
 		end
 	end
 
@@ -774,9 +775,9 @@ function hidingBar:applyLayout()
 	if not self.shown then self:Hide() end
 	self:refreshShown()
 
-	local maxButtons = i > j and i or j
+	local maxButtons = followed and i + j or i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
-	line = line + math.ceil(j / self.config.size)
+	local line =  math.ceil((j + orderDelta) / self.config.size)
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
 	if orientation == 2 then width, height = height, width end

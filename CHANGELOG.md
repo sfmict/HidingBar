@@ -1,1 +1,1 @@
-* Added "Mail" to grab default buttons.
+* Added option "Position of minimap buttons".

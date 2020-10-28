@@ -237,7 +237,7 @@ config:SetScript("OnShow", function(self)
 	-- FRAME STARTA TEXT
 	local fsText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	fsText:SetPoint("LEFT", orientationCombobox, "RIGHT", -5, 0)
-	fsText:SetText(L["Panel level"])
+	fsText:SetText(L["Strata of panel"])
 
 	-- FRAME STRATA COMBOBOX
 	local fsCombobox =  CreateFrame("FRAME", "HidingBarAddonFrameStrata", self.generalPanel, "UIDropDownMenuTemplate")
@@ -291,7 +291,6 @@ config:SetScript("OnShow", function(self)
 			UIFrameFadeRemoveFrame(self.hidingBar.drag)
 			self.hidingBar.drag:SetAlpha(1)
 		end
-		self.hidingBar:applyLayout()
 	end)
 
 	-- FADE OPACITY
@@ -523,14 +522,14 @@ config:SetScript("OnShow", function(self)
 		if self.config.size ~= value then
 			self.config.size = value
 			slider.label:SetText(value)
-			self:applyLayout()
+			self:applyLayout(.3)
 			self:hidingBarUpdate()
 		end
 	end)
 
 	-- SLIDER BUTTONS SIZE
 	local buttonSize = CreateFrame("SLIDER", nil, self.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-	buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -15)
+	buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -18)
 	buttonSize:SetPoint("RIGHT", -30, 0)
 	buttonSize:SetPoint("RIGHT", -30, 0)
 	buttonSize:SetMinMaxValues(16, 64)
@@ -544,11 +543,45 @@ config:SetScript("OnShow", function(self)
 			self.config.buttonSize = value
 			slider.label:SetText(value)
 			self:setButtonSize()
-			self:applyLayout()
+			self:applyLayout(.3)
 			self.hidingBar:setButtonSize()
 			self:hidingBarUpdate()
 		end
 	end)
+
+	-- MINIMAP BUTTON POSITION TEXT
+	local mbtnPostionText = self.buttonSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	mbtnPostionText:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -18)
+	mbtnPostionText:SetText(L["Position of minimap buttons"])
+
+	-- MINIMAP BUTTON POSITION
+	local mbtnPostionCombobox = CreateFrame("FRAME", "HidingBarAddonMBtnPosition", self.buttonSettingsPanel, "UIDropDownMenuTemplate")
+	mbtnPostionCombobox:SetPoint("LEFT", mbtnPostionText, "RIGHT", -12, 0)
+	UIDropDownMenu_SetWidth(mbtnPostionCombobox, 100)
+
+	local function updateMBtnPostion(btn)
+		UIDropDownMenu_SetSelectedValue(mbtnPostionCombobox, btn.value)
+		self.config.mbtnPosition = btn.value
+		self:hidingBarUpdate()
+		self:applyLayout(.3)
+	end
+
+	UIDropDownMenu_Initialize(mbtnPostionCombobox, function(self, level)
+		local info = UIDropDownMenu_CreateInfo()
+
+		info.checked = nil
+		info.text = L["A new line"]
+		info.value = 0
+		info.func = updateMBtnPostion
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Followed"]
+		info.value = 1
+		info.func = updateMBtnPostion
+		UIDropDownMenu_AddButton(info)
+	end)
+	UIDropDownMenu_SetSelectedValue(mbtnPostionCombobox, self.config.mbtnPosition)
 
 	-- BUTTONS TAB PANEL
 	self.buttonsTabPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
@@ -732,38 +765,40 @@ end
 function config:dragBtn(btn)
 	local scale = btn:GetScale()
 	local x = btn:GetLeft() - (self.buttonPanel:GetLeft() + 4) / scale
-	local y = (self.buttonPanel:GetTop() - 4 - btn.offset) / scale - btn:GetTop()
+	local y = (self.buttonPanel:GetTop() - 4) / scale - btn:GetTop()
 	local buttonSize = self.config.buttonSize / scale
 	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
-	if row < 0 then row = 0 end
-	if row > btn.maxRow then row = btn.maxRow end
-	if column < 1 then column = 1 end
-	if column > btn.maxColumn then column = btn.maxColumn end
-	local order = row * self.size + column
-	if order > #btn.btnList then order = #btn.btnList end
+	if row < btn.minRow then row = btn.minRow
+	elseif row > btn.maxRow then row = btn.maxRow end
+	if column < 1 then column = 1
+	elseif column > btn.maxColumn then column = btn.maxColumn end
+	local order = row * self.size + column - btn.orderDelta
+	if order < 1 then order = 1
+	elseif order > #btn.btnList then order = #btn.btnList end
 
 	local step = order > btn.settings[2] and 1 or -1
 	for i = btn.settings[2], order - step, step do
 		local button = btn.btnList[i + step]
 		btn.btnList[i] = button
 		button.settings[2] = i
-		self:setPointBtn(button, 4, 4 + btn.offset, i, .1)
+		self:setPointBtn(button, 4, 4, i + btn.orderDelta, .1)
 	end
 	btn.btnList[order] = btn
 	btn.settings[2] = order
 end
 
 
-function config:dragStart(btn, offset)
+function config:dragStart(btn, orderDelta)
 	btn.isDrag = true
 	for i = 1, #btn.btnList do
 		btn.btnList[i].settings[2] = i
 	end
 	if not btn.level then btn.level = btn:GetFrameLevel() end
 	btn:SetFrameLevel(btn.level + 2)
-	btn.offset = offset or 0
-	btn.maxColumn = #btn.btnList
-	btn.maxRow = math.floor((btn.maxColumn - 1) / self.size)
+	btn.orderDelta = orderDelta or 0
+	btn.maxColumn = #btn.btnList + btn.orderDelta
+	btn.minRow = math.floor(btn.orderDelta / self.size)
+	btn.maxRow = math.ceil(btn.maxColumn / self.size) - 1
 	if btn.maxColumn > self.size then btn.maxColumn = self.size end
 	btn:SetScript("OnUpdate", function(btn) self:dragBtn(btn) end)
 	btn:StartMoving()
@@ -775,7 +810,7 @@ function config:dragStop(btn)
 	btn:SetFrameLevel(btn.level)
 	btn:SetScript("OnUpdate", nil)
 	btn:StopMovingOrSizing()
-	self:setPointBtn(btn, 4, 4 + btn.offset, btn.settings[2], .3)
+	self:setPointBtn(btn, 4, 4, btn.settings[2] + btn.orderDelta, .3)
 	self.hidingBar:sort()
 	self:hidingBarUpdate()
 end
@@ -799,6 +834,14 @@ do
 		config:hidingBarUpdate()
 	end
 
+	local function btnDragStart(btn)
+		config:dragStart(btn)
+	end
+
+	local function btnDragStop(btn)
+		config:dragStop(btn)
+	end
+
 	function config:createButton(name, button, update)
 		if not self.buttonPanel or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
@@ -814,8 +857,8 @@ do
 		btn.iconDesaturated = button.iconDesaturated
 		btn.btnList = self.buttons
 		btn:HookScript("OnClick", btnClick)
-		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn) end)
-		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
+		btn:SetScript("OnDragStart", btnDragStart)
+		btn:SetScript("OnDragStop", btnDragStop)
 		btn.settings = self.config.btnSettings[name]
 		btn:SetChecked(btn.settings[1])
 		buttonsByName[name] = btn
@@ -843,6 +886,14 @@ do
 		end
 	end
 
+	local function btnDragStart(btn)
+		config:dragStart(btn, config.orderMBtnDelta)
+	end
+
+	local function btnDragStop(btn)
+		config:dragStop(btn)
+	end
+
 	function config:createMButton(name, icon)
 		if type(name) ~= "string" or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
@@ -853,8 +904,8 @@ do
 		btn.color = {icon:GetVertexColor()}
 		btn.btnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)
-		btn:SetScript("OnDragStart", function(btn) self:dragStart(btn, math.ceil(#self.buttons / self.size) * self.config.buttonSize) end)
-		btn:SetScript("OnDragStop", function(btn) self:dragStop(btn) end)
+		btn:SetScript("OnDragStart", btnDragStart)
+		btn:SetScript("OnDragStop", btnDragStop)
 		btn.settings = self.config.mbtnSettings[name]
 		btn:SetChecked(btn.settings[1])
 		buttonsByName[name] = btn
@@ -935,22 +986,24 @@ function config:setPointBtn(btn, offsetX, offsetY, order, delay)
 end
 
 
-function config:applyLayout()
+function config:applyLayout(delay)
+	local offsetX, offsetY = 4, 4
 	local maxColumns = math.floor(560 / self.config.buttonSize)
 	self.size = self.config.size
 	if self.size > maxColumns then self.size = maxColumns end
 
 	for i, btn in ipairs(self.buttons) do
-		self:setPointBtn(btn, 4, 4, i)
+		self:setPointBtn(btn, offsetX, offsetY, i, delay)
 	end
-	local rows = math.ceil(#self.buttons / self.size)
-	local offsetY = rows * self.config.buttonSize + 4
+	self.orderMBtnDelta = self.config.mbtnPosition == 1 and #self.buttons or math.ceil(#self.buttons / self.size) * self.size
 	for i, btn in ipairs(self.mbuttons) do
-		self:setPointBtn(btn, 4, offsetY, i)
+		self:setPointBtn(btn, offsetX, offsetY, i + self.orderMBtnDelta, delay)
 	end
 
-	rows = rows + math.ceil(#self.mbuttons / self.size)
-	self.buttonPanel:SetSize(self.size * self.config.buttonSize + 8, rows * self.config.buttonSize + 8)
+	local rows = math.ceil((#self.mbuttons + self.orderMBtnDelta) / self.size)
+	local width = self.size * self.config.buttonSize + offsetX * 2
+	local height = rows * self.config.buttonSize +  offsetY * 2
+	self.buttonPanel:SetSize(width, height)
 end
 
 
