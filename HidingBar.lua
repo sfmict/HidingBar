@@ -1,5 +1,5 @@
 local addon, L = ...
-local config = _G[addon.."ConfigAddon"]
+local config, UIParent = _G[addon.."ConfigAddon"], UIParent
 local hidingBar = CreateFrame("FRAME", addon.."Addon", UIParent, "HidingBarAddonPanel")
 hidingBar.cover = CreateFrame("FRAME", nil, hidingBar)
 hidingBar.cover:Hide()
@@ -878,30 +878,42 @@ function hidingBar:setBarPosition()
 		self.position = self.config.position / scale
 	end
 
+	local UIwidth, UIheight = UIParent:GetSize()
+	local width, height = self:GetSize()
 	local anchor = self.config.anchor
+
+	if anchor == "left" or anchor == "right" then
+		if self.config.expand == 0 then
+			if self.position > UIheight then self.position = UIheight
+			elseif self.position - height < 0 then self.position = height end
+		else
+			if self.position + height > UIheight then self.position = UIheight - height
+			elseif self.position < 0 then self.position = 0 end
+		end
+	else
+		if self.config.expand == 0 then
+			if self.position + width > UIwidth then self.position = UIwidth - width
+			elseif self.position < 0 then self.position = 0 end
+		else
+			if self.position > UIwidth then self.position = UIwidth
+			elseif self.position - width < 0 then self.position = width end
+		end
+	end
+
 	self:ClearAllPoints()
 	if anchor == "left" then
 		local point = self.config.expand == 0 and "TOPLEFT" or "BOTTOMLEFT"
-		self:SetPoint(point, self:GetParent(), "BOTTOMLEFT", 0, self.position)
+		self:SetPoint(point, UIParent, "BOTTOMLEFT", 0, self.position)
 	elseif anchor == "right" then
 		local point = self.config.expand == 0 and "TOPRIGHT" or "BOTTOMRIGHT"
-		self:SetPoint(point,  self:GetParent(), "BOTTOMRIGHT", 0, self.position)
+		self:SetPoint(point, UIParent, "BOTTOMRIGHT", 0, self.position)
 	elseif anchor == "top" then
 		local point = self.config.expand == 0 and "TOPLEFT" or "TOPRIGHT"
-		self:SetPoint(point, self:GetParent(), "TOPLEFT", self.position, 0)
+		self:SetPoint(point, UIParent, "TOPLEFT", self.position, 0)
 	else
 		local point = self.config.expand == 0 and "BOTTOMLEFT" or "BOTTOMRIGHT"
-		self:SetPoint(point, self:GetParent(), "BOTTOMLEFT", self.position, 0)
+		self:SetPoint(point, UIParent, "BOTTOMLEFT", self.position, 0)
 	end
-	-- if anchor == "left" then
-	-- 	self:SetPoint("BOTTOMLEFT", 0, self.position)
-	-- elseif anchor == "right" then
-	-- 	self:SetPoint("BOTTOMRIGHT", 0, self.position)
-	-- elseif anchor == "top" then
-	-- 	self:SetPoint("TOPLEFT", self.position, 0)
-	-- else
-	-- 	self:SetPoint("BOTTOMLEFT", self.position, 0)
-	-- end
 end
 
 
@@ -940,13 +952,10 @@ function hidingBar:dragBar()
 	if anchor == "left" or anchor == "right" then
 		local delta = self.config.expand == 0 and -height or height
 		position = y - delta / 2
-		if position + delta > UIheight then position = UIheight - delta end
 	else
 		local delta = self.config.expand == 0 and width or -width
 		position = x - delta / 2
-		if position + delta > UIwidth then position = UIwidth - delta end
 	end
-	if position < 0 then position = 0 end
 
 	self.position = position
 	self.config.position = position * scale
