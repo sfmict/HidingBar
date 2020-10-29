@@ -8,6 +8,7 @@ hidingBar.cover:EnableMouse(true)
 hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag = CreateFrame("BUTTON", nil, UIParent)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
+hidingBar.drag:SetFrameLevel(hidingBar:GetFrameLevel())
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
 hidingBar.createdButtons, hidingBar.minimapButtons = {}, {}
@@ -75,7 +76,8 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.db.config = self.db.config or {}
 		self.config = self.db.config
 		self.config.orientation = self.config.orientation or 0
-		self.config.frameStrata = self.config.frameStrata or 0
+		self.config.expand = self.config.expand or 0
+		self.config.frameStrata = self.config.frameStrata or 2
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.lineWidth = self.config.lineWidth or 4
 		self.config.showHandler = self.config.showHandler or 0
@@ -88,6 +90,7 @@ function hidingBar:ADDON_LOADED(addonName)
 			self.config.grabMinimap = true
 		end
 		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
+		self.config.mbtnPosition = self.config.mbtnPosition or 0
 		self.config.ignoreMBtn = self.config.ignoreMBtn or {"GatherMatePin"}
 		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
 		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
@@ -335,7 +338,7 @@ function hidingBar:grabMinimapAddonsButtons(t)
 
 				local btn = self.minimapButtons[child[0]]
 				self.minimapButtons[child[0]] = nil
-				if not btn or btn ~= child then
+				if btn ~= child then
 					self:setHooks(child)
 				end
 
@@ -538,13 +541,13 @@ function hidingBar:applyLayout()
 			btn:Hide()
 		end
 	end
-	local line = math.ceil(i / self.config.size)
-	local offsetYm = line * self.config.buttonSize + offsetY
+	local followed = self.config.mbtnPosition == 1
+	local orderDelta = followed and i or math.ceil(i / self.config.size) * self.config.size
 	local j = 0
 	for _, btn in ipairs(self.minimapButtons) do
 		if btn:IsShown() then
 			j = j + 1
-			self:setPointBtn(btn, offsetX, offsetYm, j, orientation)
+			self:setPointBtn(btn, offsetX, offsetY, j + orderDelta, orientation)
 		end
 	end
 
@@ -552,9 +555,9 @@ function hidingBar:applyLayout()
 	if not self.shown then self:Hide() end
 	self:refreshShown()
 
-	local maxButtons = i > j and i or j
+	local maxButtons = followed and i + j or i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
-	line = line + math.ceil(j / self.config.size)
+	local line =  math.ceil((j + orderDelta) / self.config.size)
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
 	if orientation == 2 then width, height = height, width end
@@ -619,6 +622,28 @@ function hidingBar:setDragBarPosition()
 end
 
 
+function hidingBar:setBarExpand(expand)
+	if self.config.expand == expand then return end
+	local anchor, delta = self.config.anchor
+
+	if anchor == "left" or anchor == "right" then
+		delta = self:GetHeight()
+	else
+		delta = -self:GetWidth()
+	end
+
+	if expand == 0 then
+		self.position = self.position + delta
+	else
+		self.position = self.position - delta
+	end
+	self.config.expand = expand
+	self.config.position = self.position * self:GetEffectiveScale()
+
+	self:setBarPosition()
+end
+
+
 function hidingBar:setBarPosition()
 	if not self.position then
 		local scale = UIParent:GetScale()
@@ -635,14 +660,27 @@ function hidingBar:setBarPosition()
 	local anchor = self.config.anchor
 	self:ClearAllPoints()
 	if anchor == "left" then
-		self:SetPoint("BOTTOMLEFT", 0, self.position)
+		local point = self.config.expand == 0 and "TOPLEFT" or "BOTTOMLEFT"
+		self:SetPoint(point, self:GetParent(), "BOTTOMLEFT", 0, self.position)
 	elseif anchor == "right" then
-		self:SetPoint("BOTTOMRIGHT", 0, self.position)
+		local point = self.config.expand == 0 and "TOPRIGHT" or "BOTTOMRIGHT"
+		self:SetPoint(point,  self:GetParent(), "BOTTOMRIGHT", 0, self.position)
 	elseif anchor == "top" then
-		self:SetPoint("TOPLEFT", self.position, 0)
+		local point = self.config.expand == 0 and "TOPLEFT" or "TOPRIGHT"
+		self:SetPoint(point, self:GetParent(), "TOPLEFT", self.position, 0)
 	else
-		self:SetPoint("BOTTOMLEFT", self.position, 0)
+		local point = self.config.expand == 0 and "BOTTOMLEFT" or "BOTTOMRIGHT"
+		self:SetPoint(point, self:GetParent(), "BOTTOMLEFT", self.position, 0)
 	end
+	-- if anchor == "left" then
+	-- 	self:SetPoint("BOTTOMLEFT", 0, self.position)
+	-- elseif anchor == "right" then
+	-- 	self:SetPoint("BOTTOMRIGHT", 0, self.position)
+	-- elseif anchor == "top" then
+	-- 	self:SetPoint("TOPLEFT", self.position, 0)
+	-- else
+	-- 	self:SetPoint("BOTTOMLEFT", self.position, 0)
+	-- end
 end
 
 
@@ -679,11 +717,13 @@ function hidingBar:dragBar()
 	end
 
 	if anchor == "left" or anchor == "right" then
-		position = y - height / 2
-		if position + height > UIheight then position = UIheight - height end
+		local delta = self.config.expand == 0 and -height or height
+		position = y - delta / 2
+		if position + delta > UIheight then position = UIheight - delta end
 	else
-		position = x - width / 2
-		if position + width > UIwidth then position = UIwidth - width end
+		local delta = self.config.expand == 0 and width or -width
+		position = x - delta / 2
+		if position + delta > UIwidth then position = UIwidth - delta end
 	end
 	if position < 0 then position = 0 end
 
