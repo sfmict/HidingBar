@@ -102,16 +102,42 @@ config:SetScript("OnShow", function(self)
 		self.tabButtonSettings:Enable()
 	end)
 
-	-- DESCRIPTION
-	local hexColor = toHex(self.config.lineColor)
-	local description = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	description:SetPoint("TOPLEFT", 8, -10)
-	description:SetJustifyH("LEFT")
-	description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+	-- EXPAND TO TEXT
+	local expandToText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	expandToText:SetPoint("TOPRIGHT", -10, -8)
+	expandToText:SetWidth(114)
+	expandToText:SetText(L["Expand to"])
+
+	-- EXPAND TO COMBOBOX
+	local expandToCombobox = CreateFrame("FRAME", "HidingBarAddonExpandTo", self.generalPanel, "UIDropDownMenuTemplate")
+	expandToCombobox:SetPoint("TOPRIGHT", expandToText, "BOTTOMRIGHT", 17, -2)
+	UIDropDownMenu_SetWidth(expandToCombobox, 100)
+
+	local function updateExpandTo(btn)
+		UIDropDownMenu_SetSelectedValue(expandToCombobox, btn.value)
+		self.hidingBar:setBarExpand(btn.value)
+	end
+
+	UIDropDownMenu_Initialize(expandToCombobox, function(self, level)
+		local info = UIDropDownMenu_CreateInfo()
+
+		info.checked = nil
+		info.text = L["Right / Bottom"]
+		info.value = 0
+		info.func = updateExpandTo
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Left / Top"]
+		info.value = 1
+		info.func = updateExpandTo
+		UIDropDownMenu_AddButton(info)
+	end)
+	UIDropDownMenu_SetSelectedValue(expandToCombobox, self.config.expand)
 
 	-- LINE COLOR
 	local lineColor = CreateFrame("BUTTON", nil, self.generalPanel, "HidingBarAddonColorButton")
-	lineColor:SetPoint("TOPRIGHT", -8, -8)
+	lineColor:SetPoint("TOPRIGHT", expandToCombobox, "BOTTOMRIGHT", -18, -2)
 	lineColor.color:SetColorTexture(unpack(self.config.lineColor))
 	local lineColorText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	lineColorText:SetPoint("RIGHT", lineColor, "LEFT", -3, 0)
@@ -122,7 +148,7 @@ config:SetScript("OnShow", function(self)
 		self.config.lineColor = {ColorPickerFrame:GetColorRGB()}
 		self.hidingBar.drag.bg:SetColorTexture(ColorPickerFrame:GetColorRGB())
 		local hexColor = toHex(self.config.lineColor)
-		description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+		self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
 		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		lineColor.color:SetColorTexture(ColorPickerFrame:GetColorRGB())
@@ -133,7 +159,7 @@ config:SetScript("OnShow", function(self)
 		self.config.lineColor = {color.r, color.g, color.b}
 		self.hidingBar.drag.bg:SetColorTexture(color.r, color.g, color.b)
 		local hexColor = toHex(self.config.lineColor)
-		description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+		self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
 		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		lineColor.color:SetColorTexture(color.r, color.g, color.b)
@@ -195,9 +221,16 @@ config:SetScript("OnShow", function(self)
 		OpenColorPicker(btn)
 	end)
 
+	-- DESCRIPTION
+	local hexColor = toHex(self.config.lineColor)
+	self.description = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	self.description:SetPoint("TOPLEFT", 8, -10)
+	self.description:SetJustifyH("LEFT")
+	self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+
 		-- ORIENTATION TEXT
 	local orientationText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	orientationText:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -23)
+	orientationText:SetPoint("TOPLEFT", self.description, "BOTTOMLEFT", 0, -23)
 	orientationText:SetText(L["Orientation"])
 
 	-- ORIENTATION COMBOBOX
@@ -329,7 +362,7 @@ config:SetScript("OnShow", function(self)
 
 	-- SHOW HANDLER TEXT
 	local showHandlerText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	showHandlerText:SetPoint("TOPLEFT", self.lineWidth, "BOTTOMLEFT", 0, -18)
+	showHandlerText:SetPoint("TOPLEFT", self.lineWidth, "BOTTOMLEFT", 0, -20)
 	showHandlerText:SetText(L["Show on"])
 
 	-- SHOW HANDLER
@@ -549,12 +582,12 @@ config:SetScript("OnShow", function(self)
 		end
 	end)
 
-	-- MINIMAP BUTTON POSITION TEXT
+	-- POSTION OF MINIMAP BUTTON TEXT
 	local mbtnPostionText = self.buttonSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	mbtnPostionText:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -18)
+	mbtnPostionText:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -20)
 	mbtnPostionText:SetText(L["Position of minimap buttons"])
 
-	-- MINIMAP BUTTON POSITION
+	-- POSITION OF MINIMAP BUTTON
 	local mbtnPostionCombobox = CreateFrame("FRAME", "HidingBarAddonMBtnPosition", self.buttonSettingsPanel, "UIDropDownMenuTemplate")
 	mbtnPostionCombobox:SetPoint("LEFT", mbtnPostionText, "RIGHT", -12, 0)
 	UIDropDownMenu_SetWidth(mbtnPostionCombobox, 100)
