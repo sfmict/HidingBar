@@ -359,6 +359,21 @@ function hidingBar:init()
 				return false
 			end
 
+			queue.EyeHighlightAnim:SetScript("OnLoop", nil)
+			local f = CreateFrame("FRAME")
+			f.eyeAnim = f:CreateAnimationGroup()
+			f.eyeAnim:SetLooping(queue.EyeHighlightAnim:GetLooping())
+			f.timer = f.eyeAnim:CreateAnimation()
+			f.timer:SetDuration(1)
+			f.eyeAnim:SetScript("OnLoop", function()
+				if QueueStatusMinimapButton_OnGlowPulse(queue) then
+					PlaySound(SOUNDKIT.UI_GROUP_FINDER_RECEIVE_APPLICATION)
+				end
+			end)
+			hooksecurefunc(queue.EyeHighlightAnim, "Play", function() f.eyeAnim:Play() end)
+			hooksecurefunc(queue.EyeHighlightAnim, "Stop", function() f.eyeAnim:Stop() end)
+			f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
+
 			if self.MSQ_MButton then
 				local data = {
 					_Border = QueueStatusMinimapButtonBorder,
@@ -859,28 +874,28 @@ function hidingBar:setBarExpand(expand)
 		self.position = self.position - delta
 	end
 	self.config.expand = expand
-	self.config.position = self.position * self:GetEffectiveScale()
+	self.config.position = self.position * UIParent:GetScale()
 
 	self:setBarPosition()
 end
 
 
 function hidingBar:setBarPosition()
+	local UIwidth, UIheight = UIParent:GetSize()
+	local width, height = self:GetSize()
+	local anchor = self.config.anchor
+
 	if not self.position then
 		local scale = UIParent:GetScale()
 		if not self.config.position then
-			if self.config.anchor == "left" or self.config.anchor =="right" then
-				self.config.position = WorldFrame:GetHeight() / 2 - self:GetHeight() / 2 * scale
+			if anchor == "left" or anchor =="right" then
+				self.config.position = WorldFrame:GetHeight() / 2 - height / 2 * scale
 			else
-				self.config.position = WorldFrame:GetWidth() / 2 - self:GetWidth() / 2 * scale
+				self.config.position = WorldFrame:GetWidth() / 2 - width / 2 * scale
 			end
 		end
 		self.position = self.config.position / scale
 	end
-
-	local UIwidth, UIheight = UIParent:GetSize()
-	local width, height = self:GetSize()
-	local anchor = self.config.anchor
 
 	if anchor == "left" or anchor == "right" then
 		if self.config.expand == 0 then
