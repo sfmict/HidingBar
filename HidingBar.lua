@@ -582,6 +582,12 @@ function hidingBar:grabMinimapAddonsButtons(t)
 					self:setMButtonRegions(child)
 				end
 
+				if child.SetFixedFrameStrata then
+					child:SetFixedFrameStrata(false)
+				end
+				if child.SetFixedFrameLevel then
+					child:SetFixedFrameLevel(false)
+				end
 				self.SetClipsChildren(child, true)
 				self.SetAlpha(child, 1)
 				self.SetHitRectInsets(child, 0, 0, 0, 0)
@@ -615,6 +621,12 @@ function hidingBar:grabMinimapAddonsButtons(t)
 						frame:HookScript("OnLeave", leave)
 					end
 
+					if child.SetFixedFrameStrata then
+						child:SetFixedFrameStrata(false)
+					end
+					if child.SetFixedFrameLevel then
+						child:SetFixedFrameLevel(false)
+					end
 					self.SetClipsChildren(child, true)
 					self.SetAlpha(child, 1)
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
@@ -706,6 +718,8 @@ function hidingBar:setHooks(btn)
 	btn.SetSize = void
 	btn.SetWidth = void
 	btn.SetHeight = void
+	btn.Disable = void
+	btn.SetEnabled = void
 	btn.HookScript = void
 	btn.SetScript = function(self, event, ...)
 		event = event:lower()

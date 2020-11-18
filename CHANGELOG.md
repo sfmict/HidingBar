@@ -1,3 +1,1 @@
-* Added option "Position of minimap buttons".
-* Added option "Expand to".
-* Fixed a bug where the panel would appear behind the screen.
+* Fixed LibDBIcon-1.0 icons from minimap.
