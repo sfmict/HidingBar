@@ -588,7 +588,6 @@ function hidingBar:grabMinimapAddonsButtons(t)
 				self.SetAlpha(child, 1)
 				self.SetHitRectInsets(child, 0, 0, 0, 0)
 				self.SetParent(child, self)
-				self.SetScript(child, "OnUpdate", nil)
 				self.HookScript(child, "OnEnter", enter)
 				self.HookScript(child, "OnLeave", leave)
 				tinsert(self.minimapButtons, child)
@@ -717,10 +716,10 @@ function hidingBar:setHooks(btn)
 	btn.Disable = void
 	btn.SetEnabled = void
 	btn.HookScript = void
-	btn.SetScript = function(self, event, ...)
+	btn.SetScript = function(self, event, func, ...)
 		event = event:lower()
-		if event ~= "onupdate" and event ~= "ondragstart" and event ~= "ondragstop" then
-			getmetatable(self).__index.SetScript(self, event, ...)
+		if func == nil or event ~= "onupdate" and event ~= "ondragstart" and event ~= "ondragstop" then
+			getmetatable(self).__index.SetScript(self, event, func, ...)
 		end
 	end
 end
