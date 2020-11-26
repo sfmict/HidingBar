@@ -180,8 +180,8 @@ function hidingBar:init()
 	end
 
 	if self.config.grabMinimap then
-		local ldbi = LibStub("LibDBIcon-1.0", true)
-		if ldbi then
+		local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0", true)
+		if ldbi and ldbi_ver >= 39 then
 			local ldbiTbl = ldbi:GetButtonList()
 			for i = 1, #ldbiTbl do
 				local button = ldbi:GetMinimapButton(ldbiTbl[i])
