@@ -350,7 +350,6 @@ function hidingBar:grabMinimapAddonsButtons(t)
 				self.SetAlpha(child, 1)
 				self.SetHitRectInsets(child, 0, 0, 0, 0)
 				self.SetParent(child, self)
-				self.SetScript(child, "OnUpdate", nil)
 				self.HookScript(child, "OnEnter", enter)
 				self.HookScript(child, "OnLeave", leave)
 				tinsert(self.minimapButtons, child)
@@ -470,11 +469,13 @@ function hidingBar:setHooks(btn)
 	btn.SetSize = void
 	btn.SetWidth = void
 	btn.SetHeight = void
+	btn.Disable = void
+	btn.SetEnabled = void
 	btn.HookScript = void
-	btn.SetScript = function(self, event, ...)
+	btn.SetScript = function(self, event, func, ...)
 		event = event:lower()
-		if event ~= "onupdate" and event ~= "ondragstart" and event ~= "ondragstop" then
-			getmetatable(self).__index.SetScript(self, event, ...)
+		if func == nil or event ~= "onupdate" and event ~= "ondragstart" and event ~= "ondragstop" then
+			getmetatable(self).__index.SetScript(self, event, func, ...)
 		end
 	end
 end
@@ -638,28 +639,28 @@ function hidingBar:setBarExpand(expand)
 		self.position = self.position - delta
 	end
 	self.config.expand = expand
-	self.config.position = self.position * self:GetEffectiveScale()
+	self.config.position = self.position * UIParent:GetScale()
 
 	self:setBarPosition()
 end
 
 
 function hidingBar:setBarPosition()
+	local UIwidth, UIheight = UIParent:GetSize()
+	local width, height = self:GetSize()
+	local anchor = self.config.anchor
+
 	if not self.position then
 		local scale = UIParent:GetScale()
 		if not self.config.position then
-			if self.config.anchor == "left" or self.config.anchor =="right" then
-				self.config.position = WorldFrame:GetHeight() / 2 - self:GetHeight() / 2 * scale
+			if anchor == "left" or anchor =="right" then
+				self.config.position = WorldFrame:GetHeight() / 2 - height / 2 * scale
 			else
-				self.config.position = WorldFrame:GetWidth() / 2 - self:GetWidth() / 2 * scale
+				self.config.position = WorldFrame:GetWidth() / 2 - width / 2 * scale
 			end
 		end
 		self.position = self.config.position / scale
 	end
-
-	local UIwidth, UIheight = UIParent:GetSize()
-	local width, height = self:GetSize()
-	local anchor = self.config.anchor
 
 	if anchor == "left" or anchor == "right" then
 		if self.config.expand == 0 then
