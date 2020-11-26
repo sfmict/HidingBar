@@ -616,12 +616,8 @@ function hidingBar:grabMinimapAddonsButtons(t)
 						frame:HookScript("OnLeave", leave)
 					end
 
-					if child.SetFixedFrameStrata then
-						child:SetFixedFrameStrata(false)
-					end
-					if child.SetFixedFrameLevel then
-						child:SetFixedFrameLevel(false)
-					end
+					self.SetFixedFrameStrata(child, false)
+					self.SetFixedFrameLevel(child, false)
 					self.SetClipsChildren(child, true)
 					self.SetAlpha(child, 1)
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
