@@ -21,6 +21,7 @@ local ignoreFrameList = {
 	["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
+	["GarrisonLandingPageMinimapButton"] = true,
 }
 
 
@@ -582,14 +583,23 @@ function hidingBar:grabMinimapAddonsButtons(t)
 					self:setMButtonRegions(child)
 				end
 
+				local function setMouseEvents(frame)
+					if frame:IsMouseEnabled() then
+						self.HookScript(frame, "OnEnter", enter)
+						self.HookScript(frame, "OnLeave", leave)
+					end
+					for _, fchild in ipairs({frame:GetChildren()}) do
+						setMouseEvents(fchild)
+					end
+				end
+				setMouseEvents(child)
+
 				self.SetFixedFrameStrata(child, false)
 				self.SetFixedFrameLevel(child, false)
 				self.SetClipsChildren(child, true)
 				self.SetAlpha(child, 1)
 				self.SetHitRectInsets(child, 0, 0, 0, 0)
 				self.SetParent(child, self)
-				self.HookScript(child, "OnEnter", enter)
-				self.HookScript(child, "OnLeave", leave)
 				tinsert(self.minimapButtons, child)
 			else
 				local mouseEnabled, clickable = {}
