@@ -44,6 +44,41 @@ end
 config:SetScript("OnShow", function(self)
 	self:SetScript("OnShow", nil)
 
+	local function tabClick(tab)
+		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+		for i = 1, #tab.tabs do
+			local checked = tab == tab.tabs[i]
+			tab.tabs[i]:SetEnabled(not checked)
+			tab.tabs[i].panel:SetShown(checked)
+		end
+	end
+
+	local function createTabPanel(tabs, name)
+		local panel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
+		local tab = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
+		tab.panel = panel
+		tab.tabs = tabs
+		tab:SetText(name)
+		tab:SetWidth(tab:GetTextWidth() + 48)
+		tab:SetScript("OnClick", tabClick)
+
+		if #tabs == 0 then
+			tab:SetPoint("BOTTOMLEFT", panel, "TOPLEFT", 3, -1)
+			tab:Disable()
+		else
+			local anchorTab = tabs[#tabs]
+			tab:SetPoint("LEFT", anchorTab, "RIGHT", -16, 0)
+			panel:SetPoint("TOPLEFT", anchorTab.panel)
+			panel:SetPoint("BOTTOMRIGHT", anchorTab.panel)
+			panel:Hide()
+		end
+		tinsert(tabs, tab)
+
+		return panel
+	end
+
+	local settingsTabs, buttonTabs = {}, {}
+
 	-- DIALOGS
 	self.addonName = ("%s_ADDON_"):format(addon:upper())
 	StaticPopupDialogs[self.addonName.."GET_RELOAD"] = {
@@ -85,22 +120,9 @@ config:SetScript("OnShow", function(self)
 	title:SetText(L["%s Configuration"]:format(addon))
 
 	-- GENERAL TAB PANEL
-	self.generalPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
+	self.generalPanel = createTabPanel(settingsTabs, L["General"])
 	self.generalPanel:SetPoint("TOPLEFT", 8, -58)
 	self.generalPanel:SetPoint("BOTTOMRIGHT", self, -8, 275)
-
-	self.tabGeneral = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
-	self.tabGeneral:SetPoint("BOTTOMLEFT", self.generalPanel, "TOPLEFT", 3, -1)
-	self.tabGeneral:SetText(L["General"])
-	self.tabGeneral:SetWidth(self.tabGeneral:GetTextWidth() + 48)
-	self.tabGeneral:Disable()
-	self.tabGeneral:SetScript("OnClick", function()
-		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
-		self.generalPanel:Show()
-		self.buttonSettingsPanel:Hide()
-		self.tabGeneral:Disable()
-		self.tabButtonSettings:Enable()
-	end)
 
 	-- EXPAND TO TEXT
 	local expandToText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
@@ -451,23 +473,8 @@ config:SetScript("OnShow", function(self)
 		editBox:HighlightText(0, 0)
 	end)
 
-	-- MINIMAP TAB PANEL
-	self.buttonSettingsPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
-	self.buttonSettingsPanel:SetPoint("TOPLEFT", 8, -58)
-	self.buttonSettingsPanel:SetPoint("BOTTOMRIGHT", self, -8, 275)
-	self.buttonSettingsPanel:Hide()
-
-	self.tabButtonSettings = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
-	self.tabButtonSettings:SetPoint("LEFT", self.tabGeneral, "RIGHT", -16, 0)
-	self.tabButtonSettings:SetText(L["Button settings"])
-	self.tabButtonSettings:SetWidth(self.tabButtonSettings:GetTextWidth() + 48)
-	self.tabButtonSettings:SetScript("OnClick", function()
-		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
-		self.generalPanel:Hide()
-		self.buttonSettingsPanel:Show()
-		self.tabGeneral:Enable()
-		self.tabButtonSettings:Disable()
-	end)
+	-- BUTTON TAB PANEL
+	self.buttonSettingsPanel = createTabPanel(settingsTabs, L["Button settings"])
 
 	-- GRAB ADDONS BUTTONS
 	self.grab = CreateFrame("CheckButton", nil, self.buttonSettingsPanel, "HidingBarAddonCheckButtonTemplate")
@@ -606,8 +613,92 @@ config:SetScript("OnShow", function(self)
 	end)
 	UIDropDownMenu_SetSelectedValue(mbtnPostionCombobox, self.config.mbtnPosition)
 
+	-- POSITION BAR PANEL
+	self.positionBarPanel = createTabPanel(settingsTabs, L["Bar position"])
+
+	local function updateTypePosition()
+		self.hidingBar:setBarPosition()
+
+		if self.config.freeMove then
+			UIDropDownMenu_EnableDropDown(self.hideToCombobox)
+		else
+			UIDropDownMenu_DisableDropDown(self.hideToCombobox)
+		end
+	end
+
+	-- ATTACHED TO THE SIDE
+	self.attachedToSide = CreateFrame("BUTTON", nil, self.positionBarPanel, "HidingBarAddonRadioButtonTemplate")
+	self.attachedToSide:SetPoint("TOPLEFT", 8, -8)
+	self.attachedToSide.check:SetShown(not self.config.freeMove)
+	self.attachedToSide.Text:SetText(L["Bar attached to the side"])
+	self.attachedToSide:SetScript("OnClick", function(btn)
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+		self.config.secondPosition = 0
+		self.config.freeMove = nil
+		self.freeMove.check:Hide()
+		btn.check:Show()
+		updateTypePosition()
+	end)
+
+	-- MOVES FREELY
+	self.freeMove = CreateFrame("BUTTON", nil, self.positionBarPanel, "HidingBarAddonRadioButtonTemplate")
+	self.freeMove:SetPoint("TOPLEFT", self.attachedToSide, "BOTTOMLEFT")
+	self.freeMove.check:SetShown(self.config.freeMove)
+	self.freeMove.Text:SetText(L["Bar moves freely"])
+	self.freeMove:SetScript("OnClick", function(btn)
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+		self.config.freeMove = true
+		self.attachedToSide.check:Hide()
+		btn.check:Show()
+		updateTypePosition()
+	end)
+
+	-- HIDE TO
+	self.hideToCombobox = CreateFrame("FRAME", "HidingBarAddonHideTo", self.positionBarPanel , "UIDropDownMenuTemplate")
+	self.hideToCombobox:SetPoint("TOPLEFT", self.freeMove, "BOTTOMLEFT", 8, 0)
+	UIDropDownMenu_SetWidth(self.hideToCombobox, 100)
+
+	local function updateBarAnchor(btn)
+		UIDropDownMenu_SetSelectedValue(self.hideToCombobox, btn.value)
+		self.hidingBar:setBarAnchor(btn.value)
+		self.hidingBar:enter()
+		self.hidingBar:leave()
+	end
+
+	UIDropDownMenu_Initialize(self.hideToCombobox, function(self, level)
+		local info = UIDropDownMenu_CreateInfo()
+
+		info.checked = nil
+		info.text = L["Hiding to left"]
+		info.value = "left"
+		info.func = updateBarAnchor
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Hiding to right"]
+		info.value = "right"
+		info.func = updateBarAnchor
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Hiding to up"]
+		info.value = "top"
+		info.func = updateBarAnchor
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Hiding to down"]
+		info.value = "bottom"
+		info.func = updateBarAnchor
+		UIDropDownMenu_AddButton(info)
+	end)
+	UIDropDownMenu_SetSelectedValue(self.hideToCombobox, self.config.anchor)
+
+	-- ENABLE OR DISABLE HIDE TO
+	updateTypePosition()
+
 	-- BUTTONS TAB PANEL
-	self.buttonsTabPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
+	self.buttonsTabPanel = createTabPanel(buttonTabs, L["Buttons"])
 	self.buttonsTabPanel:SetPoint("TOPLEFT", self.generalPanel, "BOTTOMLEFT", 0, -25)
 	self.buttonsTabPanel:SetPoint("BOTTOMRIGHT", self, -8, 8)
 
@@ -622,19 +713,6 @@ config:SetScript("OnShow", function(self)
 	buttonsTabPanelScroll.child:SetSize(1, 1)
 	buttonsTabPanelScroll:SetScrollChild(buttonsTabPanelScroll.child)
 
-	self.tabButtons = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
-	self.tabButtons:SetPoint("BOTTOMLEFT", self.buttonsTabPanel, "TOPLEFT", 3, -1)
-	self.tabButtons:SetText(L["Buttons"])
-	self.tabButtons:SetWidth(self.tabButtons:GetTextWidth() + 48)
-	self.tabButtons:Disable()
-	self.tabButtons:SetScript("OnClick", function()
-		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
-		self.buttonsTabPanel:Show()
-		self.ignoreTabPanel:Hide()
-		self.tabButtons:Disable()
-		self.tabIgnore:Enable()
-	end)
-
 	-- BUTTON PANEL DESCRIPTION
 	local buttonPanelDescription = buttonsTabPanelScroll.child:CreateFontString("ARTWORK", nil, "GameFontHighlight")
 	buttonPanelDescription:SetPoint("TOPLEFT", buttonsTabPanelScroll.child, "BOTTOMLEFT", 8, -5)
@@ -648,22 +726,7 @@ config:SetScript("OnShow", function(self)
 	self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
 
 	-- IGNORE TAB PANEL
-	self.ignoreTabPanel = CreateFrame("FRAME", nil, self, "HidingBarAddonOptionsPanel")
-	self.ignoreTabPanel:SetPoint("TOPLEFT", self.generalPanel, "BOTTOMLEFT", 0, -25)
-	self.ignoreTabPanel:SetPoint("BOTTOMRIGHT", self, -8, 8)
-	self.ignoreTabPanel:Hide()
-
-	self.tabIgnore = CreateFrame("BUTTON", nil, self, "HidingBarAddonTabTemplate")
-	self.tabIgnore:SetPoint("LEFT", self.tabButtons, "RIGHT", -16, 0)
-	self.tabIgnore:SetText(L["Ignore list"])
-	self.tabIgnore:SetWidth(self.tabIgnore:GetTextWidth() + 48)
-	self.tabIgnore:SetScript("OnClick", function()
-		PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
-		self.buttonsTabPanel:Hide()
-		self.ignoreTabPanel:Show()
-		self.tabButtons:Enable()
-		self.tabIgnore:Disable()
-	end)
+	self.ignoreTabPanel = createTabPanel(buttonTabs, L["Ignore list"])
 
 	-- RELOAD BUTTON
 	local reloadBtn = CreateFrame("BUTTON", nil, self, "UIPanelButtonTemplate")

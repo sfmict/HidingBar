@@ -44,6 +44,13 @@ L["Hover or Click"] = "Hover or Click"
 L["Allways"] = "Always"
 L["Delay to show"] = "Delay to show"
 L["Delay to hide"] = "Delay to hide"
+L["Bar position"] = "Bar position"
+L["Bar attached to the side"] = "Bar attached to the side"
+L["Bar moves freely"] = "Bar moves freely"
+L["Hiding to left"] = "Hiding to left"
+L["Hiding to right"] = "Hiding to right"
+L["Hiding to up"] = "Hiding to up"
+L["Hiding to down"] = "Hiding to down"
 
 setmetatable(L, {__index = function(self, key)
 	self[key] = key or ""

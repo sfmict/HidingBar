@@ -1,1 +1,1 @@
-* Updated grab buttons system.
+* Added additional options for bar dragging.
