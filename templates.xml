@@ -1,5 +1,5 @@
 <Ui>
-	<Frame name="HidingBarAddonPanel" enableMouse="true" frameLevel="100" virtual="true">
+	<Frame name="HidingBarAddonPanel" enableMouse="true" frameLevel="100" clampedToScreen="true" virtual="true">
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="bg" setAllPoints="true" file="Interface/ChatFrame/ChatFrameBackground"/>
@@ -210,9 +210,7 @@
 	</CheckButton>
 
 	<CheckButton name="HidingBarAddonCheckButtonTemplate" inherits="OptionsBaseCheckButtonTemplate" virtual="true">
-		<HitRectInsets>
-			<AbsInset left="0" right="-100" top="0" bottom="0"/>
-		</HitRectInsets>
+		<HitRectInsets left="0" right="-100" top="0" bottom="0"/>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
@@ -227,6 +225,40 @@
 			<OnDisable>self.Text:SetTextColor(.5,.5,.5,1)</OnDisable>
 		</Scripts>
 	</CheckButton>
+
+	<Button name="HidingBarAddonRadioButtonTemplate" virtual="true">
+		<Size x="22" y="22"/>
+		<HitRectInsets left="0" right="-100" top="0" bottom="0"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="1"/>
+					</Anchors>
+				</FontString>
+				<Texture parentKey="check" file="Interface/Common/UI-DropDownRadioChecks" hidden="true">
+					<Size x="20" y="20"/>
+					<Anchors>
+						<Anchor point="CENTER" x="1" y="1"/>
+					</Anchors>
+					<TexCoords left="0" right=".5" top=".5" bottom="1"/>
+				</Texture>
+			</Layer>
+		</Layers>
+		<NormalTexture file="Interface/Common/UI-DropDownRadioChecks">
+			<Size x="20" y="20"/>
+			<Anchors>
+				<Anchor point="CENTER" x="1" y="1"/>
+			</Anchors>
+			<TexCoords left=".5" right="1" top=".5" bottom="1"/>
+		</NormalTexture>
+		<HighlightTexture alphaMode="ADD" file="Interface/Minimap/UI-Minimap-ZoomButton-Highlight">
+			<Size x="16" y="16"/>
+			<Anchors>
+				<Anchor point="CENTER" y="-1"/>
+			</Anchors>
+		</HighlightTexture>
+	</Button>
 
 	<Slider name="HidingBarAddonSliderTemplate" inherits="HorizontalSliderTemplate" virtual="true">
 		<Size x="500" y="17"/>
