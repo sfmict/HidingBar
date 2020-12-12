@@ -716,27 +716,24 @@ config:SetScript("OnShow", function(self)
 			editBox:SetNumber(editBox:GetText():match("%-?%d*"))
 		end
 	end)
-	self.coordX:SetScript("OnEnterPressed", function(editBox)
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+	self.coordX.setX = function(editBox, x)
 		if self.config.anchor == "left" or self.config.anchor == "right" then
-			self.hidingBar:setBarPosition(nil, int)
+			self.hidingBar:setBarPosition(nil, x)
 		else
-			self.hidingBar:setBarPosition(int)
+			self.hidingBar:setBarPosition(x)
 		end
+	end
+	self.coordX:SetScript("OnEnterPressed", function(editBox)
+		editBox:setX(tonumber(editBox:GetText():match("%-?%d*")) or 0)
 		editBox:ClearFocus()
 	end)
 	self.coordX:SetScript("OnEditFocusLost", function(editBox)
-		self:setCoords()
+		self:updateCoords()
 		editBox:HighlightText(0, 0)
 	end)
 	self.coordX:SetScript("OnMouseWheel", function(editBox, delta)
 		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		int = int + (delta > 0 and 1 or -1)
-		if self.config.anchor == "left" or self.config.anchor == "right" then
-			self.hidingBar:setBarPosition(nil, int)
-		else
-			self.hidingBar:setBarPosition(int)
-		end
+		editBox:setX(int + (delta > 0 and 1 or -1))
 	end)
 
 	-- COORD Y
@@ -751,31 +748,28 @@ config:SetScript("OnShow", function(self)
 			editBox:SetNumber(editBox:GetText():match("%-?%d*"))
 		end
 	end)
-	self.coordY:SetScript("OnEnterPressed", function(editBox)
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+	self.coordY.setY = function(editBox, y)
 		if self.config.anchor == "left" or self.config.anchor == "right" then
-			self.hidingBar:setBarPosition(int)
+			self.hidingBar:setBarPosition(y)
 		else
-			self.hidingBar:setBarPosition(nil, int)
+			self.hidingBar:setBarPosition(nil, y)
 		end
+	end
+	self.coordY:SetScript("OnEnterPressed", function(editBox)
+		editBox:setY(tonumber(editBox:GetText():match("%-?%d*")) or 0)
 		editBox:ClearFocus()
 	end)
 	self.coordY:SetScript("OnEditFocusLost", function(editBox)
-		self:setCoords()
+		self:updateCoords()
 		editBox:HighlightText(0, 0)
 	end)
 	self.coordY:SetScript("OnMouseWheel", function(editBox, delta)
 		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		int = int + (delta > 0 and 1 or -1)
-		if self.config.anchor == "left" or self.config.anchor == "right" then
-			self.hidingBar:setBarPosition(int)
-		else
-			self.hidingBar:setBarPosition(nil, int)
-		end
+		editBox:setY(int + (delta > 0 and 1 or -1))
 	end)
 
 	-- SET COORDS
-	self:setCoords()
+	self:updateCoords()
 
 	-- ENABLE OR DISABLE "MOVES FREELY" OPTIONS
 	updateFreeMoveChilds()
@@ -897,7 +891,7 @@ config:SetScript("OnShow", function(self)
 end)
 
 
-function config:setCoords()
+function config:updateCoords()
 	if not self.coordX or not self.coordY then return end
 
 	local scale = UIParent:GetScale()

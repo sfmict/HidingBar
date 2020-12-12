@@ -965,7 +965,7 @@ function hidingBar:setBarPosition(position, secondPosition)
 		self.secondPosition = 0
 	end
 
-	config:setCoords()
+	config:updateCoords()
 
 	self:ClearAllPoints()
 	if anchor == "left" then
