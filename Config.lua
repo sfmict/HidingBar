@@ -626,14 +626,14 @@ config:SetScript("OnShow", function(self)
 	-- POSITION BAR PANEL
 	self.positionBarPanel = createTabPanel(settingsTabs, L["Bar position"])
 
-	local function updateTypePosition()
-		self.hidingBar:setBarPosition()
-
+	local function updateFreeMoveChilds()
 		if self.config.freeMove then
 			UIDropDownMenu_EnableDropDown(self.hideToCombobox)
 		else
 			UIDropDownMenu_DisableDropDown(self.hideToCombobox)
 		end
+		self.coordX:SetEnabled(self.config.freeMove)
+		self.coordY:SetEnabled(self.config.freeMove)
 	end
 
 	-- ATTACHED TO THE SIDE
@@ -643,11 +643,11 @@ config:SetScript("OnShow", function(self)
 	self.attachedToSide.Text:SetText(L["Bar attached to the side"])
 	self.attachedToSide:SetScript("OnClick", function(btn)
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-		self.config.secondPosition = 0
 		self.config.freeMove = nil
 		self.freeMove.check:Hide()
 		btn.check:Show()
-		updateTypePosition()
+		updateFreeMoveChilds()
+		self.hidingBar:setBarPosition(nil, 0)
 	end)
 
 	-- MOVES FREELY
@@ -660,7 +660,7 @@ config:SetScript("OnShow", function(self)
 		self.config.freeMove = true
 		self.attachedToSide.check:Hide()
 		btn.check:Show()
-		updateTypePosition()
+		updateFreeMoveChilds()
 	end)
 
 	-- HIDE TO
@@ -704,8 +704,81 @@ config:SetScript("OnShow", function(self)
 	end)
 	UIDropDownMenu_SetSelectedValue(self.hideToCombobox, self.config.anchor)
 
-	-- ENABLE OR DISABLE HIDE TO
-	updateTypePosition()
+	-- COORD X
+	self.coordXText = self.positionBarPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	self.coordXText:SetPoint("LEFT", self.hideToCombobox, "RIGHT", -5, 2)
+	self.coordXText:SetText("X")
+
+	self.coordX = CreateFrame("EditBox", nil, self.positionBarPanel, "HidingBarAddonCoordTextBox")
+	self.coordX:SetPoint("LEFT", self.coordXText, "RIGHT", 1, 0)
+	self.coordX:SetScript("OnTextChanged", function(editBox, userInput)
+		if userInput then
+			editBox:SetNumber(editBox:GetText():match("%-?%d*"))
+		end
+	end)
+	self.coordX:SetScript("OnEnterPressed", function(editBox)
+		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+		if self.config.anchor == "left" or self.config.anchor == "right" then
+			self.hidingBar:setBarPosition(nil, int)
+		else
+			self.hidingBar:setBarPosition(int)
+		end
+		editBox:ClearFocus()
+	end)
+	self.coordX:SetScript("OnEditFocusLost", function(editBox)
+		self:setCoords()
+		editBox:HighlightText(0, 0)
+	end)
+	self.coordX:SetScript("OnMouseWheel", function(editBox, delta)
+		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+		int = int + (delta > 0 and 1 or -1)
+		if self.config.anchor == "left" or self.config.anchor == "right" then
+			self.hidingBar:setBarPosition(nil, int)
+		else
+			self.hidingBar:setBarPosition(int)
+		end
+	end)
+
+	-- COORD Y
+	self.coordYText = self.positionBarPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	self.coordYText:SetPoint("LEFT", self.coordX, "RIGHT", 5, 0)
+	self.coordYText:SetText("Y")
+
+	self.coordY = CreateFrame("EditBox", nil, self.positionBarPanel, "HidingBarAddonCoordTextBox")
+	self.coordY:SetPoint("LEFT", self.coordYText, "RIGHT", 1, 0)
+	self.coordY:SetScript("OnTextChanged", function(editBox, userInput)
+		if userInput then
+			editBox:SetNumber(editBox:GetText():match("%-?%d*"))
+		end
+	end)
+	self.coordY:SetScript("OnEnterPressed", function(editBox)
+		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+		if self.config.anchor == "left" or self.config.anchor == "right" then
+			self.hidingBar:setBarPosition(int)
+		else
+			self.hidingBar:setBarPosition(nil, int)
+		end
+		editBox:ClearFocus()
+	end)
+	self.coordY:SetScript("OnEditFocusLost", function(editBox)
+		self:setCoords()
+		editBox:HighlightText(0, 0)
+	end)
+	self.coordY:SetScript("OnMouseWheel", function(editBox, delta)
+		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+		int = int + (delta > 0 and 1 or -1)
+		if self.config.anchor == "left" or self.config.anchor == "right" then
+			self.hidingBar:setBarPosition(int)
+		else
+			self.hidingBar:setBarPosition(nil, int)
+		end
+	end)
+
+	-- SET COORDS
+	self:setCoords()
+
+	-- ENABLE OR DISABLE "MOVES FREELY" OPTIONS
+	updateFreeMoveChilds()
 
 	-- BUTTONS TAB PANEL
 	self.buttonsTabPanel = createTabPanel(buttonTabs, L["Buttons"])
@@ -822,6 +895,20 @@ config:SetScript("OnShow", function(self)
 		self:applyLayout()
 	end)
 end)
+
+
+function config:setCoords()
+	if not self.coordX or not self.coordY then return end
+
+	local scale = UIParent:GetScale()
+	local x, y = self.config.position / scale, self.config.secondPosition / scale
+	if self.config.anchor == "left" or self.config.anchor == "right" then
+		x, y = y, x
+	end
+	
+	self.coordX:SetNumber(math.floor(x + .5))
+	self.coordY:SetNumber(math.floor(y + .5))
+end
 
 
 function config:addIgnoreName(name)

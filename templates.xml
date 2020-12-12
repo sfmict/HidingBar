@@ -298,8 +298,10 @@
 			</OnLoad>
 			<OnEditFocusGained>self:HighlightText()</OnEditFocusGained>
 			<OnEnterPressed function="EditBox_ClearFocus"/>
-			<OnEnter>self:SetBackdropBorderColor(.5, .5, .5, .8)</OnEnter>
+			<OnEnter>if self:IsEnabled() then self:SetBackdropBorderColor(.5, .5, .5, .8) end</OnEnter>
 			<OnLeave>self:SetBackdropBorderColor(.3, .3, .3, .8)</OnLeave>
+			<OnEnable>self:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB())</OnEnable>
+			<OnDisable>self:SetTextColor(GRAY_FONT_COLOR:GetRGB())</OnDisable>
 		</Scripts>
 	</EditBox>
 
@@ -309,6 +311,10 @@
 
 	<EditBox name="HidingBarAddonDecimalTextBox" inherits="HidingBarAddonEditBoxTemplate" letters="4" virtual="true">
 		<Size x="32" y="18"/>
+	</EditBox>
+
+	<EditBox name="HidingBarAddonCoordTextBox" inherits="HidingBarAddonEditBoxTemplate" letters="5" virtual="true">
+		<Size x="40" y="18"/>
 	</EditBox>
 
 	<Button name="HidingBarAddonTabTemplate" virtual="true">

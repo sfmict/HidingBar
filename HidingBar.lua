@@ -876,45 +876,42 @@ end
 
 
 function hidingBar:setBarAnchor(anchor)
-	if not self.config.freeMove then return end
+	if not self.config.freeMove or self.config.anchor == anchor then return end
+	local position, secondPosition
 
 	if anchor == "left" or anchor == "right" then
 		if self.config.expand == 0 then
-			self.position = self:GetTop()
+			position = self:GetTop()
 		else
-			self.position = self:GetBottom()
+			position = self:GetBottom()
 		end
 	else
 		if self.config.expand ==  0 then
-			self.position = self:GetLeft()
+			position = self:GetLeft()
 		else
-			self.position = self:GetRight()
+			position = self:GetRight()
 		end
 	end
 
 	if anchor == "left" then
-		self.secondPosition = self:GetLeft()
+		secondPosition = self:GetLeft()
 	elseif anchor == "right" then
-		self.secondPosition = self:GetRight() - UIParent:GetWidth()
+		secondPosition = self:GetRight() - UIParent:GetWidth()
 	elseif anchor == "top" then
-		self.secondPosition = self:GetTop() - UIParent:GetHeight()
+		secondPosition = self:GetTop() - UIParent:GetHeight()
 	else
-		self.secondPosition = self:GetBottom()
+		secondPosition = self:GetBottom()
 	end
 
-	local scale = UIParent:GetScale()
-	self.config.position = self.position * scale
-	self.config.secondPosition = self.secondPosition * scale
 	self.config.anchor = anchor
-
 	self:applyLayout()
-	self:setBarPosition()
+	self:setBarPosition(position, secondPosition)
 end
 
 
 function hidingBar:setBarExpand(expand)
 	if self.config.expand == expand then return end
-	local anchor, delta = self.config.anchor
+	local anchor, delta, position = self.config.anchor
 
 	if anchor == "left" or anchor == "right" then
 		delta = self:GetHeight()
@@ -923,24 +920,33 @@ function hidingBar:setBarExpand(expand)
 	end
 
 	if expand == 0 then
-		self.position = self.position + delta
+		position = self.position + delta
 	else
-		self.position = self.position - delta
+		position = self.position - delta
 	end
 	self.config.expand = expand
-	self.config.position = self.position * UIParent:GetScale()
 
-	self:setBarPosition()
+	self:setBarPosition(position)
 end
 
 
-function hidingBar:setBarPosition()
+function hidingBar:setBarPosition(position, secondPosition)
 	local UIwidth, UIheight = UIParent:GetSize()
 	local width, height = self:GetSize()
+	local scale = UIParent:GetScale()
 	local anchor = self.config.anchor
 
+	if position then
+		self.position = position
+		self.config.position = position * scale
+	end
+
+	if secondPosition then
+		self.secondPosition = secondPosition
+		self.config.secondPosition = secondPosition * scale
+	end
+
 	if not self.position then
-		local scale = UIParent:GetScale()
 		if not self.config.position then
 			if anchor == "left" or anchor =="right" then
 				self.config.position = WorldFrame:GetHeight() / 2 - height / 2 * scale
@@ -958,6 +964,8 @@ function hidingBar:setBarPosition()
 	else
 		self.secondPosition = 0
 	end
+
+	config:setCoords()
 
 	self:ClearAllPoints()
 	if anchor == "left" then
@@ -1032,11 +1040,7 @@ function hidingBar:dragBar()
 		end
 	end
 
-	self.position = position
-	self.config.position = position * scale
-	self.secondPosition = secondPosition
-	self.config.secondPosition = secondPosition * scale
-	self:setBarPosition()
+	self:setBarPosition(position, secondPosition)
 end
 
 
