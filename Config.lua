@@ -903,7 +903,7 @@ function config:updateCoords()
 	if self.config.anchor == "left" or self.config.anchor == "right" then
 		x, y = y, x
 	end
-	
+
 	self.coordX:SetNumber(math.floor(x + .5))
 	self.coordY:SetNumber(math.floor(y + .5))
 end
