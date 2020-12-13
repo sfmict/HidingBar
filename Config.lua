@@ -898,8 +898,8 @@ end)
 function config:updateCoords()
 	if not self.coordX or not self.coordY then return end
 
-	local scale = UIParent:GetScale()
-	local x, y = self.config.position / scale, self.config.secondPosition / scale
+	local x = self.hidingBar.position or 0
+	local y = self.hidingBar.secondPosition or 0
 	if self.config.anchor == "left" or self.config.anchor == "right" then
 		x, y = y, x
 	end
