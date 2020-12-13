@@ -732,8 +732,10 @@ config:SetScript("OnShow", function(self)
 		editBox:HighlightText(0, 0)
 	end)
 	self.coordX:SetScript("OnMouseWheel", function(editBox, delta)
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		editBox:setX(int + (delta > 0 and 1 or -1))
+		if editBox:IsEnabled() then
+			local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+			editBox:setX(int + (delta > 0 and 1 or -1))
+		end
 	end)
 
 	-- COORD Y
@@ -764,8 +766,10 @@ config:SetScript("OnShow", function(self)
 		editBox:HighlightText(0, 0)
 	end)
 	self.coordY:SetScript("OnMouseWheel", function(editBox, delta)
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		editBox:setY(int + (delta > 0 and 1 or -1))
+		if editBox:IsEnabled() then
+			local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
+			editBox:setY(int + (delta > 0 and 1 or -1))
+		end
 	end)
 
 	-- SET COORDS
