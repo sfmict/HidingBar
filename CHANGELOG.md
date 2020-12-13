@@ -1,1 +1,1 @@
-* Added additional options for bar dragging.
+* Added coords control.
