@@ -716,12 +716,11 @@ function hidingBar:setBarPosition(position, secondPosition)
 		self.position = self.config.position / scale
 	end
 
-	if self.config.freeMove then
-		if not self.secondPosition then
-			self.secondPosition = (self.config.secondPosition or 0) / UIParent:GetScale()
+	if not self.secondPosition then
+		if not self.config.secondPosition then
+			self.config.secondPosition = 0
 		end
-	else
-		self.secondPosition = 0
+		self.secondPosition = self.config.secondPosition / scale
 	end
 
 	config:updateCoords()

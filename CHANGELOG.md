@@ -1,1 +1,2 @@
 * Added coords control.
+* Fixes.
