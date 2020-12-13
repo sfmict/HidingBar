@@ -810,7 +810,7 @@ function hidingBar:applyLayout()
 
 	local maxButtons = followed and i + j or i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
-	local line =  math.ceil((j + orderDelta) / self.config.size)
+	local line = math.ceil((j + orderDelta) / self.config.size)
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
 	if orientation == 2 then width, height = height, width end
@@ -886,7 +886,7 @@ function hidingBar:setBarAnchor(anchor)
 			position = self:GetBottom()
 		end
 	else
-		if self.config.expand ==  0 then
+		if self.config.expand == 0 then
 			position = self:GetLeft()
 		else
 			position = self:GetRight()

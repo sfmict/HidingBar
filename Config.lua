@@ -295,7 +295,7 @@ config:SetScript("OnShow", function(self)
 	fsText:SetText(L["Strata of panel"])
 
 	-- FRAME STRATA COMBOBOX
-	local fsCombobox =  CreateFrame("FRAME", "HidingBarAddonFrameStrata", self.generalPanel, "UIDropDownMenuTemplate")
+	local fsCombobox = CreateFrame("FRAME", "HidingBarAddonFrameStrata", self.generalPanel, "UIDropDownMenuTemplate")
 	fsCombobox:SetPoint("LEFT", fsText, "RIGHT", -12, 0)
 	UIDropDownMenu_SetWidth(fsCombobox, 100)
 
@@ -1179,7 +1179,7 @@ function config:applyLayout(delay)
 
 	local rows = math.ceil((#self.mbuttons + self.orderMBtnDelta) / self.size)
 	local width = self.size * self.config.buttonSize + offsetX * 2
-	local height = rows * self.config.buttonSize +  offsetY * 2
+	local height = rows * self.config.buttonSize + offsetY * 2
 	self.buttonPanel:SetSize(width, height)
 end
 
