@@ -18,9 +18,10 @@ local createdButtonsByName = {}
 
 local ignoreFrameList = {
 	["MiniMapBattlefieldFrame"] = true,
+	["MinimapBackdrop"] = true,
+	["MiniMapTrackingFrame"] = true,
 	["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
-	["MinimapBackdrop"] = true,
 }
 
 
