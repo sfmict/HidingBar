@@ -571,7 +571,7 @@ function hidingBar:grabMinimapAddonsButtons(t)
 	for _, child in ipairs({Minimap:GetChildren()}) do
 		local name = child:GetName()
 		local width, height = child:GetSize()
-		if not ignoreFrameList[name] and self:ignoreCheck(name) and math.abs(width - height) < 5 then
+		if not ignoreFrameList[name] and self:ignoreCheck(name) and max(width, height) > 16 and math.abs(width - height) < 5 then
 			if child:HasScript("OnClick") and child:GetScript("OnClick")
 			or child:HasScript("OnMouseUp") and child:GetScript("OnMouseUp")
 			or child:HasScript("OnMouseDown") and child:GetScript("OnMouseDown") then
