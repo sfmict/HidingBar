@@ -1,2 +1,1 @@
-* Added coords control.
-* Fixes.
+* Updated button grab system.

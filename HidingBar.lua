@@ -572,7 +572,9 @@ function hidingBar:grabMinimapAddonsButtons(t)
 		local name = child:GetName()
 		local width, height = child:GetSize()
 		if not ignoreFrameList[name] and self:ignoreCheck(name) and math.abs(width - height) < 5 then
-			if child:HasScript("OnClick") and (child:GetScript("OnClick") or child:HasScript("OnMouseUp") and child:GetScript("OnMouseUp")) then
+			if child:HasScript("OnClick") and child:GetScript("OnClick")
+			or child:HasScript("OnMouseUp") and child:GetScript("OnMouseUp")
+			or child:HasScript("OnMouseDown") and child:GetScript("OnMouseDown") then
 				if name then self.config.mbtnSettings[name].tstmp = t end
 
 				local btn = self.minimapButtons[child[0]]
@@ -581,7 +583,7 @@ function hidingBar:grabMinimapAddonsButtons(t)
 					self:setHooks(child)
 				end
 
-				if self.MSQ_MButton then
+				if child:GetObjectType() == "Button" and self.MSQ_MButton then
 					self:setMButtonRegions(child)
 				end
 
@@ -931,7 +933,6 @@ end
 
 
 function hidingBar:setBarPosition(position, secondPosition)
-	local UIwidth, UIheight = UIParent:GetSize()
 	local width, height = self:GetSize()
 	local scale = UIParent:GetScale()
 	local anchor = self.config.anchor
@@ -987,13 +988,14 @@ function hidingBar:dragBar()
 	local x, y = GetCursorPosition()
 	local width, height = self:GetSize()
 	local UIwidth, UIheight = UIParent:GetSize()
+	local anchor = self.config.anchor
+	local secondPosition, position = 0
 	local scale = UIParent:GetScale()
 	x, y = x / scale, y / scale
 
-	local anchor = self.config.anchor
-	local offset, secondPosition, position = 100, 0
-
 	if not self.config.freeMove then
+		local offset = 100
+
 		if anchor == "left" and x > width
 		or anchor == "right" and x < UIwidth - width then
 			if y > UIheight - offset then
@@ -1026,16 +1028,16 @@ function hidingBar:dragBar()
 		position = y - delta / 2
 		if self.config.freeMove then
 			local dhWidth = self.drag:GetWidth() / 2
-			delta = anchor == "left" and -width - dhWidth or width + dhWidth - UIwidth
-			secondPosition = x + delta
+			delta = anchor == "left" and width + dhWidth or UIwidth - width - dhWidth
+			secondPosition = x - delta
 		end
 	else
 		local delta = self.config.expand == 0 and width or -width
 		position = x - delta / 2
 		if self.config.freeMove then
 			local dhHeight = self.drag:GetHeight() / 2
-			delta = anchor == "top" and height + dhHeight - UIheight or -height - dhHeight
-			secondPosition = y + delta
+			delta = anchor == "top" and UIheight - height - dhHeight or height + dhHeight
+			secondPosition = y - delta
 		end
 	end
 
