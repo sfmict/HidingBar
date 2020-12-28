@@ -154,6 +154,12 @@ config:SetScript("OnShow", function(self)
 		info.value = 1
 		info.func = updateExpandTo
 		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Both direction"]
+		info.value = 2
+		info.func = updateExpandTo
+		UIDropDownMenu_AddButton(info)
 	end)
 	UIDropDownMenu_SetSelectedValue(expandToCombobox, self.config.expand)
 

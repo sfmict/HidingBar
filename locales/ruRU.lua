@@ -26,6 +26,7 @@ L["Lock the bar's location"] = "Заблокировать позицию пан
 L["Expand to"] = "Расширять в"
 L["Right / Bottom"] = "Право / Низ"
 L["Left / Top"] = "Лево / Верх"
+L["Both direction"] = "Оба направления"
 L["Grab default buttons on minimap"] = "Захватить стандартные кнопки на миникарте"
 L["Grab addon buttons on minimap"] = "Захватить кнопки аддонов на миникарте"
 L["Try to grab after"] = "Попробовать захватиь после"

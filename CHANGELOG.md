@@ -1,1 +1,1 @@
-* Updated button grab system.
+* Added option "Both direction" into "Expand to".

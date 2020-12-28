@@ -1,6 +1,7 @@
 local addon, L = ...
 local config, UIParent = _G[addon.."ConfigAddon"], UIParent
 local hidingBar = CreateFrame("FRAME", addon.."Addon", UIParent, "HidingBarAddonPanel")
+hidingBar:SetClampedToScreen(true)
 hidingBar.cover = CreateFrame("FRAME", nil, hidingBar)
 hidingBar.cover:Hide()
 hidingBar.cover:SetAllPoints()
@@ -79,7 +80,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.db.config = self.db.config or {}
 		self.config = self.db.config
 		self.config.orientation = self.config.orientation or 0
-		self.config.expand = self.config.expand or 0
+		self.config.expand = self.config.expand or 2
 		self.config.frameStrata = self.config.frameStrata or 2
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.lineWidth = self.config.lineWidth or 4
@@ -583,7 +584,7 @@ function hidingBar:grabMinimapAddonsButtons(t)
 					self:setHooks(child)
 				end
 
-				if child:GetObjectType() == "Button" and self.MSQ_MButton then
+				if self.MSQ_MButton and child:GetObjectType() == "Button" then
 					self:setMButtonRegions(child)
 				end
 
@@ -921,6 +922,11 @@ function hidingBar:setBarExpand(expand)
 		delta = -self:GetWidth()
 	end
 
+	if self.config.expand == 2 or expand == 2 then
+		delta = delta / 2
+		if self.config.expand == 1 then delta = -delta end
+	end
+
 	if expand == 0 then
 		position = self.position + delta
 	else
@@ -932,54 +938,60 @@ function hidingBar:setBarExpand(expand)
 end
 
 
-function hidingBar:setBarPosition(position, secondPosition)
-	local width, height = self:GetSize()
-	local scale = UIParent:GetScale()
-	local anchor = self.config.anchor
+do
+	local pointForExpand = {
+		left   = {[0] = "TOPLEFT",    "BOTTOMLEFT",  "LEFT"},
+		right  = {[0] = "TOPRIGHT",   "BOTTOMRIGHT", "RIGHT"},
+		top    = {[0] = "TOPLEFT",    "TOPRIGHT",    "TOP"},
+		bottom = {[0] = "BOTTOMLEFT", "BOTTOMRIGHT", "BOTTOM"},
+	}
 
-	if position then
-		self.position = position
-		self.config.position = position * scale
-	end
+	function hidingBar:setBarPosition(position, secondPosition)
+		local width, height = self:GetSize()
+		local scale = UIParent:GetScale()
+		local anchor = self.config.anchor
 
-	if secondPosition then
-		self.secondPosition = secondPosition
-		self.config.secondPosition = secondPosition * scale
-	end
+		if position then
+			self.position = position
+			self.config.position = position * scale
+		end
 
-	if not self.position then
-		if not self.config.position then
-			if anchor == "left" or anchor =="right" then
-				self.config.position = WorldFrame:GetHeight() / 2 - height / 2 * scale
-			else
-				self.config.position = WorldFrame:GetWidth() / 2 - width / 2 * scale
+		if secondPosition then
+			self.secondPosition = secondPosition
+			self.config.secondPosition = secondPosition * scale
+		end
+
+		if not self.position then
+			if not self.config.position then
+				if anchor == "left" or anchor =="right" then
+					self.config.position = WorldFrame:GetHeight() / 2 - height / 2 * scale
+				else
+					self.config.position = WorldFrame:GetWidth() / 2 - width / 2 * scale
+				end
 			end
+			self.position = self.config.position / scale
 		end
-		self.position = self.config.position / scale
-	end
 
-	if not self.secondPosition then
-		if not self.config.secondPosition then
-			self.config.secondPosition = 0
+		if not self.secondPosition then
+			if not self.config.secondPosition then
+				self.config.secondPosition = 0
+			end
+			self.secondPosition = self.config.secondPosition / scale
 		end
-		self.secondPosition = self.config.secondPosition / scale
-	end
 
-	config:updateCoords()
+		config:updateCoords()
 
-	self:ClearAllPoints()
-	if anchor == "left" then
-		local point = self.config.expand == 0 and "TOPLEFT" or "BOTTOMLEFT"
-		self:SetPoint(point, UIParent, "BOTTOMLEFT", self.secondPosition, self.position)
-	elseif anchor == "right" then
-		local point = self.config.expand == 0 and "TOPRIGHT" or "BOTTOMRIGHT"
-		self:SetPoint(point, UIParent, "BOTTOMRIGHT", self.secondPosition, self.position)
-	elseif anchor == "top" then
-		local point = self.config.expand == 0 and "TOPLEFT" or "TOPRIGHT"
-		self:SetPoint(point, UIParent, "TOPLEFT", self.position, self.secondPosition)
-	else
-		local point = self.config.expand == 0 and "BOTTOMLEFT" or "BOTTOMRIGHT"
-		self:SetPoint(point, UIParent, "BOTTOMLEFT", self.position, self.secondPosition)
+		local point = pointForExpand[anchor][self.config.expand]
+		self:ClearAllPoints()
+		if anchor == "left" then
+			self:SetPoint(point, UIParent, "BOTTOMLEFT", self.secondPosition, self.position)
+		elseif anchor == "right" then
+			self:SetPoint(point, UIParent, "BOTTOMRIGHT", self.secondPosition, self.position)
+		elseif anchor == "top" then
+			self:SetPoint(point, UIParent, "TOPLEFT", self.position, self.secondPosition)
+		else
+			self:SetPoint(point, UIParent, "BOTTOMLEFT", self.position, self.secondPosition)
+		end
 	end
 end
 
@@ -1024,16 +1036,30 @@ function hidingBar:dragBar()
 	end
 
 	if anchor == "left" or anchor == "right" then
-		local delta = self.config.expand == 0 and -height or height
-		position = y - delta / 2
+		local delta
+		if self.config.expand == 0 then
+			delta = -height / 2
+		elseif self.config.expand == 1 then
+			delta = height / 2
+		else
+			delta = 0
+		end
+		position = y - delta
 		if self.config.freeMove then
 			local dhWidth = self.drag:GetWidth() / 2
 			delta = anchor == "left" and width + dhWidth or UIwidth - width - dhWidth
 			secondPosition = x - delta
 		end
 	else
-		local delta = self.config.expand == 0 and width or -width
-		position = x - delta / 2
+		local delta
+		if self.config.expand == 0 then
+			delta = width / 2
+		elseif self.config.expand == 1 then
+			delta = -width / 2
+		else
+			delta = 0
+		end
+		position = x - delta
 		if self.config.freeMove then
 			local dhHeight = self.drag:GetHeight() / 2
 			delta = anchor == "top" and UIheight - height - dhHeight or height + dhHeight
