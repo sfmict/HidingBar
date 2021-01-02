@@ -24,6 +24,9 @@ local ignoreFrameList = {
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
 	["GarrisonLandingPageMinimapButton"] = true,
+	["MinimapZoomIn"] = true,
+	["MinimapZoomOut"] = true,
+	["MiniMapWorldMapButton"] = true,
 }
 
 
@@ -196,11 +199,13 @@ function hidingBar:init()
 			end
 		end
 
-		self:grabMinimapAddonsButtons(t)
+		self:grabMinimapAddonsButtons(Minimap, t)
+		self:grabMinimapAddonsButtons(MinimapBackdrop, t)
 
 		if self.config.grabMinimapAfter then
 			C_Timer.After(tonumber(self.config.grabMinimapAfterN) or 1, function()
-				self:grabMinimapAddonsButtons(t)
+				self:grabMinimapAddonsButtons(Minimap, t)
+				self:grabMinimapAddonsButtons(MinimapBackdrop, t)
 				self:sort()
 				self:setButtonSize()
 				self:applyLayout()
@@ -448,6 +453,102 @@ function hidingBar:init()
 			proxyMail:HookScript("OnLeave", leave)
 			tinsert(self.minimapButtons, proxyMail)
 		end
+
+		-- ZOOM IN & ZOOM OUT
+		for _, zoom in next, {MinimapZoomIn, MinimapZoomOut} do
+			local name = zoom:GetName()
+			if self:ignoreCheck(name) then
+				self.config.mbtnSettings[name].tstmp = t
+				self:setHooks(zoom)
+
+				if self.MSQ_MButton then
+					zoom.icon = zoom:CreateTexture(nil, "ARTWORK")
+					zoom.icon:SetTexture(zoom:GetNormalTexture():GetTexture())
+					zoom.icon:SetAllPoints()
+					zoom.data = {iconCoords = {.24, .79, .21, .76}}
+					zoom.icon.dSetTexCoord = zoom.icon.SetTexCoord
+					zoom.icon.SetTexCoord = setTexCoord
+					zoom:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
+					zoom:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
+					local data = {
+						_Pushed = zoom:GetPushedTexture(),
+						Icon = zoom.icon,
+						Highlight = zoom:GetHighlightTexture(),
+					}
+					self.MSQ_MButton_Data[zoom] = data
+					self.MSQ_MButton:AddButton(zoom, data, nil,  true)
+					self:MSQ_MButton_Update(zoom)
+				else
+					zoom.icon = zoom:GetNormalTexture()
+				end
+
+				zoom.click = zoom:GetScript("OnClick")
+				zoom.Disable = function(zoom)
+					zoom.icon:SetDesaturated(true)
+					zoom:SetScript("OnClick", nil)
+				end
+				zoom.Enable = function(zoom)
+					zoom.icon:SetDesaturated(false)
+					zoom:SetScript("OnClick", zoom.click)
+				end
+				if not zoom:IsEnabled() then
+					zoom:Disable()
+				end
+
+				self.SetClipsChildren(zoom, true)
+				self.SetAlpha(zoom, 1)
+				self.SetHitRectInsets(zoom, 0, 0, 0, 0)
+				getmetatable(zoom).__index.Enable(zoom)
+				self.SetParent(zoom, self)
+				self.HookScript(zoom, "OnEnter", enter)
+				self.HookScript(zoom, "OnLeave", leave)
+				tinsert(self.minimapButtons, zoom)
+			end
+		end
+
+		-- WORLD MAP BUTTON
+		if self:ignoreCheck("MiniMapWorldMapButton") then
+			self.config.mbtnSettings["MiniMapWorldMapButton"].tstmp = t
+			local mapButton = MiniMapWorldMapButton
+			self:setHooks(mapButton)
+			mapButton.puched = mapButton:GetPushedTexture()
+			mapButton.highligt = mapButton:GetHighlightTexture()
+
+			if self.MSQ_MButton then
+				mapButton.icon = mapButton:CreateTexture(nil, "ARTWORK")
+				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+				mapButton.icon:SetAllPoints()
+				mapButton.data = {iconCoords = {.125, .875, 0, .5}}
+				mapButton.icon.dSetTexCoord = mapButton.icon.SetTexCoord
+				mapButton.icon.SetTexCoord = setTexCoord
+				mapButton:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
+				mapButton:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
+				local data = {
+					_Pushed = mapButton.puched,
+					Icon = mapButton.icon,
+					Highlight = mapButton.highligt,
+				}
+				self.MSQ_MButton_Data[mapButton] = data
+				self.MSQ_MButton:AddButton(mapButton, data, nil,  true)
+				self:MSQ_MButton_Update(mapButton)
+			else
+				mapButton.icon = mapButton:GetNormalTexture()
+				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
+				mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+				mapButton.puched:SetTexCoord(.125, .875, .5, 1)
+				mapButton.highligt:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
+				mapButton.highligt:SetAllPoints()
+			end
+
+			self.SetClipsChildren(mapButton, true)
+			self.SetAlpha(mapButton, 1)
+			self.SetHitRectInsets(mapButton, 0, 0, 0, 0)
+			self.SetParent(mapButton, self)
+			self.HookScript(mapButton, "OnEnter", enter)
+			self.HookScript(mapButton, "OnLeave", leave)
+			tinsert(self.minimapButtons, mapButton)
+		end
 	end
 
 	local tstmp = self.db.tstmp or t
@@ -568,8 +669,8 @@ function hidingBar:addButton(name, data, update)
 end
 
 
-function hidingBar:grabMinimapAddonsButtons(t)
-	for _, child in ipairs({Minimap:GetChildren()}) do
+function hidingBar:grabMinimapAddonsButtons(parentFrame, t)
+	for _, child in ipairs({parentFrame:GetChildren()}) do
 		local name = child:GetName()
 		local width, height = child:GetSize()
 		if not ignoreFrameList[name] and self:ignoreCheck(name) and max(width, height) > 16 and math.abs(width - height) < 5 then
