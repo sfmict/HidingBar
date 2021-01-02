@@ -23,6 +23,9 @@ local ignoreFrameList = {
 	["MiniMapTrackingFrame"] = true,
 	["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
+	["MinimapZoomIn"] = true,
+	["MinimapZoomOut"] = true,
+	["MiniMapWorldMapButton"] = true,
 }
 
 
@@ -195,11 +198,13 @@ function hidingBar:init()
 			end
 		end
 
-		self:grabMinimapAddonsButtons(t)
+		self:grabMinimapAddonsButtons(Minimap, t)
+		self:grabMinimapAddonsButtons(MinimapBackdrop, t)
 
 		if self.config.grabMinimapAfter then
 			C_Timer.After(tonumber(self.config.grabMinimapAfterN) or 1, function()
-				self:grabMinimapAddonsButtons(t)
+				self:grabMinimapAddonsButtons(Minimap, t)
+				self:grabMinimapAddonsButtons(MinimapBackdrop, t)
 				self:sort()
 				self:setButtonSize()
 				self:applyLayout()
@@ -332,8 +337,8 @@ function hidingBar:addButton(name, data, update)
 end
 
 
-function hidingBar:grabMinimapAddonsButtons(t)
-	for _, child in ipairs({Minimap:GetChildren()}) do
+function hidingBar:grabMinimapAddonsButtons(parentFrame, t)
+	for _, child in ipairs({parentFrame:GetChildren()}) do
 		local name = child:GetName()
 		local width, height = child:GetSize()
 		if not ignoreFrameList[name] and self:ignoreCheck(name) and max(width, height) > 16 and math.abs(width - height) < 5 then
