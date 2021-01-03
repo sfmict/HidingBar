@@ -427,7 +427,7 @@ function hidingBar:setMButtonRegions(btn)
 				icon = region
 			end
 			if name:find("highlight") or layer == "HIGHLIGHT" then
-				highligt = region
+				highlight = region
 			end
 		end
 	end
@@ -436,9 +436,11 @@ function hidingBar:setMButtonRegions(btn)
 			_Border = border,
 			_Background = background,
 			Icon = icon,
-			Highlight = highligt,
+			Highlight = highlight,
 		}
 		self.MSQ_MButton_Data[btn] = data
+	elseif highlight then
+		data = {Highlight = highlight}
 	end
 	self.MSQ_MButton:AddButton(btn, data, nil, true)
 	self:MSQ_MButton_Update(btn)
@@ -645,34 +647,39 @@ end
 
 function hidingBar:setBarAnchor(anchor)
 	if not self.config.freeMove or self.config.anchor == anchor then return end
-	local position, secondPosition
+	local x, y, position, secondPosition = self:GetCenter()
+	self.config.anchor = anchor
+	local width, height = self:applyLayout()
+	width, height = width / 2, height / 2
 
 	if anchor == "left" or anchor == "right" then
 		if self.config.expand == 0 then
-			position = self:GetTop()
+			position = y + height
+		elseif self.config.expand == 1 then
+			position = y - height
 		else
-			position = self:GetBottom()
+			position = y
 		end
 	else
 		if self.config.expand == 0 then
-			position = self:GetLeft()
+			position = x - width
+		elseif self.config.expand == 1 then
+			position = x + width
 		else
-			position = self:GetRight()
+			position = x
 		end
 	end
 
 	if anchor == "left" then
-		secondPosition = self:GetLeft()
+		secondPosition = x - width
 	elseif anchor == "right" then
-		secondPosition = self:GetRight() - UIParent:GetWidth()
+		secondPosition = x + width - UIParent:GetWidth()
 	elseif anchor == "top" then
-		secondPosition = self:GetTop() - UIParent:GetHeight()
+		secondPosition = y + height - UIParent:GetHeight()
 	else
-		secondPosition = self:GetBottom()
+		secondPosition = y - height
 	end
 
-	self.config.anchor = anchor
-	self:applyLayout()
 	self:setBarPosition(position, secondPosition)
 end
 
@@ -729,9 +736,9 @@ do
 		if not self.position then
 			if not self.config.position then
 				if anchor == "left" or anchor =="right" then
-					self.config.position = WorldFrame:GetHeight() / 2 - height / 2 * scale
+					self.config.position = WorldFrame:GetHeight() / 2
 				else
-					self.config.position = WorldFrame:GetWidth() / 2 - width / 2 * scale
+					self.config.position = WorldFrame:GetWidth() / 2
 				end
 			end
 			self.position = self.config.position / scale
