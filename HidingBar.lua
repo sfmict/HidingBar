@@ -484,12 +484,14 @@ function hidingBar:init()
 
 				zoom.click = zoom:GetScript("OnClick")
 				zoom.Disable = function(zoom)
-					zoom.icon:SetDesaturated(true)
 					zoom:SetScript("OnClick", nil)
+					zoom.icon:SetDesaturated(true)
+					zoom:GetPushedTexture():SetDesaturated(true)
 				end
 				zoom.Enable = function(zoom)
-					zoom.icon:SetDesaturated(false)
 					zoom:SetScript("OnClick", zoom.click)
+					zoom.icon:SetDesaturated(false)
+					zoom:GetPushedTexture():SetDesaturated(false)
 				end
 				if not zoom:IsEnabled() then
 					zoom:Disable()
@@ -763,7 +765,7 @@ function hidingBar:setMButtonRegions(btn)
 				icon = region
 			end
 			if name:find("highlight") or layer == "HIGHLIGHT" then
-				highligt = region
+				highlight = region
 			end
 		end
 	end
@@ -772,9 +774,11 @@ function hidingBar:setMButtonRegions(btn)
 			_Border = border,
 			_Background = background,
 			Icon = icon,
-			Highlight = highligt,
+			Highlight = highlight,
 		}
 		self.MSQ_MButton_Data[btn] = data
+	elseif highlight then
+		data = {Highlight = highlight}
 	end
 	self.MSQ_MButton:AddButton(btn, data, nil, true)
 	self:MSQ_MButton_Update(btn)
