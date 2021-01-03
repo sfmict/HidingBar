@@ -1069,9 +1069,9 @@ do
 		if not self.position then
 			if not self.config.position then
 				if anchor == "left" or anchor =="right" then
-					self.config.position = WorldFrame:GetHeight() / 2 - height / 2 * scale
+					self.config.position = WorldFrame:GetHeight() / 2
 				else
-					self.config.position = WorldFrame:GetWidth() / 2 - width / 2 * scale
+					self.config.position = WorldFrame:GetWidth() / 2
 				end
 			end
 			self.position = self.config.position / scale
