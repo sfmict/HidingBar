@@ -13,8 +13,8 @@ hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
 hidingBar.drag:SetFrameLevel(hidingBar:GetFrameLevel())
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
-hidingBar.createdButtons, hidingBar.minimapButtons = {}, {}
-local createdButtonsByName = {}
+hidingBar.createdButtons, hidingBar.minimapButtons, hidingBar.mixedButtons = {}, {}, {}
+local createdButtonsByName, btnSettings = {}, {}
 
 
 local ignoreFrameList = {
@@ -213,6 +213,7 @@ function hidingBar:init()
 				if config.buttonPanel then
 					config:initMButtons()
 					config:sort(config.mbuttons)
+					config:sort(config.mixedButtons)
 					config:setButtonSize()
 					config:applyLayout()
 				end
@@ -223,8 +224,9 @@ function hidingBar:init()
 	if self.config.grabDefMinimap then
 		-- CALENDAR BUTTON
 		if self:ignoreCheck("GameTimeFrame") then
-			self.config.mbtnSettings["GameTimeFrame"].tstmp = t
 			local GameTimeFrame = GameTimeFrame
+			btnSettings[GameTimeFrame] = self.config.mbtnSettings["GameTimeFrame"]
+			btnSettings[GameTimeFrame].tstmp = t
 			local normalTexture = GameTimeFrame:GetNormalTexture()
 			normalTexture:SetTexCoord(0, .375, 0, .75)
 			local pushedTexture = GameTimeFrame:GetPushedTexture()
@@ -266,12 +268,14 @@ function hidingBar:init()
 			self.HookScript(GameTimeFrame, "OnEnter", enter)
 			self.HookScript(GameTimeFrame, "OnLeave", leave)
 			tinsert(self.minimapButtons, GameTimeFrame)
+			tinsert(self.mixedButtons, GameTimeFrame)
 		end
 
 		-- TRACKING BUTTON
 		if self:ignoreCheck("MiniMapTracking") then
-			self.config.mbtnSettings["MiniMapTracking"].tstmp = t
 			local MiniMapTracking = MiniMapTracking
+			btnSettings[MiniMapTracking] = self.config.mbtnSettings["MiniMapTracking"]
+			btnSettings[MiniMapTracking].tstmp = t
 			local icon = MiniMapTrackingIcon
 			hooksecurefunc(icon, "SetPoint", function(icon)
 				icon:ClearAllPoints()
@@ -305,24 +309,30 @@ function hidingBar:init()
 			MiniMapTrackingButton:HookScript("OnEnter", enter)
 			MiniMapTrackingButton:HookScript("OnLeave", leave)
 			tinsert(self.minimapButtons, MiniMapTracking)
+			tinsert(self.mixedButtons, MiniMapTracking)
 		end
 
 		-- GARRISON BUTTON
 		if self:ignoreCheck("GarrisonLandingPageMinimapButton") then
-			self.config.mbtnSettings["GarrisonLandingPageMinimapButton"].tstmp = t
 			local garrison = GarrisonLandingPageMinimapButton
+			btnSettings[garrison] = self.config.mbtnSettings["GarrisonLandingPageMinimapButton"]
+			btnSettings[garrison].tstmp = t
 			garrison.show = garrison:IsShown()
 			self:setHooks(garrison)
 			garrison.Show = function(garrison)
-				garrison.show = true
-				self:applyLayout()
+				if not garrison.show then
+					garrison.show = true
+					self:applyLayout()
+				end
 			end
 			garrison.Hide = function(garrison)
-				garrison.show = false
-				self:applyLayout()
+				if garrison.show then
+					garrison.show = false
+					self:applyLayout()
+				end
 			end
 			garrison.IsShown = function(garrison)
-				if garrison.show and not self.config.mbtnSettings[garrison:GetName()][1] then
+				if garrison.show and not btnSettings[garrison][1] then
 					self.Show(garrison)
 					return true
 				end
@@ -338,29 +348,35 @@ function hidingBar:init()
 			self.HookScript(garrison, "OnEnter", enter)
 			self.HookScript(garrison, "OnLeave", leave)
 			tinsert(self.minimapButtons, garrison)
+			tinsert(self.mixedButtons, garrison)
 		end
 
 		-- QUEUE STATUS
 		if self:ignoreCheck("QueueStatusMinimapButton") then
-			self.config.mbtnSettings["QueueStatusMinimapButton"].tstmp = t
 			local queue = QueueStatusMinimapButton
+			btnSettings[queue] = self.config.mbtnSettings["QueueStatusMinimapButton"]
+			btnSettings[queue].tstmp = t
 			QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
 			queue.show = queue:IsShown()
 			queue.icon = queue.Eye.texture
 			self:setHooks(queue)
 			queue.Show = function(queue)
-				queue.show = true
-				self:applyLayout()
+				if not queue.show then
+					queue.show = true
+					self:applyLayout()
+				end
 			end
 			queue.Hide = function(queue)
-				queue.show = false
-				if QueueStatusMinimapButtonDropDown == UIDROPDOWNMENU_OPEN_MENU then
-					CloseDropDownMenus()
+				if queue.show then
+					queue.show = false
+					if QueueStatusMinimapButtonDropDown == UIDROPDOWNMENU_OPEN_MENU then
+						CloseDropDownMenus()
+					end
+					self:applyLayout()
 				end
-				self:applyLayout()
 			end
 			queue.IsShown = function(queue)
-				if queue.show and not self.config.mbtnSettings[queue:GetName()][1] then
+				if queue.show and not btnSettings[queue][1] then
 					self.Show(queue)
 					return true
 				end
@@ -403,12 +419,14 @@ function hidingBar:init()
 			self.HookScript(queue, "OnEnter", enter)
 			self.HookScript(queue, "OnLeave", leave)
 			tinsert(self.minimapButtons, queue)
+			tinsert(self.mixedButtons, queue)
 		end
 
 		-- MAIL
 		if self:ignoreCheck("HidingBarAddonMail") then
-			self.config.mbtnSettings["HidingBarAddonMail"].tstmp = t
 			local proxyMail = CreateFrame("BUTTON", "HidingBarAddonMail", self, "HidingBarAddonMailTemplate")
+			btnSettings[proxyMail] = self.config.mbtnSettings["HidingBarAddonMail"]
+			btnSettings[proxyMail].tstmp = t
 			local mail = MiniMapMailFrame
 			proxyMail.show = mail:IsShown()
 			self:setHooks(mail)
@@ -421,15 +439,19 @@ function hidingBar:init()
 			proxyMail:RegisterEvent("UPDATE_PENDING_MAIL")
 
 			proxyMail.Show = function(proxyMail)
-				proxyMail.show = true
-				self:applyLayout()
+				if not proxyMail.show then
+					proxyMail.show = true
+					self:applyLayout()
+				end
 			end
 			proxyMail.Hide = function(proxyMail)
-				proxyMail.show = false
-				self:applyLayout()
+				if proxyMail.show then
+					proxyMail.show = false
+					self:applyLayout()
+				end
 			end
 			proxyMail.IsShown = function(proxyMail)
-				if proxyMail.show and not self.config.mbtnSettings[proxyMail:GetName()][1] then
+				if proxyMail.show and not btnSettings[proxyMail][1] then
 					self.Show(proxyMail)
 					return true
 				end
@@ -452,13 +474,15 @@ function hidingBar:init()
 			proxyMail:HookScript("OnEnter", enter)
 			proxyMail:HookScript("OnLeave", leave)
 			tinsert(self.minimapButtons, proxyMail)
+			tinsert(self.mixedButtons, proxyMail)
 		end
 
 		-- ZOOM IN & ZOOM OUT
 		for _, zoom in next, {MinimapZoomIn, MinimapZoomOut} do
 			local name = zoom:GetName()
 			if self:ignoreCheck(name) then
-				self.config.mbtnSettings[name].tstmp = t
+				btnSettings[zoom] = self.config.mbtnSettings[name]
+				btnSettings[zoom].tstmp = t
 				self:setHooks(zoom)
 
 				if self.MSQ_MButton then
@@ -505,13 +529,15 @@ function hidingBar:init()
 				self.HookScript(zoom, "OnEnter", enter)
 				self.HookScript(zoom, "OnLeave", leave)
 				tinsert(self.minimapButtons, zoom)
+				tinsert(self.mixedButtons, zoom)
 			end
 		end
 
 		-- WORLD MAP BUTTON
 		if self:ignoreCheck("MiniMapWorldMapButton") then
-			self.config.mbtnSettings["MiniMapWorldMapButton"].tstmp = t
 			local mapButton = MiniMapWorldMapButton
+			btnSettings[mapButton] = self.config.mbtnSettings["MiniMapWorldMapButton"]
+			btnSettings[mapButton].tstmp = t
 			self:setHooks(mapButton)
 			mapButton.puched = mapButton:GetPushedTexture()
 			mapButton.highligt = mapButton:GetHighlightTexture()
@@ -550,6 +576,7 @@ function hidingBar:init()
 			self.HookScript(mapButton, "OnEnter", enter)
 			self.HookScript(mapButton, "OnLeave", leave)
 			tinsert(self.minimapButtons, mapButton)
+			tinsert(self.mixedButtons, mapButton)
 		end
 	end
 
@@ -609,65 +636,79 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 end
 
 
---[[
-OnEnter         - Handler OnEnter
-OnLeave         - Handler OnLeave
-OnClick         - Handler OnClick
-icon            - Texture icon
-iconCoords      - Table with coords
-iconR           - icon R color (RGB)
-iconG           - icon G color (RGB)
-iconB           - icon B color (RGB)
-iconDesaturated - Desaturated icon (boolean)
-OnTooltipShow   - Handler tooltip show: function(TooltipFrame) .. end
---]]
-function hidingBar:addButton(name, data, update)
-	if createdButtonsByName[name] then return end
-	self.config.btnSettings[name].tstmp = time()
-	local button = CreateFrame("BUTTON", ("ADDON_%s_%s"):format(addon, name), self, "HidingBarAddonCreatedButtonTemplate")
-	createdButtonsByName[name] = button
-	button.name = name
-	button.data = data
-	if data.icon then
-		button.icon:SetTexture(data.icon)
-		button.iconTex = data.icon
-		if data.iconCoords then
-			button.iconCoords = {unpack(data.iconCoords)}
-			button.icon:SetTexCoord(unpack(data.iconCoords))
+do
+	local function IsShown(btn)
+		if not btnSettings[btn][1] then
+			btn:Show()
+			return true
 		end
-		button.icon.dSetTexCoord = button.icon.SetTexCoord
-		button.icon.SetTexCoord = setTexCoord
-		button.iconR = data.iconR
-		button.iconG = data.iconG
-		button.iconB = data.iconB
-		button.icon:SetVertexColor(data.iconR or 1, data.iconG or 1, data.iconB or 1)
-		if data.iconDesaturated ~= nil then
-			button.iconDesaturated = data.iconDesaturated
-			button.icon:SetDesaturated(data.iconDesaturated)
-		end
-	end
-	if data.OnClick then
-		button:SetScript("OnClick", data.OnClick)
-	end
-	button:HookScript("OnEnter", enter)
-	button:HookScript("OnLeave", leave)
-	tinsert(self.createdButtons, button)
-	if update then
-		self:sort()
-		self:applyLayout()
-		self:leave()
-		config:createButton(name, button, update)
+		btn:Hide()
+		return false
 	end
 
-	if self.MSQ_Button then
-		local buttonData = {
-			Icon = button.icon,
-			Highlight = button.highlight,
-		}
-		self.MSQ_Button:AddButton(button, buttonData, nil, true)
-	end
+	--[[
+	OnEnter         - Handler OnEnter
+	OnLeave         - Handler OnLeave
+	OnClick         - Handler OnClick
+	icon            - Texture icon
+	iconCoords      - Table with coords
+	iconR           - icon R color (RGB)
+	iconG           - icon G color (RGB)
+	iconB           - icon B color (RGB)
+	iconDesaturated - Desaturated icon (boolean)
+	OnTooltipShow   - Handler tooltip show: function(TooltipFrame) .. end
+	--]]
+	function hidingBar:addButton(name, data, update)
+		if createdButtonsByName[name] then return end
+		local button = CreateFrame("BUTTON", ("ADDON_%s_%s"):format(addon, name), self, "HidingBarAddonCreatedButtonTemplate")
+		btnSettings[button] = self.config.btnSettings[name]
+		btnSettings[button].tstmp = time()
+		createdButtonsByName[name] = button
+		button.name = name
+		button.data = data
+		if data.icon then
+			button.icon:SetTexture(data.icon)
+			button.iconTex = data.icon
+			if data.iconCoords then
+				button.iconCoords = {unpack(data.iconCoords)}
+				button.icon:SetTexCoord(unpack(data.iconCoords))
+			end
+			button.icon.dSetTexCoord = button.icon.SetTexCoord
+			button.icon.SetTexCoord = setTexCoord
+			button.iconR = data.iconR
+			button.iconG = data.iconG
+			button.iconB = data.iconB
+			button.icon:SetVertexColor(data.iconR or 1, data.iconG or 1, data.iconB or 1)
+			if data.iconDesaturated ~= nil then
+				button.iconDesaturated = data.iconDesaturated
+				button.icon:SetDesaturated(data.iconDesaturated)
+			end
+		end
+		if data.OnClick then
+			button:SetScript("OnClick", data.OnClick)
+		end
+		button:HookScript("OnEnter", enter)
+		button:HookScript("OnLeave", leave)
+		button.IsShown = IsShown
+		tinsert(self.createdButtons, button)
+		tinsert(self.mixedButtons, button)
+		if update then
+			self:sort()
+			self:applyLayout()
+			self:leave()
+			config:createButton(name, button, update)
+		end
 
-	return button
+		if self.MSQ_Button then
+			local buttonData = {
+				Icon = button.icon,
+				Highlight = button.highlight,
+			}
+			self.MSQ_Button:AddButton(button, buttonData, nil, true)
+		end
+
+		return button
+	end
 end
 
 
@@ -679,7 +720,10 @@ function hidingBar:grabMinimapAddonsButtons(parentFrame, t)
 			if child:HasScript("OnClick") and child:GetScript("OnClick")
 			or child:HasScript("OnMouseUp") and child:GetScript("OnMouseUp")
 			or child:HasScript("OnMouseDown") and child:GetScript("OnMouseDown") then
-				if name then self.config.mbtnSettings[name].tstmp = t end
+				if name then
+					btnSettings[child] = self.config.mbtnSettings[name]
+					btnSettings[child].tstmp = t
+				end
 
 				local btn = self.minimapButtons[child[0]]
 				self.minimapButtons[child[0]] = nil
@@ -709,6 +753,7 @@ function hidingBar:grabMinimapAddonsButtons(parentFrame, t)
 				self.SetHitRectInsets(child, 0, 0, 0, 0)
 				self.SetParent(child, self)
 				tinsert(self.minimapButtons, child)
+				tinsert(self.mixedButtons, child)
 			else
 				local mouseEnabled, clickable = {}
 				local function getMouseEnabled(frame)
@@ -725,7 +770,10 @@ function hidingBar:grabMinimapAddonsButtons(parentFrame, t)
 				getMouseEnabled(child)
 
 				if clickable then
-					if name then self.config.mbtnSettings[name].tstmp = t end
+					if name then
+						btnSettings[child] = self.config.mbtnSettings[name]
+						btnSettings[child].tstmp = t
+					end
 
 					self:setHooks(child)
 					for _, frame in ipairs(mouseEnabled) do
@@ -741,6 +789,7 @@ function hidingBar:grabMinimapAddonsButtons(parentFrame, t)
 					self.SetHitRectInsets(child, 0, 0, 0, 0)
 					self.SetParent(child, self)
 					tinsert(self.minimapButtons, child)
+					tinsert(self.mixedButtons, child)
 				end
 			end
 		end
@@ -785,78 +834,88 @@ function hidingBar:setMButtonRegions(btn)
 end
 
 
-function hidingBar:setHooks(btn)
-	btn.CreateAnimationGroup = function(self, ...)
+do
+	local function IsShown(btn)
+		local data = btnSettings[btn]
+		if not (data and data[1]) then
+			hidingBar.Show(btn)
+			return true
+		end
+		hidingBar.Hide(btn)
+		return false
+	end
+
+	local function CreateAnimationGroup(self, ...)
 		local animationGroup = getmetatable(self).__index.CreateAnimationGroup(self, ...)
 		animationGroup.Play = void
 		return animationGroup
 	end
-	for _, animationGroup in ipairs({btn:GetAnimationGroups()}) do
-		local disable
-		for _, animation in ipairs({animationGroup:GetAnimations()}) do
-			if animation:GetTarget() == btn then
-				local animType = animation:GetObjectType()
-				if animType ~= "Animation" and animType ~= "Rotation" then
-					disable = true
-					break
-				end
-			end
-		end
-		if disable then
-			animationGroup:Stop()
-			animationGroup.Play = void
-		end
-	end
-	btn.SetHitRectInsets = void
-	btn.ClearAllPoints = void
-	btn.StartMoving = void
-	btn.SetParent = void
-	btn.IsShown = function(btn)
-		local name = btn:GetName()
-		if not (name and self.config.mbtnSettings[name][1]) then
-			self.Show(btn)
-			return true
-		end
-		self.Hide(btn)
-		return false
-	end
-	btn.Show = void
-	btn.Hide = void
-	btn.SetShown = void
-	btn.SetPoint = void
-	btn.SetAlpha = void
-	btn.SetScale = void
-	btn.SetSize = void
-	btn.SetWidth = void
-	btn.SetHeight = void
-	btn.Disable = void
-	btn.SetEnabled = void
-	btn.HookScript = void
-	btn.SetScript = function(self, event, func, ...)
+
+	local function SetScript(self, event, func, ...)
 		event = event:lower()
 		if func == nil or event ~= "onupdate" and event ~= "ondragstart" and event ~= "ondragstop" then
 			getmetatable(self).__index.SetScript(self, event, func, ...)
 		end
+	end
+
+	function hidingBar:setHooks(btn)
+		btn.CreateAnimationGroup = CreateAnimationGroup
+		for _, animationGroup in ipairs({btn:GetAnimationGroups()}) do
+			local disable
+			for _, animation in ipairs({animationGroup:GetAnimations()}) do
+				if animation:GetTarget() == btn then
+					local animType = animation:GetObjectType()
+					if animType ~= "Animation" and animType ~= "Rotation" then
+						disable = true
+						break
+					end
+				end
+			end
+			if disable then
+				animationGroup:Stop()
+				animationGroup.Play = void
+			end
+		end
+		btn.SetHitRectInsets = void
+		btn.ClearAllPoints = void
+		btn.StartMoving = void
+		btn.SetParent = void
+		btn.Show = void
+		btn.Hide = void
+		btn.IsShown = IsShown
+		btn.SetShown = void
+		btn.SetPoint = void
+		btn.SetAlpha = void
+		btn.SetScale = void
+		btn.SetSize = void
+		btn.SetWidth = void
+		btn.SetHeight = void
+		btn.Disable = void
+		btn.SetEnabled = void
+		btn.HookScript = void
+		btn.SetScript = SetScript
 	end
 end
 
 
 function hidingBar:sort()
 	sort(self.createdButtons, function(a, b)
-		local o1, o2 = self.config.btnSettings[a.name][2], self.config.btnSettings[b.name][2]
+		local o1, o2 = btnSettings[a][2], btnSettings[b][2]
 		return o1 and not o2
 			 or o1 and o2 and o1 < o2
 			 or o1 == o2 and a.name < b.name
 	end)
-	sort(self.minimapButtons, function(a, b)
+	local btnSort = function(a, b)
 		local n1, n2, o1, o2 = a:GetName(), b:GetName()
-		if n1 then o1 = self.config.mbtnSettings[n1][2] end
-		if n2 then o2 = self.config.mbtnSettings[n2][2] end
+		if n1 then o1 = btnSettings[a][2] end
+		if n2 then o2 = btnSettings[b][2] end
 		return o1 and not o2
 			 or o1 and o2 and o1 < o2
 			 or o1 == o2 and (n1 and not n2
 								or n1 and n2 and n1 < n2)
-	end)
+	end
+	sort(self.minimapButtons, btnSort)
+	sort(self.mixedButtons, btnSort)
 end
 
 
@@ -892,33 +951,42 @@ function hidingBar:applyLayout()
 		orientation = self.config.orientation
 	end
 
-	local i = 0
-	for _, btn in ipairs(self.createdButtons) do
-		if not self.config.btnSettings[btn.name][1] then
-			i = i + 1
-			self:setPointBtn(btn, offsetX, offsetY, i, orientation)
-			btn:Show()
-		else
-			btn:Hide()
+	local i, maxButtons, line = 0
+	if self.config.mbtnPosition == 2 then
+		for _, btn in ipairs(self.mixedButtons) do
+			if btn:IsShown() then
+				i = i + 1
+				self:setPointBtn(btn, offsetX, offsetY, i, orientation)
+			end
 		end
-	end
-	local followed = self.config.mbtnPosition == 1
-	local orderDelta = followed and i or math.ceil(i / self.config.size) * self.config.size
-	local j = 0
-	for _, btn in ipairs(self.minimapButtons) do
-		if btn:IsShown() then
-			j = j + 1
-			self:setPointBtn(btn, offsetX, offsetY, j + orderDelta, orientation)
+		self.shown = i ~= 0
+		maxButtons = i
+		line = math.ceil(i / self.config.size)
+	else
+		for _, btn in ipairs(self.createdButtons) do
+			if btn:IsShown() then
+				i = i + 1
+				self:setPointBtn(btn, offsetX, offsetY, i, orientation)
+			end
 		end
+		local followed = self.config.mbtnPosition == 1
+		local orderDelta = followed and i or math.ceil(i / self.config.size) * self.config.size
+		local j = 0
+		for _, btn in ipairs(self.minimapButtons) do
+			if btn:IsShown() then
+				j = j + 1
+				self:setPointBtn(btn, offsetX, offsetY, j + orderDelta, orientation)
+			end
+		end
+		self.shown = i + j ~= 0
+		maxButtons = followed and i + j or i > j and i or j
+		line = math.ceil((j + orderDelta) / self.config.size)
 	end
 
-	self.shown = i + j ~= 0
 	if not self.shown then self:Hide() end
 	self:refreshShown()
 
-	local maxButtons = followed and i + j or i > j and i or j
 	if maxButtons > self.config.size then maxButtons = self.config.size end
-	local line = math.ceil((j + orderDelta) / self.config.size)
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
 	if orientation == 2 then width, height = height, width end

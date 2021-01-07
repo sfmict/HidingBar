@@ -5,7 +5,7 @@ config.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 config.noIcon:SetTexCoord(.05, .95, .05, .95)
 config.noIcon:Hide()
 config.name = addon
-config.buttons, config.mbuttons = {}, {}
+config.buttons, config.mbuttons, config.mixedButtons = {}, {}, {}
 
 
 config.optionsPanelBackdrop = {
@@ -626,6 +626,12 @@ config:SetScript("OnShow", function(self)
 		info.value = 1
 		info.func = updateMBtnPostion
 		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Mixed"]
+		info.value = 2
+		info.func = updateMBtnPostion
+		UIDropDownMenu_AddButton(info)
 	end)
 	UIDropDownMenu_SetSelectedValue(mbtnPostionCombobox, self.config.mbtnPosition)
 
@@ -895,6 +901,7 @@ config:SetScript("OnShow", function(self)
 	C_Timer.After(.1, function()
 		self:initButtons()
 		self:initMButtons()
+		self:sort(self.mixedButtons)
 		self:setButtonSize()
 		self:applyLayout()
 	end)
@@ -977,6 +984,7 @@ end
 
 function config:dragStart(btn, orderDelta)
 	btn.isDrag = true
+	btn.btnList = self.config.mbtnPosition == 2 and self.mixedButtons or btn.defBtnList
 	for i = 1, #btn.btnList do
 		btn.btnList[i].settings[2] = i
 	end
@@ -998,6 +1006,11 @@ function config:dragStop(btn)
 	btn:SetScript("OnUpdate", nil)
 	btn:StopMovingOrSizing()
 	self:setPointBtn(btn, 4, 4, btn.settings[2] + btn.orderDelta, .3)
+	if self.config.mbtnPosition == 2 then
+		self:sort(btn.defBtnList)
+	else
+		self:sort(self.mixedButtons)
+	end
 	self.hidingBar:sort()
 	self:hidingBarUpdate()
 end
@@ -1032,7 +1045,8 @@ do
 	function config:createButton(name, button, update)
 		if not self.buttonPanel or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
-		btn.name = name
+		btn.name = button:GetName()
+		btn.title = name
 		if button.iconTex then
 			btn.icon:SetTexture(button.iconTex)
 			if button.iconCoords then
@@ -1042,7 +1056,7 @@ do
 		end
 		btn.color = {btn.icon:GetVertexColor()}
 		btn.iconDesaturated = button.iconDesaturated
-		btn.btnList = self.buttons
+		btn.defBtnList = self.buttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", btnDragStart)
 		btn:SetScript("OnDragStop", btnDragStop)
@@ -1050,8 +1064,10 @@ do
 		btn:SetChecked(btn.settings[1])
 		buttonsByName[name] = btn
 		tinsert(self.buttons, btn)
+		tinsert(self.mixedButtons, btn)
 		if update then
 			self:sort(self.buttons)
+			self:sort(self.mixedButtons)
 			self:applyLayout()
 		end
 	end
@@ -1089,7 +1105,7 @@ do
 		btn.icon:SetTexture(icon:GetTexture())
 		btn.icon:SetTexCoord(icon:GetTexCoord())
 		btn.color = {icon:GetVertexColor()}
-		btn.btnList = self.mbuttons
+		btn.defBtnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)
 		btn:SetScript("OnDragStart", btnDragStart)
 		btn:SetScript("OnDragStop", btnDragStop)
@@ -1097,6 +1113,7 @@ do
 		btn:SetChecked(btn.settings[1])
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
+		tinsert(self.mixedButtons, btn)
 	end
 end
 
@@ -1175,19 +1192,27 @@ end
 
 function config:applyLayout(delay)
 	local offsetX, offsetY = 4, 4
-	local maxColumns = math.floor(560 / self.config.buttonSize)
+	local maxColumns, rows = math.floor(560 / self.config.buttonSize)
 	self.size = self.config.size
 	if self.size > maxColumns then self.size = maxColumns end
 
-	for i, btn in ipairs(self.buttons) do
-		self:setPointBtn(btn, offsetX, offsetY, i, delay)
-	end
-	self.orderMBtnDelta = self.config.mbtnPosition == 1 and #self.buttons or math.ceil(#self.buttons / self.size) * self.size
-	for i, btn in ipairs(self.mbuttons) do
-		self:setPointBtn(btn, offsetX, offsetY, i + self.orderMBtnDelta, delay)
+	if self.config.mbtnPosition == 2 then
+		for i, btn in ipairs(self.mixedButtons) do
+			self:setPointBtn(btn, offsetX, offsetY, i, delay)
+		end
+		self.orderMBtnDelta = 0
+		rows = math.ceil(#self.mixedButtons / self.size)
+	else
+		for i, btn in ipairs(self.buttons) do
+			self:setPointBtn(btn, offsetX, offsetY, i, delay)
+		end
+		self.orderMBtnDelta = self.config.mbtnPosition == 1 and #self.buttons or math.ceil(#self.buttons / self.size) * self.size
+		for i, btn in ipairs(self.mbuttons) do
+			self:setPointBtn(btn, offsetX, offsetY, i + self.orderMBtnDelta, delay)
+		end
+		rows = math.ceil((#self.mbuttons + self.orderMBtnDelta) / self.size)
 	end
 
-	local rows = math.ceil((#self.mbuttons + self.orderMBtnDelta) / self.size)
 	local width = self.size * self.config.buttonSize + offsetX * 2
 	local height = rows * self.config.buttonSize + offsetY * 2
 	self.buttonPanel:SetSize(width, height)
