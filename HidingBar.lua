@@ -1186,6 +1186,21 @@ function hidingBar:dragBar()
 	if not self.config.freeMove then
 		local offset = 100
 
+		if not IsShiftKeyDown() then
+			local delta = 10 / scale
+			if anchor == "top" or anchor == "bottom" then
+				local halfWidth = UIwidth / 2
+				if math.abs(halfWidth - x) < delta then
+					x = halfWidth
+				end
+			else
+				local halfHeight = UIheight / 2
+				if math.abs(halfHeight - y) < delta then
+					y = halfHeight
+				end
+			end
+		end
+
 		if anchor == "left" and x > width
 		or anchor == "right" and x < UIwidth - width then
 			if y > UIheight - offset then
