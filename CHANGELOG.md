@@ -1,3 +1,2 @@
-* Added option "Both direction" into "Expand to".
-* Update button grab system.
+* Added option "Mixed" into "Position of minimap buttons".
 * Fixes.
