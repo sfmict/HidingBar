@@ -332,12 +332,9 @@ function hidingBar:init()
 				end
 			end
 			garrison.IsShown = function(garrison)
-				if garrison.show and not btnSettings[garrison][1] then
-					self.Show(garrison)
-					return true
-				end
-				self.Hide(garrison)
-				return false
+				local show = garrison.show and not btnSettings[garrison][1]
+				self.SetShown(garrison, show)
+				return show
 			end
 
 			self.SetClipsChildren(garrison, true)
@@ -376,12 +373,9 @@ function hidingBar:init()
 				end
 			end
 			queue.IsShown = function(queue)
-				if queue.show and not btnSettings[queue][1] then
-					self.Show(queue)
-					return true
-				end
-				self.Hide(queue)
-				return false
+				local show = queue.show and not btnSettings[queue][1]
+				self.SetShown(queue, show)
+				return show
 			end
 
 			queue.EyeHighlightAnim:SetScript("OnLoop", nil)
@@ -451,12 +445,9 @@ function hidingBar:init()
 				end
 			end
 			proxyMail.IsShown = function(proxyMail)
-				if proxyMail.show and not btnSettings[proxyMail][1] then
-					self.Show(proxyMail)
-					return true
-				end
-				self.Hide(proxyMail)
-				return false
+				local show = proxyMail.show and not btnSettings[proxyMail][1]
+				self.SetShown(proxyMail, show)
+				return show
 			end
 
 			if self.MSQ_MButton then
@@ -478,7 +469,7 @@ function hidingBar:init()
 		end
 
 		-- ZOOM IN & ZOOM OUT
-		for _, zoom in next, {MinimapZoomIn, MinimapZoomOut} do
+		for _, zoom in ipairs({MinimapZoomIn, MinimapZoomOut}) do
 			local name = zoom:GetName()
 			if self:ignoreCheck(name) then
 				btnSettings[zoom] = self.config.mbtnSettings[name]
@@ -488,7 +479,6 @@ function hidingBar:init()
 				if self.MSQ_MButton then
 					zoom.icon = zoom:CreateTexture(nil, "ARTWORK")
 					zoom.icon:SetTexture(zoom:GetNormalTexture():GetTexture())
-					zoom.icon:SetAllPoints()
 					zoom.data = {iconCoords = {.24, .79, .21, .76}}
 					zoom.icon.dSetTexCoord = zoom.icon.SetTexCoord
 					zoom.icon.SetTexCoord = setTexCoord
@@ -638,12 +628,9 @@ end
 
 do
 	local function IsShown(btn)
-		if not btnSettings[btn][1] then
-			btn:Show()
-			return true
-		end
-		btn:Hide()
-		return false
+		local show = not btnSettings[btn][1]
+		btn:SetShown(show)
+		return show
 	end
 
 	--[[
@@ -837,12 +824,9 @@ end
 do
 	local function IsShown(btn)
 		local data = btnSettings[btn]
-		if not (data and data[1]) then
-			hidingBar.Show(btn)
-			return true
-		end
-		hidingBar.Hide(btn)
-		return false
+		local show = not (data and data[1])
+		hidingBar.SetShown(btn, show)
+		return show
 	end
 
 	local function CreateAnimationGroup(self, ...)
