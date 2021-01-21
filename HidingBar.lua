@@ -97,7 +97,7 @@ function hidingBar:ADDON_LOADED(addonName)
 			self.config.grabMinimap = true
 		end
 		self.config.grabMinimapAfterN = self.config.grabMinimapAfterN or 1
-		self.config.mbtnPosition = self.config.mbtnPosition or 0
+		self.config.mbtnPosition = self.config.mbtnPosition or 2
 		self.config.ignoreMBtn = self.config.ignoreMBtn or {"GatherMatePin"}
 		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
 		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
@@ -886,17 +886,18 @@ function hidingBar:sort()
 	sort(self.createdButtons, function(a, b)
 		local o1, o2 = btnSettings[a][2], btnSettings[b][2]
 		return o1 and not o2
-			 or o1 and o2 and o1 < o2
-			 or o1 == o2 and a.name < b.name
+			or o1 and o2 and o1 < o2
+			or o1 == o2 and a.name < b.name
 	end)
 	local btnSort = function(a, b)
-		local n1, n2, o1, o2 = a:GetName(), b:GetName()
-		if n1 then o1 = btnSettings[a][2] end
-		if n2 then o2 = btnSettings[b][2] end
-		return o1 and not o2
-			 or o1 and o2 and o1 < o2
-			 or o1 == o2 and (n1 and not n2
-								or n1 and n2 and n1 < n2)
+		local o1 = btnSettings[a] and btnSettings[a][2]
+		local o2 = btnSettings[b] and btnSettings[b][2]
+		if o1 and not o2 or o1 and o2 and o1 < o2 then return true
+		elseif o1 ~= o2 then return false end
+
+		local n1, n2 = a:GetName(), b:GetName()
+		return n1 and not n2
+			or n1 and n2 and n1 < n2
 	end
 	sort(self.minimapButtons, btnSort)
 	sort(self.mixedButtons, btnSort)

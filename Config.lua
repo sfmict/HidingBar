@@ -358,13 +358,14 @@ config:SetScript("OnShow", function(self)
 	self.fadeOpacity = CreateFrame("SLIDER", nil, self.generalPanel, "HidingBarAddonSliderTemplate")
 	self.fadeOpacity:SetPoint("LEFT", self.fade.Text, "RIGHT", 20, 0)
 	self.fadeOpacity:SetPoint("RIGHT", -30, 0)
-	self.fadeOpacity:SetMinMaxValues(0, .9)
+	self.fadeOpacity:SetMinMaxValues(0, .95)
+	self.fadeOpacity.step = 1 / .05
 	self.fadeOpacity.text:SetText(L["Opacity"])
 	self.fadeOpacity:SetValue(self.config.fadeOpacity)
 	self.fadeOpacity.label:SetText(self.config.fadeOpacity)
 	self.fadeOpacity:SetEnabled(self.config.fade)
 	self.fadeOpacity:SetScript("OnValueChanged", function(slider, value)
-		value = math.floor(value * 10 + .5) / 10
+		value = math.floor(value * slider.step + .5) / slider.step
 		config.config.fadeOpacity = value
 		slider.label:SetText(value)
 		slider:SetValue(value)
