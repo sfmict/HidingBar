@@ -655,6 +655,12 @@ config:SetScript("OnShow", function(self)
 		self.coordX:SetEnabled(self.config.barTypePosition == 1)
 		self.coordY:SetEnabled(self.config.barTypePosition == 1)
 
+		if self.config.barTypePosition == 2 then
+			UIDropDownMenu_EnableDropDown(self.mbShowToCombobox)
+		else
+			UIDropDownMenu_DisableDropDown(self.mbShowToCombobox)
+		end
+
 		self:hidingBarUpdate()
 	end
 
