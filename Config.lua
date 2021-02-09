@@ -138,6 +138,8 @@ config:SetScript("OnShow", function(self)
 	local function updateExpandTo(btn)
 		UIDropDownMenu_SetSelectedValue(expandToCombobox, btn.value)
 		self.hidingBar:setBarExpand(btn.value)
+		self.hidingBar:enter()
+		self.hidingBar:leave()
 	end
 
 	UIDropDownMenu_Initialize(expandToCombobox, function(self, level)
@@ -332,8 +334,7 @@ config:SetScript("OnShow", function(self)
 	self.lock:SetScript("OnClick", function(btn)
 		local checked = btn:GetChecked()
 		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-		self.config.lock = checked
-		self.hidingBar:refreshShown()
+		self.hidingBar:setLocked(checked)
 	end)
 
 	-- FADE
@@ -346,6 +347,7 @@ config:SetScript("OnShow", function(self)
 		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 		self.config.fade = checked
 		self.fadeOpacity:SetEnabled(checked)
+		if not self.hidingBar.drag:IsShown() then return end
 		if checked then
 			UIFrameFadeOut(self.hidingBar.drag, 1.5, self.hidingBar.drag:GetAlpha(), self.config.fadeOpacity)
 		else
@@ -639,41 +641,39 @@ config:SetScript("OnShow", function(self)
 	-- POSITION BAR PANEL
 	self.positionBarPanel = createTabPanel(settingsTabs, L["Bar position"])
 
-	local function updateFreeMoveChilds()
-		if self.config.freeMove then
+	local function updateBarTypePosition()
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+		self.attachedToSide.check:SetShown(self.config.barTypePosition == nil)
+		self.freeMove.check:SetShown(self.config.barTypePosition == 1)
+		self.likeMB.check:SetShown(self.config.barTypePosition == 2)
+
+		if self.config.barTypePosition == 1 then
 			UIDropDownMenu_EnableDropDown(self.hideToCombobox)
 		else
 			UIDropDownMenu_DisableDropDown(self.hideToCombobox)
 		end
-		self.coordX:SetEnabled(self.config.freeMove)
-		self.coordY:SetEnabled(self.config.freeMove)
+		self.coordX:SetEnabled(self.config.barTypePosition == 1)
+		self.coordY:SetEnabled(self.config.barTypePosition == 1)
+
+		self:hidingBarUpdate()
 	end
 
-	-- ATTACHED TO THE SIDE
+	-- BAR ATTACHED TO THE SIDE
 	self.attachedToSide = CreateFrame("BUTTON", nil, self.positionBarPanel, "HidingBarAddonRadioButtonTemplate")
 	self.attachedToSide:SetPoint("TOPLEFT", 8, -8)
-	self.attachedToSide.check:SetShown(not self.config.freeMove)
 	self.attachedToSide.Text:SetText(L["Bar attached to the side"])
-	self.attachedToSide:SetScript("OnClick", function(btn)
-		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-		self.config.freeMove = nil
-		self.freeMove.check:Hide()
-		btn.check:Show()
-		updateFreeMoveChilds()
-		self.hidingBar:setBarPosition(nil, 0)
+	self.attachedToSide:SetScript("OnClick", function()
+		self.hidingBar:setBarTypePosition()
+		updateBarTypePosition()
 	end)
 
-	-- MOVES FREELY
+	-- BAR MOVES FREELY
 	self.freeMove = CreateFrame("BUTTON", nil, self.positionBarPanel, "HidingBarAddonRadioButtonTemplate")
 	self.freeMove:SetPoint("TOPLEFT", self.attachedToSide, "BOTTOMLEFT")
-	self.freeMove.check:SetShown(self.config.freeMove)
 	self.freeMove.Text:SetText(L["Bar moves freely"])
-	self.freeMove:SetScript("OnClick", function(btn)
-		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-		self.config.freeMove = true
-		self.attachedToSide.check:Hide()
-		btn.check:Show()
-		updateFreeMoveChilds()
+	self.freeMove:SetScript("OnClick", function()
+		self.hidingBar:setBarTypePosition(1)
+		updateBarTypePosition()
 	end)
 
 	-- HIDE TO
@@ -731,10 +731,11 @@ config:SetScript("OnShow", function(self)
 	end)
 	self.coordX.setX = function(editBox, x)
 		if self.config.anchor == "left" or self.config.anchor == "right" then
-			self.hidingBar:setBarPosition(nil, x)
+			self.hidingBar:setBarCoords(nil, x)
 		else
-			self.hidingBar:setBarPosition(x)
+			self.hidingBar:setBarCoords(x)
 		end
+		self.hidingBar:updateBarPosition()
 	end
 	self.coordX:SetScript("OnEnterPressed", function(editBox)
 		editBox:setX(tonumber(editBox:GetText():match("%-?%d*")) or 0)
@@ -765,10 +766,11 @@ config:SetScript("OnShow", function(self)
 	end)
 	self.coordY.setY = function(editBox, y)
 		if self.config.anchor == "left" or self.config.anchor == "right" then
-			self.hidingBar:setBarPosition(y)
+			self.hidingBar:setBarCoords(y)
 		else
-			self.hidingBar:setBarPosition(nil, y)
+			self.hidingBar:setBarCoords(nil, y)
 		end
+		self.hidingBar:updateBarPosition()
 	end
 	self.coordY:SetScript("OnEnterPressed", function(editBox)
 		editBox:setY(tonumber(editBox:GetText():match("%-?%d*")) or 0)
@@ -788,8 +790,58 @@ config:SetScript("OnShow", function(self)
 	-- SET COORDS
 	self:updateCoords()
 
-	-- ENABLE OR DISABLE "MOVES FREELY" OPTIONS
-	updateFreeMoveChilds()
+	-- BAR LIKE MINIMAP BUTTON
+	self.likeMB = CreateFrame("BUTTON", nil, self.positionBarPanel, "HidingBarAddonRadioButtonTemplate")
+	self.likeMB:SetPoint("TOPLEFT", self.hideToCombobox, "BOTTOMLEFT", -8, 0)
+	self.likeMB.Text:SetText(L["Bar like a minimap button"])
+	self.likeMB:SetScript("OnClick", function()
+		self.hidingBar:setBarTypePosition(2)
+		updateBarTypePosition()
+	end)
+
+	-- MINIMAP BUTTON SHOW TO
+	self.mbShowToCombobox = CreateFrame("FRAME", "HidingBarAddonMBShowTo", self.positionBarPanel, "UIDropDownMenuTemplate")
+	self.mbShowToCombobox:SetPoint("TOPLEFT", self.likeMB, "BOTTOMLEFT", 8, 0)
+	UIDropDownMenu_SetWidth(self.mbShowToCombobox, 100)
+
+	local function mbShowToChange(btn)
+		UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, btn.value)
+		self.hidingBar:setMBAnchor(btn.value)
+		self.hidingBar:enter()
+		self.hidingBar:leave()
+	end
+
+	UIDropDownMenu_Initialize(self.mbShowToCombobox, function(self, level)
+		local info = UIDropDownMenu_CreateInfo()
+
+		info.checked = nil
+		info.text = L["Show to left"]
+		info.value = "right"
+		info.func = mbShowToChange
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Show to right"]
+		info.value = "left"
+		info.func = mbShowToChange
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Show to up"]
+		info.value = "bottom"
+		info.func = mbShowToChange
+		UIDropDownMenu_AddButton(info)
+
+		info.checked = nil
+		info.text = L["Show to down"]
+		info.value = "top"
+		info.func = mbShowToChange
+		UIDropDownMenu_AddButton(info)
+	end)
+	UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, self.config.omb.anchor)
+
+	-- UPDATE BAR TYPE POSITION OPTIONS
+	updateBarTypePosition()
 
 	-- BUTTONS TAB PANEL
 	self.buttonsTabPanel = createTabPanel(buttonTabs, L["Buttons"])

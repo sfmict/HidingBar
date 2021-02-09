@@ -1,9 +1,10 @@
 package-as: HidingBar
 
 externals:
-	libs/LibStub: https://repos.wowace.com/wow/libstub/trunk
-	libs/CallbackHandler-1.0: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+	libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
+	libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
 	libs/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1
+	libs/LibDBIcon-1.0: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
 
 enable-nolib-creation: no
 
@@ -17,3 +18,4 @@ ignore:
 	- libs/LibStub/LibStub.toc
 	- libs/LibStub/tests
 	- libs/LibDataBroker-1.1/README.textile
+	- libs/LibDBIcon-1.0/lib.xml

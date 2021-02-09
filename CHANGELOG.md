@@ -1,2 +1,1 @@
-* Added option "Mixed" into "Position of minimap buttons".
-* Fixes.
+* Added option "Bar like a minimap button".
