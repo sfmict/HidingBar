@@ -813,8 +813,7 @@ config:SetScript("OnShow", function(self)
 	local function mbShowToChange(btn)
 		UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, btn.value)
 		self.hidingBar:setMBAnchor(btn.value)
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		self:hidingBarUpdate()
 	end
 
 	UIDropDownMenu_Initialize(self.mbShowToCombobox, function(self, level)
