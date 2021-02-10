@@ -660,8 +660,6 @@ config:SetScript("OnShow", function(self)
 		else
 			UIDropDownMenu_DisableDropDown(self.mbShowToCombobox)
 		end
-
-		self:hidingBarUpdate()
 	end
 
 	-- BAR ATTACHED TO THE SIDE
@@ -672,6 +670,7 @@ config:SetScript("OnShow", function(self)
 		self.hidingBar:setBarCoords(nil, 0)
 		self.hidingBar:setBarTypePosition()
 		updateBarTypePosition()
+		self:hidingBarUpdate()
 	end)
 
 	-- BAR MOVES FREELY
@@ -681,6 +680,7 @@ config:SetScript("OnShow", function(self)
 	self.freeMove:SetScript("OnClick", function()
 		self.hidingBar:setBarTypePosition(1)
 		updateBarTypePosition()
+		self:hidingBarUpdate()
 	end)
 
 	-- HIDE TO
@@ -804,6 +804,7 @@ config:SetScript("OnShow", function(self)
 	self.likeMB:SetScript("OnClick", function()
 		self.hidingBar:setBarTypePosition(2)
 		updateBarTypePosition()
+		self:hidingBarUpdate()
 	end)
 
 	-- MINIMAP BUTTON SHOW TO
