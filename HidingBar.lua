@@ -149,7 +149,6 @@ function hidingBar:createOwnMinimapButton()
 			elseif button == "RightButton" then
 				if IsAltKeyDown() then
 					self:setLocked(not self.config.lock)
-					self:refreshShown()
 					if config.lock then config.lock:SetChecked(self.config.lock) end
 				end
 				if IsShiftKeyDown() then
@@ -161,7 +160,7 @@ function hidingBar:createOwnMinimapButton()
 			local func = self.drag:GetScript("OnEnter")
 			if func then func(self.drag) end
 		end,
-		OnLeave = function(btn)
+		OnLeave = function()
 			local func = self.drag:GetScript("OnLeave")
 			if func then func(self.drag) end
 		end,
@@ -1289,7 +1288,6 @@ do
 	}
 
 	function hidingBar:updateBarPosition()
-		local width, height = self:GetSize()
 		local anchor = self.anchorObj.anchor
 
 		if not self.position then
@@ -1337,7 +1335,7 @@ function hidingBar:dragBar()
 	x, y = x / scale, y / scale
 
 	if self.config.barTypePosition == nil then
-		local offset = 100
+		local offset = 70 / scale
 
 		if not IsShiftKeyDown() then
 			local delta = 10 / scale
@@ -1425,8 +1423,7 @@ hidingBar.drag:SetScript("OnMouseDown", function(_, button)
 		hidingBar:SetScript("OnUpdate", hidingBar.dragBar)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
-			hidingBar.config.lock = not hidingBar.config.lock
-			hidingBar:refreshShown()
+			self:setLocked(not hidingBar.config.lock)
 			if config.lock then config.lock:SetChecked(hidingBar.config.lock) end
 		end
 		if IsShiftKeyDown() then
@@ -1510,8 +1507,7 @@ end
 
 
 function hidingBar.drag:hoverHandler()
-	if not hidingBar.drag:IsShown() then return end
-	if hidingBar.config.fade then
+	if self:IsShown() and hidingBar.config.fade then
 		UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), 1)
 	end
 end
@@ -1530,7 +1526,7 @@ function hidingBar.drag:showOnHoverWithDelay()
 	if hidingBar:IsShown() or hidingBar.config.showDelay == 0 then
 		hidingBar:enter()
 	else
-		hidingBar.drag:hoverHandler()
+		self:hoverHandler()
 		self.fTimer.timer = hidingBar.config.showDelay
 		self.fTimer:SetScript("OnUpdate", self.showBarDelay)
 	end
@@ -1558,7 +1554,7 @@ end
 
 hidingBar.drag:SetScript("OnLeave", function(self)
 	self.fTimer:SetScript("OnUpdate", nil)
-	if hidingBar.config.fade and not hidingBar:IsShown() and hidingBar.drag:IsShown() then
+	if hidingBar.config.fade and not hidingBar:IsShown() and self:IsShown() then
 		UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), hidingBar.config.fadeOpacity)
 	end
 	hidingBar:leave()
