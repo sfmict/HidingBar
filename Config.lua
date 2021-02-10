@@ -645,6 +645,12 @@ config:SetScript("OnShow", function(self)
 		self.coordX:SetEnabled(self.config.barTypePosition == 1)
 		self.coordY:SetEnabled(self.config.barTypePosition == 1)
 
+		if self.config.barTypePosition == 2 then
+			UIDropDownMenu_EnableDropDown(self.mbShowToCombobox)
+		else
+			UIDropDownMenu_DisableDropDown(self.mbShowToCombobox)
+		end
+
 		self:hidingBarUpdate()
 	end
 
@@ -653,6 +659,7 @@ config:SetScript("OnShow", function(self)
 	self.attachedToSide:SetPoint("TOPLEFT", 8, -8)
 	self.attachedToSide.Text:SetText(L["Bar attached to the side"])
 	self.attachedToSide:SetScript("OnClick", function()
+		self.hidingBar:setBarCoords(nil, 0)
 		self.hidingBar:setBarTypePosition()
 		updateBarTypePosition()
 	end)
@@ -797,8 +804,7 @@ config:SetScript("OnShow", function(self)
 	local function mbShowToChange(btn)
 		UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, btn.value)
 		self.hidingBar:setMBAnchor(btn.value)
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		self:hidingBarUpdate()
 	end
 
 	UIDropDownMenu_Initialize(self.mbShowToCombobox, function(self, level)
