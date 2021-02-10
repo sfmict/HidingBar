@@ -258,7 +258,7 @@ config:SetScript("OnShow", function(self)
 	self.description:SetJustifyH("LEFT")
 	self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
 
-		-- ORIENTATION TEXT
+	-- ORIENTATION TEXT
 	local orientationText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 	orientationText:SetPoint("TOPLEFT", self.description, "BOTTOMLEFT", 0, -23)
 	orientationText:SetText(L["Orientation"])
