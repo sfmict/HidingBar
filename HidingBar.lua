@@ -620,13 +620,13 @@ function hidingBar:init()
 		end
 	end
 
-	local tstmp = self.db.tstmp or t
+	local tstmp = tonumber(self.db.tstmp) or t
 	local maxTime = 60 * 60 * 24 * 90 -- 90 days and remove
 	for k, s in pairs(self.config.btnSettings) do
-		if tstmp - s.tstmp > maxTime then self.config.btnSettings[k] = nil end
+		if tstmp - (tonumber(s.tstmp) or 0) > maxTime then self.config.btnSettings[k] = nil end
 	end
 	for k, s in pairs(self.config.mbtnSettings) do
-		if tstmp - s.tstmp > maxTime then self.config.mbtnSettings[k] = nil end
+		if tstmp - (tonumber(s.tstmp) or 0) > maxTime then self.config.mbtnSettings[k] = nil end
 	end
 	self.db.tstmp = t
 
