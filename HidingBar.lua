@@ -836,7 +836,7 @@ function hidingBar:addMButton(button)
 			if clickable then
 				if name then
 					btnSettings[button] = self.config.mbtnSettings[name]
-					btnSettings[button].tstmp = t
+					btnSettings[button].tstmp = time()
 				end
 
 				self:setHooks(button)
