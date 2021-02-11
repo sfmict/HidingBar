@@ -140,7 +140,7 @@ function hidingBar:createOwnMinimapButton()
 		icon = "Interface/Icons/misc_arrowleft",
 		OnClick = function(_, button)
 			if button == "LeftButton" then
-				if self:IsShown() then
+				if self:IsShown() and self.config.showHandler ~= 3 then
 					self:Hide()
 				else
 					local func = self.drag:GetScript("OnClick")
@@ -196,9 +196,6 @@ function hidingBar:init()
 		self.MSQ_MButton_Data = {}
 
 		function self:MSQ_MButton_Update(btn)
-			if btn:GetName() == "MiniMapTracking" then
-				btn = MiniMapTrackingButton
-			end
 			if not btn.__MSQ_Enabled then return end
 			local data = self.MSQ_MButton_Data[btn]
 			if data then
@@ -215,7 +212,7 @@ function hidingBar:init()
 		end
 
 		self.MSQ_MButton:SetCallback(function()
-			for _, btn in ipairs(self.minimapButtons) do
+			for btn in pairs(self.MSQ_MButton.Buttons) do
 				self:MSQ_MButton_Update(btn)
 			end
 			self:enter()
@@ -621,7 +618,7 @@ function hidingBar:init()
 	end
 
 	local tstmp = tonumber(self.db.tstmp) or t
-	local maxTime = 60 * 60 * 24 * 90 -- 90 days and remove
+	local maxTime = 7776000 -- 60 * 60 * 24 * 90 = 90 days and remove
 	for k, s in pairs(self.config.btnSettings) do
 		if tstmp - (tonumber(s.tstmp) or 0) > maxTime then self.config.btnSettings[k] = nil end
 	end
@@ -759,7 +756,7 @@ function hidingBar:ldbi_add(_, button, name)
 	self:applyLayout()
 
 	if config.buttonPanel then
-		config:initMButtons()
+		config:createMButton(button:GetName(), button.icon)
 		config:sort(config.mbuttons)
 		config:sort(config.mixedButtons)
 		config:setButtonSize()
@@ -801,6 +798,7 @@ function hidingBar:addMButton(button)
 
 			local function setMouseEvents(frame)
 				if frame:IsMouseEnabled() then
+					self.SetHitRectInsets(frame, 0, 0, 0, 0)
 					self.HookScript(frame, "OnEnter", enter)
 					self.HookScript(frame, "OnLeave", leave)
 				end
@@ -814,7 +812,6 @@ function hidingBar:addMButton(button)
 			self.SetFixedFrameLevel(button, false)
 			self.SetClipsChildren(button, true)
 			self.SetAlpha(button, 1)
-			self.SetHitRectInsets(button, 0, 0, 0, 0)
 			self.SetParent(button, self)
 			tinsert(self.minimapButtons, button)
 			tinsert(self.mixedButtons, button)
@@ -1125,7 +1122,7 @@ function hidingBar:updateDragBarPosition()
 end
 
 
-function hidingBar:setMBAnchor(anchor)
+function hidingBar:setOMBAnchor(anchor)
 	if self.config.barTypePosition ~= 2 or self.config.omb.anchor == anchor then return end
 	self.config.omb.anchor = anchor
 	self:setBarTypePosition(self.config.barTypePosition)
@@ -1205,13 +1202,13 @@ function hidingBar:setBarTypePosition(typePosition)
 
 	if self.config.barTypePosition == 2 then
 		ldbi:Show(addon)
-		if not self.mb then
-			self.mb = ldbi:GetMinimapButton(addon)
+		if not self.omb then
+			self.omb = ldbi:GetMinimapButton(addon)
 			if MSQ then
 				self.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
-				self.MSQ_OMB:SetCallback(function() self:MSQ_MButton_Update(self.mb) end)
-				self.MSQ_OMB:AddButton(self.mb, self:setMButtonRegions(self.mb, true), nil, true)
-				self:MSQ_MButton_Update(self.mb)
+				self.MSQ_OMB:SetCallback(function() self:MSQ_MButton_Update(self.omb) end)
+				self.MSQ_OMB:AddButton(self.omb, self:setMButtonRegions(self.omb, true), nil, true)
+				self:MSQ_MButton_Update(self.omb)
 			end
 		end
 
@@ -1249,7 +1246,7 @@ function hidingBar:setBarTypePosition(typePosition)
 		end
 
 		self.anchorObj = self.config.omb
-		self.rFrame = self.mb
+		self.rFrame = self.omb
 		self.position = position
 		self.secondPosition = secondPosition
 	else
