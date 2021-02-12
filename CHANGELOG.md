@@ -1,4 +1,4 @@
-* Fixed auto orientation when the bar is displayed like a minimap button.
-* Fixed disable/enable options.
-* Fixed resetting positon when the bar is attached to the side.
+* Added option to resize own minimap button.
+* Fixed the disappearance of the bar in the "minimap button" mode when option "Show on" is set "Always".
+* Fixed reaction to UI scaling event.
 * Minor fixes.

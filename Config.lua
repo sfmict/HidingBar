@@ -138,8 +138,7 @@ config:SetScript("OnShow", function(self)
 	local function updateExpandTo(btn)
 		UIDropDownMenu_SetSelectedValue(expandToCombobox, btn.value)
 		self.hidingBar:setBarExpand(btn.value)
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		self:hidingBarUpdate()
 	end
 
 	UIDropDownMenu_Initialize(expandToCombobox, function(self, level)
@@ -175,26 +174,22 @@ config:SetScript("OnShow", function(self)
 	lineColorText:SetText(L["Line"])
 
 	lineColor.swatchFunc = function()
-		self.config.lineColor = {ColorPickerFrame:GetColorRGB()}
-		self.hidingBar.drag.bg:SetColorTexture(ColorPickerFrame:GetColorRGB())
+		self.hidingBar:setLineColor(ColorPickerFrame:GetColorRGB())
 		local hexColor = toHex(self.config.lineColor)
 		self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
 		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
-		lineColor.color:SetColorTexture(ColorPickerFrame:GetColorRGB())
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		lineColor.color:SetColorTexture(unpack(self.config.lineColor))
+		self:hidingBarUpdate()
 	end
 	lineColor.cancelFunc = function(color)
-		self.config.lineColor = {color.r, color.g, color.b}
-		self.hidingBar.drag.bg:SetColorTexture(color.r, color.g, color.b)
+		self.hidingBar:setLineColor(color.r, color.g, color.b)
 		local hexColor = toHex(self.config.lineColor)
 		self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
 		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
-		lineColor.color:SetColorTexture(color.r, color.g, color.b)
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		lineColor.color:SetColorTexture(unpack(self.config.lineColor))
+		self:hidingBarUpdate()
 	end
 	lineColor:SetScript("OnClick", function(btn)
 		if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
@@ -216,31 +211,22 @@ config:SetScript("OnShow", function(self)
 
 	bgColor.hasOpacity = true
 	bgColor.swatchFunc = function()
-		self.config.bgColor[1], self.config.bgColor[2], self.config.bgColor[3] = ColorPickerFrame:GetColorRGB()
-		self.hidingBar.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.hidingBar:setBackgroundColor(ColorPickerFrame:GetColorRGB())
 		self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
 		bgColor.color:SetColorTexture(unpack(self.config.bgColor))
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		self:hidingBarUpdate()
 	end
 	bgColor.opacityFunc = function()
-		self.config.bgColor[4] = OpacitySliderFrame:GetValue()
-		self.hidingBar.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.hidingBar:setBackgroundColor(nil, nil, nil, OpacitySliderFrame:GetValue())
 		self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
 		bgColor.color:SetColorTexture(unpack(self.config.bgColor))
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		self:hidingBarUpdate()
 	end
 	bgColor.cancelFunc = function(color)
-		self.config.bgColor[1] = color.r
-		self.config.bgColor[2] = color.g
-		self.config.bgColor[3] = color.b
-		self.config.bgColor[4] = color.opacity
-		self.hidingBar.bg:SetVertexColor(unpack(self.config.bgColor))
+		self.hidingBar:setBackgroundColor(color.r, color.g, color.b, color.opacity)
 		self.buttonPanel.bg:SetVertexColor(unpack(self.config.bgColor))
 		bgColor.color:SetColorTexture(unpack(self.config.bgColor))
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		self:hidingBarUpdate()
 	end
 	bgColor:SetScript("OnClick", function(btn)
 		if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
@@ -270,7 +256,7 @@ config:SetScript("OnShow", function(self)
 
 	local function orientationChange(btn)
 		UIDropDownMenu_SetSelectedValue(orientationCombobox, btn.value)
-		self.config.orientation = btn.value
+		self.hidingBar:setOrientation(btn.value)
 		self:hidingBarUpdate()
 	end
 
@@ -309,8 +295,7 @@ config:SetScript("OnShow", function(self)
 
 	local function fsChange(btn)
 		UIDropDownMenu_SetSelectedValue(fsCombobox, btn.value)
-		self.config.frameStrata = btn.value
-		self.hidingBar:setFrameStrata()
+		self.hidingBar:setFrameStrata(btn.value)
 	end
 
 	UIDropDownMenu_Initialize(fsCombobox, function(self, level)
@@ -345,15 +330,8 @@ config:SetScript("OnShow", function(self)
 	self.fade:SetScript("OnClick", function(btn)
 		local checked = btn:GetChecked()
 		PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-		self.config.fade = checked
 		self.fadeOpacity:SetEnabled(checked)
-		if not self.hidingBar.drag:IsShown() then return end
-		if checked then
-			UIFrameFadeOut(self.hidingBar.drag, 1.5, self.hidingBar.drag:GetAlpha(), self.config.fadeOpacity)
-		else
-			UIFrameFadeRemoveFrame(self.hidingBar.drag)
-			self.hidingBar.drag:SetAlpha(1)
-		end
+		self.hidingBar:setFade(checked)
 	end)
 
 	-- FADE OPACITY
@@ -368,11 +346,9 @@ config:SetScript("OnShow", function(self)
 	self.fadeOpacity:SetEnabled(self.config.fade)
 	self.fadeOpacity:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value * slider.step + .5) / slider.step
-		config.config.fadeOpacity = value
+		self.hidingBar:setFadeOpacity(value)
 		slider.label:SetText(value)
 		slider:SetValue(value)
-		UIFrameFadeRemoveFrame(self.hidingBar.drag)
-		self.hidingBar.drag:SetAlpha(value)
 	end)
 
 	-- LINE WIDTH
@@ -385,10 +361,9 @@ config:SetScript("OnShow", function(self)
 	self.lineWidth.label:SetText(self.config.lineWidth)
 	self.lineWidth:SetScript("OnValueChanged", function(slider, value)
 		value = math.floor(value * 10 + .5) / 10
-		config.config.lineWidth = value
+		self.hidingBar:setLineWidth(value)
 		slider.label:SetText(value)
 		slider:SetValue(value)
-		self.hidingBar.drag:SetSize(value, value)
 	end)
 
 	-- SHOW HANDLER TEXT
@@ -403,8 +378,7 @@ config:SetScript("OnShow", function(self)
 
 	local function updateShowHandler(btn)
 		UIDropDownMenu_SetSelectedValue(showHandlerCombobox, btn.value)
-		self.config.showHandler = btn.value
-		self.hidingBar.drag:setShowHandler()
+		self.hidingBar.drag:setShowHandler(btn.value)
 	end
 
 	UIDropDownMenu_Initialize(showHandlerCombobox, function(self, level)
@@ -559,8 +533,8 @@ config:SetScript("OnShow", function(self)
 		value = math.floor(value + .5)
 		slider:SetValue(value)
 		if self.config.size ~= value then
-			self.config.size = value
 			slider.label:SetText(value)
+			self.hidingBar:setMaxButtons(value)
 			self:applyLayout(.3)
 			self:hidingBarUpdate()
 		end
@@ -572,7 +546,7 @@ config:SetScript("OnShow", function(self)
 	buttonSize:SetPoint("RIGHT", -30, 0)
 	buttonSize:SetPoint("RIGHT", -30, 0)
 	buttonSize:SetMinMaxValues(16, 64)
-	buttonSize.text:SetText(L["Button Size"])
+	buttonSize.text:SetText(L["Buttons Size"])
 	buttonSize:SetValue(self.config.buttonSize)
 	buttonSize.label:SetText(self.config.buttonSize)
 	buttonSize:SetScript("OnValueChanged", function(slider, value)
@@ -583,7 +557,7 @@ config:SetScript("OnShow", function(self)
 			slider.label:SetText(value)
 			self:setButtonSize()
 			self:applyLayout(.3)
-			self.hidingBar:setButtonSize()
+			self.hidingBar:setButtonSize(value)
 			self:hidingBarUpdate()
 		end
 	end)
@@ -600,9 +574,9 @@ config:SetScript("OnShow", function(self)
 
 	local function updateMBtnPostion(btn)
 		UIDropDownMenu_SetSelectedValue(mbtnPostionCombobox, btn.value)
-		self.config.mbtnPosition = btn.value
-		self:hidingBarUpdate()
 		self:applyLayout(.3)
+		self.hidingBar:setMBtnPosition(btn.value)
+		self:hidingBarUpdate()
 	end
 
 	UIDropDownMenu_Initialize(mbtnPostionCombobox, function(self, level)
@@ -633,7 +607,7 @@ config:SetScript("OnShow", function(self)
 
 	local function updateBarTypePosition()
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-		self.attachedToSide.check:SetShown(self.config.barTypePosition == nil)
+		self.attachedToSide.check:SetShown(self.config.barTypePosition == 0)
 		self.freeMove.check:SetShown(self.config.barTypePosition == 1)
 		self.likeMB.check:SetShown(self.config.barTypePosition == 2)
 
@@ -646,10 +620,11 @@ config:SetScript("OnShow", function(self)
 		self.coordY:SetEnabled(self.config.barTypePosition == 1)
 
 		if self.config.barTypePosition == 2 then
-			UIDropDownMenu_EnableDropDown(self.mbShowToCombobox)
+			UIDropDownMenu_EnableDropDown(self.ombShowToCombobox)
 		else
-			UIDropDownMenu_DisableDropDown(self.mbShowToCombobox)
+			UIDropDownMenu_DisableDropDown(self.ombShowToCombobox)
 		end
+		self.ombSize:SetEnabled(self.config.barTypePosition == 2)
 	end
 
 	-- BAR ATTACHED TO THE SIDE
@@ -658,7 +633,7 @@ config:SetScript("OnShow", function(self)
 	self.attachedToSide.Text:SetText(L["Bar attached to the side"])
 	self.attachedToSide:SetScript("OnClick", function()
 		self.hidingBar:setBarCoords(nil, 0)
-		self.hidingBar:setBarTypePosition()
+		self.hidingBar:setBarTypePosition(0)
 		updateBarTypePosition()
 		self:hidingBarUpdate()
 	end)
@@ -681,8 +656,7 @@ config:SetScript("OnShow", function(self)
 	local function updateBarAnchor(btn)
 		UIDropDownMenu_SetSelectedValue(self.hideToCombobox, btn.value)
 		self.hidingBar:setBarAnchor(btn.value)
-		self.hidingBar:enter()
-		self.hidingBar:leave()
+		self:hidingBarUpdate()
 	end
 
 	UIDropDownMenu_Initialize(self.hideToCombobox, function(self, level)
@@ -798,17 +772,17 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- MINIMAP BUTTON SHOW TO
-	self.mbShowToCombobox = CreateFrame("FRAME", "HidingBarAddonMBShowTo", self.positionBarPanel, "UIDropDownMenuTemplate")
-	self.mbShowToCombobox:SetPoint("TOPLEFT", self.likeMB, "BOTTOMLEFT", 8, 0)
-	UIDropDownMenu_SetWidth(self.mbShowToCombobox, 100)
+	self.ombShowToCombobox = CreateFrame("FRAME", "HidingBarAddonMBShowTo", self.positionBarPanel, "UIDropDownMenuTemplate")
+	self.ombShowToCombobox:SetPoint("TOPLEFT", self.likeMB, "BOTTOMLEFT", 8, 0)
+	UIDropDownMenu_SetWidth(self.ombShowToCombobox, 100)
 
 	local function mbShowToChange(btn)
-		UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, btn.value)
-		self.hidingBar:setMBAnchor(btn.value)
+		UIDropDownMenu_SetSelectedValue(self.ombShowToCombobox, btn.value)
+		self.hidingBar:setOMBAnchor(btn.value)
 		self:hidingBarUpdate()
 	end
 
-	UIDropDownMenu_Initialize(self.mbShowToCombobox, function(self, level)
+	UIDropDownMenu_Initialize(self.ombShowToCombobox, function(self, level)
 		local info = UIDropDownMenu_CreateInfo()
 
 		info.checked = nil
@@ -835,7 +809,25 @@ config:SetScript("OnShow", function(self)
 		info.func = mbShowToChange
 		UIDropDownMenu_AddButton(info)
 	end)
-	UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, self.config.omb.anchor)
+	UIDropDownMenu_SetSelectedValue(self.ombShowToCombobox, self.config.omb.anchor)
+
+	-- SLIDER MINIMAP BUTTON SIZE
+	self.ombSize = CreateFrame("SLIDER", nil, self.positionBarPanel, "HidingBarAddonSliderTemplate")
+	self.ombSize:SetPoint("LEFT", self.ombShowToCombobox, "RIGHT", -5, 0)
+	self.ombSize:SetPoint("RIGHT", -30, 0)
+	self.ombSize:SetMinMaxValues(16, 64)
+	self.ombSize.text:SetText(L["Button Size"])
+	self.ombSize:SetValue(self.config.omb.size)
+	self.ombSize.label:SetText(self.config.omb.size)
+	self.ombSize:SetScript("OnValueChanged", function(slider, value)
+		value = math.floor(value + .5)
+		slider:SetValue(value)
+		if self.config.omb.size ~= value then
+			slider.label:SetText(value)
+			self.hidingBar:setOMBSize(value)
+			self.hidingBar:setBarTypePosition()
+		end
+	end)
 
 	-- UPDATE BAR TYPE POSITION OPTIONS
 	updateBarTypePosition()
@@ -963,9 +955,8 @@ function config:updateCoords()
 
 	local x = self.hidingBar.position or 0
 	local y = self.hidingBar.secondPosition or 0
-	if self.config.anchor == "left" or self.config.anchor == "right" then
-		x, y = y, x
-	end
+	local anchor = self.config.barTypePosition == 2 and self.config.omb.anchor or self.config.anchor
+	if anchor == "left" or anchor == "right" then x, y = y, x end
 
 	self.coordX:SetNumber(math.floor(x + .5))
 	self.coordY:SetNumber(math.floor(y + .5))
@@ -1001,7 +992,6 @@ end
 
 function config:hidingBarUpdate()
 	self.hidingBar:enter()
-	self.hidingBar:applyLayout()
 	self.hidingBar:leave()
 end
 
@@ -1062,6 +1052,7 @@ function config:dragStop(btn)
 		self:sort(self.mixedButtons)
 	end
 	self.hidingBar:sort()
+	self.hidingBar:applyLayout()
 	self:hidingBarUpdate()
 end
 
@@ -1081,6 +1072,7 @@ do
 
 	local function btnClick(self)
 		self.settings[1] = self:GetChecked()
+		config.hidingBar:applyLayout()
 		config:hidingBarUpdate()
 	end
 
@@ -1118,6 +1110,7 @@ do
 		if update then
 			self:sort(self.buttons)
 			self:sort(self.mixedButtons)
+			self:setButtonSize()
 			self:applyLayout()
 		end
 	end
@@ -1130,6 +1123,7 @@ do
 	local function btnClick(self, button)
 		if button == "LeftButton" then
 			self.settings[1] = self:GetChecked()
+			config.hidingBar:applyLayout()
 			config:hidingBarUpdate()
 		elseif button == "RightButton" then
 			self:SetChecked(not self:GetChecked())
@@ -1147,8 +1141,8 @@ do
 		config:dragStop(btn)
 	end
 
-	function config:createMButton(name, icon)
-		if type(name) ~= "string" or buttonsByName[name] then return end
+	function config:createMButton(name, icon, update)
+		if not self.buttonPanel or type(name) ~= "string" or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.name = name
 		btn.title = name:gsub("LibDBIcon10_", "")
@@ -1164,6 +1158,12 @@ do
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
+		if update then
+			self:sort(self.mbuttons)
+			self:sort(self.mixedButtons)
+			self:setButtonSize()
+			self:applyLayout()
+		end
 	end
 end
 
@@ -1175,7 +1175,7 @@ function config:initButtons()
 end
 
 
-function config:initMButtons()
+function config:initMButtons(update)
 	for _, button in ipairs(self.hidingBar.minimapButtons) do
 		local name = button:GetName()
 		if name then
@@ -1190,7 +1190,7 @@ function config:initMButtons()
 			if not icon or not icon.GetTexture then
 				icon = self.noIcon
 			end
-			self:createMButton(name, icon)
+			self:createMButton(name, icon, update)
 		end
 	end
 end
