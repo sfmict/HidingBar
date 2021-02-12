@@ -1057,11 +1057,7 @@ function hidingBar:setPointBtn(btn, order, orientation)
 end
 
 
-local asd = 0
 function hidingBar:applyLayout()
-	fprint("applyLayout", asd)
-	asd = asd + 1
-
 	local orientation
 	if self.config.orientation == 0 then
 		orientation = (self.anchorObj.anchor == "left" or self.anchorObj.anchor == "right") and 1 or 2
