@@ -16,6 +16,7 @@ hidingBar.drag.bg:SetAllPoints()
 hidingBar.drag.fTimer = CreateFrame("FRAME")
 hidingBar.createdButtons, hidingBar.minimapButtons, hidingBar.mixedButtons = {}, {}, {}
 local createdButtonsByName, btnSettings = {}, {}
+local offsetX, offsetY = 2, 2
 local ldb = LibStub("LibDataBroker-1.1")
 local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0")
 local MSQ = LibStub("Masque", true)
@@ -98,6 +99,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.size = self.config.size or 10
 		self.config.buttonSize = self.config.buttonSize or 32
 		self.config.anchor = self.config.anchor or "top"
+		self.config.barTypePosition = self.config.barTypePosition or 0
 		if self.config.grabMinimap == nil then
 			self.config.grabMinimap = true
 		end
@@ -121,9 +123,9 @@ function hidingBar:ADDON_LOADED(addonName)
 		end
 
 		self:setFrameStrata()
-		self.bg:SetVertexColor(unpack(self.config.bgColor))
-		self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
-		self.drag.bg:SetColorTexture(unpack(self.config.lineColor))
+		self:setLineColor()
+		self:setBackgroundColor()
+		self:setLineWidth()
 
 		config.hidingBar = self
 		config.config = self.config
@@ -170,9 +172,7 @@ end
 
 
 function hidingBar:UI_SCALE_CHANGED()
-	self.position = nil
-	self.secondPosition = nil
-	self:updateBarPosition()
+	self:setBarTypePosition()
 end
 
 
@@ -253,14 +253,9 @@ function hidingBar:init()
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
 				self:sort()
 				self:setButtonSize()
-				self:applyLayout()
 
 				if config.buttonPanel then
-					config:initMButtons()
-					config:sort(config.mbuttons)
-					config:sort(config.mixedButtons)
-					config:setButtonSize()
-					config:applyLayout()
+					config:initMButtons(true)
 				end
 			end)
 		end
@@ -631,10 +626,9 @@ function hidingBar:init()
 
 	self.drag:setShowHandler()
 	self:sort()
-	self:setButtonSize()
-	self:setBarTypePosition(self.config.barTypePosition)
+	self:setBarTypePosition()
 	self:updateDragBarPosition()
-	self:applyLayout()
+	self:setButtonSize()
 
 	self:RegisterEvent("UI_SCALE_CHANGED")
 end
@@ -753,14 +747,9 @@ function hidingBar:ldbi_add(_, button, name)
 	self:addMButton(button)
 	self:sort()
 	self:setButtonSize()
-	self:applyLayout()
 
 	if config.buttonPanel then
-		config:createMButton(button:GetName(), button.icon)
-		config:sort(config.mbuttons)
-		config:sort(config.mixedButtons)
-		config:setButtonSize()
-		config:applyLayout()
+		config:createMButton(button:GetName(), button.icon, true)
 	end
 end
 
@@ -979,7 +968,64 @@ function hidingBar:sort()
 end
 
 
-function hidingBar:setButtonSize()
+function hidingBar:setLineColor(r, g, b)
+	local color = self.config.lineColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	self.drag.bg:SetColorTexture(unpack(color))
+end
+
+
+function hidingBar:setBackgroundColor(r, g, b, a)
+	local color = self.config.bgColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	if a then color[4] = a end
+	self.bg:SetVertexColor(unpack(color))
+end
+
+
+function hidingBar:setOrientation(orientation)
+	self.config.orientation = orientation
+	self:applyLayout()
+end
+
+
+function hidingBar:setFade(fade)
+	self.config.fade = fade
+	if fade and self.drag:IsShown() then
+		UIFrameFadeOut(self.drag, 1.5, self.drag:GetAlpha(), self.config.fadeOpacity)
+	else
+		UIFrameFadeRemoveFrame(self.drag)
+		self.drag:SetAlpha(1)
+	end
+end
+
+
+function hidingBar:setLineWidth(width)
+	if width then self.config.lineWidth = width end
+	self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
+end
+
+
+function hidingBar:setFadeOpacity(opacity)
+	self.config.fadeOpacity = opacity
+	self.drag:SetAlpha(opacity)
+	UIFrameFadeRemoveFrame(self.drag)
+end
+
+
+function hidingBar:setMaxButtons(size)
+	self.config.size = size
+	self:applyLayout()
+end
+
+
+function hidingBar:setButtonSize(size)
+	if size then self.config.buttonSize = size end
+
 	for _, btn in ipairs(self.createdButtons) do
 		btn:SetScale(self.config.buttonSize / btn:GetWidth())
 	end
@@ -988,10 +1034,18 @@ function hidingBar:setButtonSize()
 		local maxSize = width > height and width or height
 		self.SetScale(btn, self.config.buttonSize / maxSize)
 	end
+
+	self:applyLayout()
 end
 
 
-function hidingBar:setPointBtn(btn, offsetX, offsetY, order, orientation)
+function hidingBar:setMBtnPosition(position)
+	self.config.mbtnPosition = position
+	self:applyLayout()
+end
+
+
+function hidingBar:setPointBtn(btn, order, orientation)
 	order = order - 1
 	local size = self.config.size
 	local x = order % size * self.config.buttonSize + offsetX
@@ -1003,8 +1057,12 @@ function hidingBar:setPointBtn(btn, offsetX, offsetY, order, orientation)
 end
 
 
+local asd = 0
 function hidingBar:applyLayout()
-	local offsetX, offsetY, orientation = 2, 2
+	fprint("applyLayout", asd)
+	asd = asd + 1
+
+	local orientation
 	if self.config.orientation == 0 then
 		orientation = (self.anchorObj.anchor == "left" or self.anchorObj.anchor == "right") and 1 or 2
 	else
@@ -1016,7 +1074,7 @@ function hidingBar:applyLayout()
 		for _, btn in ipairs(self.mixedButtons) do
 			if btn:IsShown() then
 				i = i + 1
-				self:setPointBtn(btn, offsetX, offsetY, i, orientation)
+				self:setPointBtn(btn, i, orientation)
 			end
 		end
 		self.shown = i ~= 0
@@ -1026,7 +1084,7 @@ function hidingBar:applyLayout()
 		for _, btn in ipairs(self.createdButtons) do
 			if btn:IsShown() then
 				i = i + 1
-				self:setPointBtn(btn, offsetX, offsetY, i, orientation)
+				self:setPointBtn(btn, i, orientation)
 			end
 		end
 		local followed = self.config.mbtnPosition == 1
@@ -1035,7 +1093,7 @@ function hidingBar:applyLayout()
 		for _, btn in ipairs(self.minimapButtons) do
 			if btn:IsShown() then
 				j = j + 1
-				self:setPointBtn(btn, offsetX, offsetY, j + orderDelta, orientation)
+				self:setPointBtn(btn, j + orderDelta, orientation)
 			end
 		end
 		self.shown = i + j ~= 0
@@ -1066,8 +1124,9 @@ function hidingBar:setLocked(lock)
 end
 
 
-function hidingBar:setFrameStrata()
-	local strata
+function hidingBar:setFrameStrata(strata)
+	if strata then self.config.frameStrata = strata end
+
 	if self.config.frameStrata == 5 then
 		strata = "TOOLTIP"
 	elseif self.config.frameStrata == 4 then
@@ -1125,7 +1184,8 @@ end
 function hidingBar:setOMBAnchor(anchor)
 	if self.config.barTypePosition ~= 2 or self.config.omb.anchor == anchor then return end
 	self.config.omb.anchor = anchor
-	self:setBarTypePosition(self.config.barTypePosition)
+	self:applyLayout()
+	self:setBarTypePosition()
 end
 
 
@@ -1193,12 +1253,12 @@ function hidingBar:setBarExpand(expand)
 	self.config.expand = expand
 
 	self:setBarCoords(position)
-	self:setBarTypePosition(self.config.barTypePosition)
+	self:setBarTypePosition()
 end
 
 
 function hidingBar:setBarTypePosition(typePosition)
-	self.config.barTypePosition = typePosition
+	if typePosition then self.config.barTypePosition = typePosition end
 
 	if self.config.barTypePosition == 2 then
 		ldbi:Show(addon)
@@ -1215,17 +1275,17 @@ function hidingBar:setBarTypePosition(typePosition)
 		local btnSize, position, secondPosition = 31
 		if self.config.omb.anchor == "left" or self.config.omb.anchor == "right" then
 			if self.config.expand == 0 then
-				position = btnSize
+				position = btnSize + offsetY
 			elseif self.config.expand == 1 then
-				position = 0
+				position = -offsetY
 			else
 				position = btnSize / 2
 			end
 		else
 			if self.config.expand == 0 then
-				position = 0
+				position = -offsetX
 			elseif self.config.expand == 1 then
-				position = btnSize
+				position = btnSize + offsetX
 			else
 				position = btnSize / 2
 			end
@@ -1257,6 +1317,7 @@ function hidingBar:setBarTypePosition(typePosition)
 		self.secondPosition = nil
 	end
 
+	if typePosition then self:applyLayout() end
 	self:updateBarPosition()
 end
 
@@ -1331,7 +1392,7 @@ function hidingBar:dragBar()
 	local scale = UIParent:GetScale()
 	x, y = x / scale, y / scale
 
-	if self.config.barTypePosition == nil then
+	if self.config.barTypePosition == 0 then
 		local offset = 70 / scale
 
 		if not IsShiftKeyDown() then
@@ -1530,7 +1591,9 @@ function hidingBar.drag:showOnHoverWithDelay()
 end
 
 
-function hidingBar.drag:setShowHandler()
+function hidingBar.drag:setShowHandler(showHandler)
+	if showHandler then hidingBar.config.showHandler = showHandler end
+
 	if hidingBar.config.showHandler == 3 then
 		self:SetScript("OnEnter", nil)
 		self:SetScript("OnClick", nil)
