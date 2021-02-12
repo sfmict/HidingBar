@@ -544,8 +544,8 @@ config:SetScript("OnShow", function(self)
 		slider:SetValue(value)
 		if self.config.size ~= value then
 			slider.label:SetText(value)
-			self:applyLayout(.3)
 			self.hidingBar:setMaxButtons(value)
+			self:applyLayout(.3)
 			self:hidingBarUpdate()
 		end
 	end)
@@ -556,7 +556,7 @@ config:SetScript("OnShow", function(self)
 	buttonSize:SetPoint("RIGHT", -30, 0)
 	buttonSize:SetPoint("RIGHT", -30, 0)
 	buttonSize:SetMinMaxValues(16, 64)
-	buttonSize.text:SetText(L["Button Size"])
+	buttonSize.text:SetText(L["Buttons Size"])
 	buttonSize:SetValue(self.config.buttonSize)
 	buttonSize.label:SetText(self.config.buttonSize)
 	buttonSize:SetScript("OnValueChanged", function(slider, value)
@@ -630,10 +630,11 @@ config:SetScript("OnShow", function(self)
 		self.coordY:SetEnabled(self.config.barTypePosition == 1)
 
 		if self.config.barTypePosition == 2 then
-			UIDropDownMenu_EnableDropDown(self.mbShowToCombobox)
+			UIDropDownMenu_EnableDropDown(self.ombShowToCombobox)
 		else
-			UIDropDownMenu_DisableDropDown(self.mbShowToCombobox)
+			UIDropDownMenu_DisableDropDown(self.ombShowToCombobox)
 		end
+		self.ombSize:SetEnabled(self.config.barTypePosition == 2)
 	end
 
 	-- BAR ATTACHED TO THE SIDE
@@ -781,17 +782,17 @@ config:SetScript("OnShow", function(self)
 	end)
 
 	-- MINIMAP BUTTON SHOW TO
-	self.mbShowToCombobox = CreateFrame("FRAME", "HidingBarAddonMBShowTo", self.positionBarPanel, "UIDropDownMenuTemplate")
-	self.mbShowToCombobox:SetPoint("TOPLEFT", self.likeMB, "BOTTOMLEFT", 8, 0)
-	UIDropDownMenu_SetWidth(self.mbShowToCombobox, 100)
+	self.ombShowToCombobox = CreateFrame("FRAME", "HidingBarAddonMBShowTo", self.positionBarPanel, "UIDropDownMenuTemplate")
+	self.ombShowToCombobox:SetPoint("TOPLEFT", self.likeMB, "BOTTOMLEFT", 8, 0)
+	UIDropDownMenu_SetWidth(self.ombShowToCombobox, 100)
 
 	local function mbShowToChange(btn)
-		UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, btn.value)
+		UIDropDownMenu_SetSelectedValue(self.ombShowToCombobox, btn.value)
 		self.hidingBar:setOMBAnchor(btn.value)
 		self:hidingBarUpdate()
 	end
 
-	UIDropDownMenu_Initialize(self.mbShowToCombobox, function(self, level)
+	UIDropDownMenu_Initialize(self.ombShowToCombobox, function(self, level)
 		local info = UIDropDownMenu_CreateInfo()
 
 		info.checked = nil
@@ -818,7 +819,25 @@ config:SetScript("OnShow", function(self)
 		info.func = mbShowToChange
 		UIDropDownMenu_AddButton(info)
 	end)
-	UIDropDownMenu_SetSelectedValue(self.mbShowToCombobox, self.config.omb.anchor)
+	UIDropDownMenu_SetSelectedValue(self.ombShowToCombobox, self.config.omb.anchor)
+
+	-- SLIDER MINIMAP BUTTON SIZE
+	self.ombSize = CreateFrame("SLIDER", nil, self.positionBarPanel, "HidingBarAddonSliderTemplate")
+	self.ombSize:SetPoint("LEFT", self.ombShowToCombobox, "RIGHT", -5, 0)
+	self.ombSize:SetPoint("RIGHT", -30, 0)
+	self.ombSize:SetMinMaxValues(16, 64)
+	self.ombSize.text:SetText(L["Button Size"])
+	self.ombSize:SetValue(self.config.omb.size)
+	self.ombSize.label:SetText(self.config.omb.size)
+	self.ombSize:SetScript("OnValueChanged", function(slider, value)
+		value = math.floor(value + .5)
+		slider:SetValue(value)
+		if self.config.omb.size ~= value then
+			slider.label:SetText(value)
+			self.hidingBar:setOMBSize(value)
+			self.hidingBar:setBarTypePosition()
+		end
+	end)
 
 	-- UPDATE BAR TYPE POSITION OPTIONS
 	updateBarTypePosition()
@@ -1133,7 +1152,7 @@ do
 	end
 
 	function config:createMButton(name, icon, update)
-		if type(name) ~= "string" or buttonsByName[name] then return end
+		if not self.buttonPanel or type(name) ~= "string" or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.name = name
 		btn.title = name:gsub("LibDBIcon10_", "")

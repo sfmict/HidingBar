@@ -108,12 +108,15 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.ignoreMBtn = self.config.ignoreMBtn or {"GatherMatePin"}
 		self.config.bgColor = self.config.bgColor or {.1, .1, .1, .7}
 		self.config.lineColor = self.config.lineColor or {.8, .6, 0}
-		self.config.omb = self.config.omb or {
-			hide = true,
-			anchor = "right",
-			size = 31,
-			lock = self.config.lock,
-		}
+		self.config.omb = self.config.omb or {}
+		if self.config.omb.hide == nil then
+			self.config.omb.hide = true
+		end
+		self.config.omb.anchor = self.config.omb.anchor or "right"
+		self.config.omb.size = self.config.omb.size or 31
+		if self.config.omb.lock == nil then
+			self.config.omb.lock = self.config.lock or false
+		end
 		self.config.btnSettings = setmetatable(self.config.btnSettings or {}, meta)
 		self.config.mbtnSettings = setmetatable(self.config.mbtnSettings or {}, meta)
 
@@ -253,10 +256,7 @@ function hidingBar:init()
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
 				self:sort()
 				self:setButtonSize()
-
-				if config.buttonPanel then
-					config:initMButtons(true)
-				end
+				config:initMButtons(true)
 			end)
 		end
 	end
@@ -747,10 +747,7 @@ function hidingBar:ldbi_add(_, button, name)
 	self:addMButton(button)
 	self:sort()
 	self:setButtonSize()
-
-	if config.buttonPanel then
-		config:createMButton(button:GetName(), button.icon, true)
-	end
+	config:createMButton(button:GetName(), button.icon, true)
 end
 
 
@@ -1004,16 +1001,16 @@ function hidingBar:setFade(fade)
 end
 
 
-function hidingBar:setLineWidth(width)
-	if width then self.config.lineWidth = width end
-	self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
+function hidingBar:setFadeOpacity(opacity)
+	self.config.fadeOpacity = opacity
+	UIFrameFadeRemoveFrame(self.drag)
+	self.drag:SetAlpha(opacity)
 end
 
 
-function hidingBar:setFadeOpacity(opacity)
-	self.config.fadeOpacity = opacity
-	self.drag:SetAlpha(opacity)
-	UIFrameFadeRemoveFrame(self.drag)
+function hidingBar:setLineWidth(width)
+	if width then self.config.lineWidth = width end
+	self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
 end
 
 
@@ -1185,6 +1182,14 @@ function hidingBar:setOMBAnchor(anchor)
 end
 
 
+function hidingBar:setOMBSize(size)
+	if size then self.config.omb.size = size end
+	if self.omb then
+		self.omb:SetScale(self.config.omb.size / self.omb:GetWidth())
+	end
+end
+
+
 function hidingBar:setBarAnchor(anchor)
 	if self.config.barTypePosition ~= 1 or self.config.anchor == anchor then return end
 	local x, y, position, secondPosition = self:GetCenter()
@@ -1260,6 +1265,19 @@ function hidingBar:setBarTypePosition(typePosition)
 		ldbi:Show(addon)
 		if not self.omb then
 			self.omb = ldbi:GetMinimapButton(addon)
+			self.omb.dSetPoint = self.omb.SetPoint
+			self.omb.SetPoint = function(self, point, rFrame, rPoint, x, y)
+				local scale = self:GetScale()
+				if not rFrame or type(rFrame) == "number" then
+					rFrame = (rFrame or 0) / scale
+					rPoint = (rPoint or 0) / scale
+				else
+					x = (x or 0) / scale
+					y = (y or 0) / scale
+				end
+				self:dSetPoint(point, rFrame, rPoint, x, y)
+			end
+			self:setOMBSize()
 			if MSQ then
 				self.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
 				self.MSQ_OMB:SetCallback(function() self:MSQ_MButton_Update(self.omb) end)
@@ -1268,7 +1286,7 @@ function hidingBar:setBarTypePosition(typePosition)
 			end
 		end
 
-		local btnSize, position, secondPosition = 31
+		local btnSize, position, secondPosition = self.config.omb.size
 		if self.config.omb.anchor == "left" or self.config.omb.anchor == "right" then
 			if self.config.expand == 0 then
 				position = btnSize + offsetY
