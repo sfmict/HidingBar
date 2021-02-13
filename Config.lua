@@ -563,11 +563,10 @@ config:SetScript("OnShow", function(self)
 		value = math.floor(value + .5)
 		slider:SetValue(value)
 		if self.config.buttonSize ~= value then
-			self.config.buttonSize = value
 			slider.label:SetText(value)
+			self.hidingBar:setButtonSize(value)
 			self:setButtonSize()
 			self:applyLayout(.3)
-			self.hidingBar:setButtonSize(value)
 			self:hidingBarUpdate()
 		end
 	end)
@@ -584,8 +583,8 @@ config:SetScript("OnShow", function(self)
 
 	local function updateMBtnPostion(btn)
 		UIDropDownMenu_SetSelectedValue(mbtnPostionCombobox, btn.value)
-		self:applyLayout(.3)
 		self.hidingBar:setMBtnPosition(btn.value)
+		self:applyLayout(.3)
 		self:hidingBarUpdate()
 	end
 
