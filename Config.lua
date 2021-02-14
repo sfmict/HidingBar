@@ -257,6 +257,7 @@ config:SetScript("OnShow", function(self)
 	local function orientationChange(btn)
 		UIDropDownMenu_SetSelectedValue(orientationCombobox, btn.value)
 		self.hidingBar:setOrientation(btn.value)
+		self:applyLayout(.3)
 		self:hidingBarUpdate()
 	end
 
@@ -643,6 +644,7 @@ config:SetScript("OnShow", function(self)
 	self.attachedToSide:SetScript("OnClick", function()
 		self.hidingBar:setBarCoords(nil, 0)
 		self.hidingBar:setBarTypePosition(0)
+		self:applyLayout(.3)
 		updateBarTypePosition()
 		self:hidingBarUpdate()
 	end)
@@ -653,6 +655,7 @@ config:SetScript("OnShow", function(self)
 	self.freeMove.Text:SetText(L["Bar moves freely"])
 	self.freeMove:SetScript("OnClick", function()
 		self.hidingBar:setBarTypePosition(1)
+		self:applyLayout(.3)
 		updateBarTypePosition()
 		self:hidingBarUpdate()
 	end)
@@ -665,6 +668,7 @@ config:SetScript("OnShow", function(self)
 	local function updateBarAnchor(btn)
 		UIDropDownMenu_SetSelectedValue(self.hideToCombobox, btn.value)
 		self.hidingBar:setBarAnchor(btn.value)
+		self:applyLayout(.3)
 		self:hidingBarUpdate()
 	end
 
@@ -776,6 +780,7 @@ config:SetScript("OnShow", function(self)
 	self.likeMB.Text:SetText(L["Bar like a minimap button"])
 	self.likeMB:SetScript("OnClick", function()
 		self.hidingBar:setBarTypePosition(2)
+		self:applyLayout(.3)
 		updateBarTypePosition()
 		self:hidingBarUpdate()
 	end)
@@ -788,6 +793,7 @@ config:SetScript("OnShow", function(self)
 	local function mbShowToChange(btn)
 		UIDropDownMenu_SetSelectedValue(self.ombShowToCombobox, btn.value)
 		self.hidingBar:setOMBAnchor(btn.value)
+		self:applyLayout(.3)
 		self:hidingBarUpdate()
 	end
 
@@ -1009,6 +1015,7 @@ function config:dragBtn(btn)
 	local scale = btn:GetScale()
 	local x = btn:GetLeft() - (self.buttonPanel:GetLeft() + 4) / scale
 	local y = (self.buttonPanel:GetTop() - 4) / scale - btn:GetTop()
+	if self.orientation == 2 then x, y = y, x end
 	local buttonSize = self.config.buttonSize / scale
 	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
 	if row < btn.minRow then row = btn.minRow
@@ -1234,6 +1241,7 @@ function config:setPointBtn(btn, offsetX, offsetY, order, delay)
 	order = order - 1
 	btn.x = (order % self.size * self.config.buttonSize + offsetX) / scale
 	btn.y = (-math.floor(order / self.size) * self.config.buttonSize - offsetY) / scale
+	if self.orientation == 2 then btn.x, btn.y = -btn.y, -btn.x end
 
 	if delay then
 		btn.timer = delay
@@ -1250,10 +1258,17 @@ end
 
 
 function config:applyLayout(delay)
+	if not self.buttonPanel then return end
 	local offsetX, offsetY = 4, 4
 	local maxColumns, rows = math.floor(560 / self.config.buttonSize)
 	self.size = self.config.size
 	if self.size > maxColumns then self.size = maxColumns end
+	if self.config.orientation == 0 then
+		local anchor = self.config.barTypePosition == 2 and self.config.omb.anchor or self.config.anchor
+		self.orientation = (anchor == "left" or anchor == "right") and 1 or 2
+	else
+		self.orientation = self.config.orientation
+	end
 
 	if self.config.mbtnPosition == 2 then
 		for i, btn in ipairs(self.mixedButtons) do
@@ -1274,6 +1289,7 @@ function config:applyLayout(delay)
 
 	local width = self.size * self.config.buttonSize + offsetX * 2
 	local height = rows * self.config.buttonSize + offsetY * 2
+	if self.orientation == 2 then width, height = height, width end
 	self.buttonPanel:SetSize(width, height)
 end
 

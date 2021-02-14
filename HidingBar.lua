@@ -1445,6 +1445,7 @@ function hidingBar:dragBar()
 			width, height = self:applyLayout()
 			self:updateDragBarPosition()
 
+			config:applyLayout(.3)
 			if config.hideToCombobox then
 				UIDropDownMenu_SetSelectedValue(config.hideToCombobox, self.config.anchor)
 			end
