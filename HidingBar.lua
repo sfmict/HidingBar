@@ -97,7 +97,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.showDelay = self.config.showDelay or 0
 		self.config.hideDelay = self.config.hideDelay or .75
 		self.config.size = self.config.size or 10
-		self.config.buttonSize = self.config.buttonSize or 32
+		self.config.buttonSize = self.config.buttonSize or 31
 		self.config.anchor = self.config.anchor or "top"
 		self.config.barTypePosition = self.config.barTypePosition or 0
 		if self.config.grabMinimap == nil then
@@ -298,7 +298,7 @@ function hidingBar:init()
 					Highlight = GameTimeFrame:GetHighlightTexture(),
 				}
 				self.MSQ_MButton_Data[GameTimeFrame] = data
-				self.MSQ_MButton:AddButton(GameTimeFrame, data, nil, true)
+				self.MSQ_MButton:AddButton(GameTimeFrame, data, "Legacy", true)
 				self:MSQ_MButton_Update(GameTimeFrame)
 			end
 
@@ -333,7 +333,7 @@ function hidingBar:init()
 					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
 				}
 				self.MSQ_MButton_Data[MiniMapTrackingButton] = data
-				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, nil, true)
+				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
 				self:MSQ_MButton_Update(MiniMapTrackingButton)
 			end
 
@@ -442,7 +442,7 @@ function hidingBar:init()
 					Highlight = queue:GetHighlightTexture(),
 				}
 				self.MSQ_MButton_Data[queue] = data
-				self.MSQ_MButton:AddButton(queue, data, nil, true)
+				self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
 				self:MSQ_MButton_Update(queue)
 			end
 
@@ -499,7 +499,7 @@ function hidingBar:init()
 					Highlight = proxyMail.highlight,
 				}
 				self.MSQ_MButton_Data[proxyMail] = data
-				self.MSQ_MButton:AddButton(proxyMail, data, nil, true)
+				self.MSQ_MButton:AddButton(proxyMail, data, "Legacy", true)
 				self:MSQ_MButton_Update(proxyMail)
 			end
 
@@ -532,7 +532,7 @@ function hidingBar:init()
 						Highlight = zoom:GetHighlightTexture(),
 					}
 					self.MSQ_MButton_Data[zoom] = data
-					self.MSQ_MButton:AddButton(zoom, data, nil,  true)
+					self.MSQ_MButton:AddButton(zoom, data, "Legacy",  true)
 					self:MSQ_MButton_Update(zoom)
 				else
 					zoom.icon = zoom:GetNormalTexture()
@@ -572,7 +572,7 @@ function hidingBar:init()
 			btnSettings[mapButton].tstmp = t
 			self:setHooks(mapButton)
 			mapButton.puched = mapButton:GetPushedTexture()
-			mapButton.highligt = mapButton:GetHighlightTexture()
+			mapButton.highlight = mapButton:GetHighlightTexture()
 
 			if self.MSQ_MButton then
 				mapButton.icon = mapButton:CreateTexture(nil, "ARTWORK")
@@ -586,10 +586,10 @@ function hidingBar:init()
 				local data = {
 					_Pushed = mapButton.puched,
 					Icon = mapButton.icon,
-					Highlight = mapButton.highligt,
+					Highlight = mapButton.highlight,
 				}
 				self.MSQ_MButton_Data[mapButton] = data
-				self.MSQ_MButton:AddButton(mapButton, data, nil,  true)
+				self.MSQ_MButton:AddButton(mapButton, data, "Legacy",  true)
 				self:MSQ_MButton_Update(mapButton)
 			else
 				mapButton.icon = mapButton:GetNormalTexture()
@@ -597,8 +597,8 @@ function hidingBar:init()
 				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
 				mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
 				mapButton.puched:SetTexCoord(.125, .875, .5, 1)
-				mapButton.highligt:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
-				mapButton.highligt:SetAllPoints()
+				mapButton.highlight:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
+				mapButton.highlight:SetAllPoints()
 			end
 
 			self.SetClipsChildren(mapButton, true)
@@ -734,7 +734,7 @@ do
 				Icon = button.icon,
 				Highlight = button.highlight,
 			}
-			self.MSQ_Button:AddButton(button, buttonData, nil, true)
+			self.MSQ_Button:AddButton(button, buttonData, "Legacy", true)
 		end
 
 		return button
@@ -844,7 +844,7 @@ end
 
 
 function hidingBar:setMButtonRegions(btn, getData)
-	local name, texture, layer, border, background, icon, highlight, data
+	local name, texture, layer, border, background, icon, highlight
 	for _, region in ipairs({btn:GetRegions()}) do
 		if region:GetObjectType() == "Texture" then
 			name = region:GetDebugName():lower()
@@ -864,20 +864,34 @@ function hidingBar:setMButtonRegions(btn, getData)
 			end
 		end
 	end
-	if border and icon then
-		data = {
+	if not icon then
+		local normal = btn:GetNormalTexture()
+		if normal then
+			normal.Hide = void
+			normal.SetAlpha = void
+			normal.SetTexture = void
+			icon = normal
+		else
+			background = nil
+		end
+	end
+	if not highlight then
+		btn:SetHighlightTexture("")
+		highlight = btn:GetHighlightTexture()
+	end
+	if border or background then
+		self.MSQ_MButton_Data[btn] = {
 			_Border = border,
 			_Background = background,
-			Icon = icon,
-			Highlight = highlight,
 		}
-		self.MSQ_MButton_Data[btn] = data
-	elseif highlight then
-		data = {Highlight = highlight}
 	end
 
+	local data = {
+		Icon = icon,
+		Highlight = highlight,
+	}
 	if getData then return data end
-	self.MSQ_MButton:AddButton(btn, data, nil, true)
+	self.MSQ_MButton:AddButton(btn, data, "Legacy", true)
 	self:MSQ_MButton_Update(btn)
 end
 
@@ -1047,7 +1061,7 @@ function hidingBar:setPointBtn(btn, order, orientation)
 	local size = self.config.size
 	local x = order % size * self.config.buttonSize + offsetX
 	local y = -math.floor(order / size) * self.config.buttonSize - offsetY
-	if orientation == 2 then x, y = -y, -x end
+	if orientation then x, y = -y, -x end
 	self.ClearAllPoints(btn)
 	local scale = btn:GetScale()
 	self.SetPoint(btn, "TOPLEFT", x / scale, y / scale)
@@ -1057,9 +1071,9 @@ end
 function hidingBar:applyLayout()
 	local orientation
 	if self.config.orientation == 0 then
-		orientation = (self.anchorObj.anchor == "left" or self.anchorObj.anchor == "right") and 1 or 2
+		orientation = self.anchorObj.anchor == "top" or self.anchorObj.anchor == "bottom"
 	else
-		orientation = self.config.orientation
+		orientation = self.config.orientation == 2
 	end
 
 	local i, maxButtons, line = 0
@@ -1100,7 +1114,7 @@ function hidingBar:applyLayout()
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	local width = maxButtons * self.config.buttonSize + offsetX * 2
 	local height = line * self.config.buttonSize + offsetY * 2
-	if orientation == 2 then width, height = height, width end
+	if orientation then width, height = height, width end
 	self:SetSize(width, height)
 	return width, height
 end
@@ -1281,7 +1295,7 @@ function hidingBar:setBarTypePosition(typePosition)
 			if MSQ then
 				self.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
 				self.MSQ_OMB:SetCallback(function() self:MSQ_MButton_Update(self.omb) end)
-				self.MSQ_OMB:AddButton(self.omb, self:setMButtonRegions(self.omb, true), nil, true)
+				self.MSQ_OMB:AddButton(self.omb, self:setMButtonRegions(self.omb, true), "Legacy", true)
 				self:MSQ_MButton_Update(self.omb)
 			end
 		end
