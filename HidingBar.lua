@@ -33,6 +33,8 @@ local ignoreFrameList = {
 	["MinimapZoomIn"] = true,
 	["MinimapZoomOut"] = true,
 	["MiniMapWorldMapButton"] = true,
+	["MiniMapMailFrame"] = true,
+	["MiniMapTracking"] = true,
 }
 
 
@@ -68,6 +70,96 @@ local function setTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 	end
 
 	self:dSetTexCoord(ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+end
+
+
+if MSQ then
+	hidingBar.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
+	hidingBar.MSQ_Button:SetCallback(function()
+		hidingBar:enter()
+		hidingBar:leave()
+	end)
+
+
+	hidingBar.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
+	hidingBar.MSQ_MButton_Data = {}
+	hidingBar.MSQ_MButton:SetCallback(function()
+		for btn in pairs(hidingBar.MSQ_MButton.Buttons) do
+			hidingBar:MSQ_MButton_Update(btn)
+		end
+		hidingBar:enter()
+		hidingBar:leave()
+	end)
+
+
+	function hidingBar:MSQ_MButton_Update(btn)
+		if not btn.__MSQ_Enabled then return end
+		local data = self.MSQ_MButton_Data[btn]
+		if data then
+			if data._Border then
+				data._Border:Hide()
+			end
+			if data._Background then
+				data._Background:Hide()
+			end
+			if data._Pushed then
+				data._Pushed:SetAlpha(0)
+			end
+		end
+	end
+
+
+	function hidingBar:setMButtonRegions(btn, getData)
+		local name, texture, layer, border, background, icon, highlight
+		for _, region in ipairs({btn:GetRegions()}) do
+			if region:GetObjectType() == "Texture" then
+				name = region:GetDebugName():lower()
+				texture = region:GetTexture()
+				layer = region:GetDrawLayer()
+				if type(texture) == "string" and texture:find("MiniMap%-TrackingBorder") then
+					border = region
+				end
+				if type(texture) == "string" and texture:find("UI%-Minimap%-Background") or name:find("background") then
+					background = region
+				end
+				if name:find("icon") or type(texture) == "string" and texture:lower():find("icon") then
+					icon = region
+				end
+				if name:find("highlight") or layer == "HIGHLIGHT" then
+					highlight = region
+				end
+			end
+		end
+		if not icon then
+			local normal = btn:GetNormalTexture()
+			if normal then
+				normal.Hide = void
+				normal.SetAlpha = void
+				normal.SetTexture = void
+				icon = normal
+			else
+				background = nil
+			end
+		end
+		if not highlight then
+			btn:SetHighlightTexture("")
+			highlight = btn:GetHighlightTexture()
+		end
+		if border or background then
+			self.MSQ_MButton_Data[btn] = {
+				_Border = border,
+				_Background = background,
+			}
+		end
+
+		local data = {
+			Icon = icon,
+			Highlight = highlight,
+		}
+		if getData then return data end
+		self.MSQ_MButton:AddButton(btn, data, "Legacy", true)
+		self:MSQ_MButton_Update(btn)
+	end
 end
 
 
@@ -189,40 +281,6 @@ end
 
 
 function hidingBar:init()
-	if MSQ then
-		self.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
-		self.MSQ_Button:SetCallback(function()
-			self:enter()
-			self:leave()
-		end)
-		self.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
-		self.MSQ_MButton_Data = {}
-
-		function self:MSQ_MButton_Update(btn)
-			if not btn.__MSQ_Enabled then return end
-			local data = self.MSQ_MButton_Data[btn]
-			if data then
-				if data._Border then
-					data._Border:Hide()
-				end
-				if data._Background then
-					data._Background:Hide()
-				end
-				if data._Pushed then
-					data._Pushed:SetAlpha(0)
-				end
-			end
-		end
-
-		self.MSQ_MButton:SetCallback(function()
-			for btn in pairs(self.MSQ_MButton.Buttons) do
-				self:MSQ_MButton_Update(btn)
-			end
-			self:enter()
-			self:leave()
-		end)
-	end
-
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
@@ -292,12 +350,13 @@ function hidingBar:init()
 				GameTimeFrame.icon.SetTexCoord = setTexCoord
 				GameTimeFrame.icon:SetAllPoints()
 				GameTimeFrame.icon:SetPoint(normalTexture:GetPoint())
+				self.MSQ_MButton_Data[GameTimeFrame] = {
+					_Pushed = GameTimeFrame:GetPushedTexture()
+				}
 				local data = {
-					_Pushed = GameTimeFrame:GetPushedTexture(),
 					Icon = GameTimeFrame.icon,
 					Highlight = GameTimeFrame:GetHighlightTexture(),
 				}
-				self.MSQ_MButton_Data[GameTimeFrame] = data
 				self.MSQ_MButton:AddButton(GameTimeFrame, data, "Legacy", true)
 				self:MSQ_MButton_Update(GameTimeFrame)
 			end
@@ -326,13 +385,14 @@ function hidingBar:init()
 			self:setHooks(MiniMapTracking)
 
 			if self.MSQ_MButton then
-				local data = {
+				self.MSQ_MButton_Data[MiniMapTrackingButton] = {
 					_Border = MiniMapTrackingButtonBorder,
 					_Background = MiniMapTrackingBackground,
+				}
+				local data = {
 					Icon = icon,
 					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
 				}
-				self.MSQ_MButton_Data[MiniMapTrackingButton] = data
 				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
 				self:MSQ_MButton_Update(MiniMapTrackingButton)
 			end
@@ -436,12 +496,13 @@ function hidingBar:init()
 			f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
 
 			if self.MSQ_MButton then
-				local data = {
+				self.MSQ_MButton_Data[queue] = {
 					_Border = QueueStatusMinimapButtonBorder,
+				}
+				local data = {
 					Icon = queue.icon,
 					Highlight = queue:GetHighlightTexture(),
 				}
-				self.MSQ_MButton_Data[queue] = data
 				self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
 				self:MSQ_MButton_Update(queue)
 			end
@@ -493,12 +554,13 @@ function hidingBar:init()
 			end
 
 			if self.MSQ_MButton then
-				local data = {
+				self.MSQ_MButton_Data[proxyMail] = {
 					_Border = proxyMail.border,
+				}
+				local data = {
 					Icon = proxyMail.icon,
 					Highlight = proxyMail.highlight,
 				}
-				self.MSQ_MButton_Data[proxyMail] = data
 				self.MSQ_MButton:AddButton(proxyMail, data, "Legacy", true)
 				self:MSQ_MButton_Update(proxyMail)
 			end
@@ -517,25 +579,29 @@ function hidingBar:init()
 				btnSettings[zoom] = self.config.mbtnSettings[name]
 				btnSettings[zoom].tstmp = t
 				self:setHooks(zoom)
+				local normal = zoom:GetNormalTexture()
 
 				if self.MSQ_MButton then
-					zoom.icon = zoom:CreateTexture(nil, "ARTWORK")
-					zoom.icon:SetTexture(zoom:GetNormalTexture():GetTexture())
+					zoom.icon = zoom:CreateTexture(nil, "BACKGROUND")
+					zoom.icon:SetTexture(normal:GetTexture())
+					zoom.icon:SetAllPoints()
 					zoom.data = {iconCoords = {.24, .79, .21, .76}}
 					zoom.icon.dSetTexCoord = zoom.icon.SetTexCoord
 					zoom.icon.SetTexCoord = setTexCoord
+					normal:SetTexture()
 					zoom:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
 					zoom:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
-					local data = {
+					self.MSQ_MButton_Data[zoom] = {
 						_Pushed = zoom:GetPushedTexture(),
+					}
+					local data = {
 						Icon = zoom.icon,
 						Highlight = zoom:GetHighlightTexture(),
 					}
-					self.MSQ_MButton_Data[zoom] = data
 					self.MSQ_MButton:AddButton(zoom, data, "Legacy",  true)
 					self:MSQ_MButton_Update(zoom)
 				else
-					zoom.icon = zoom:GetNormalTexture()
+					zoom.icon = normal
 				end
 
 				zoom.click = zoom:GetScript("OnClick")
@@ -571,34 +637,30 @@ function hidingBar:init()
 			btnSettings[mapButton] = self.config.mbtnSettings["MiniMapWorldMapButton"]
 			btnSettings[mapButton].tstmp = t
 			self:setHooks(mapButton)
+			mapButton.icon = mapButton:GetNormalTexture()
+			mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+			mapButton.icon:SetTexCoord(.125, .875, 0, .5)
 			mapButton.puched = mapButton:GetPushedTexture()
+			mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+			mapButton.puched:SetTexCoord(.125, .875, .5, 1)
 			mapButton.highlight = mapButton:GetHighlightTexture()
+			mapButton.highlight:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
+			mapButton.highlight:SetAllPoints()
 
 			if self.MSQ_MButton then
-				mapButton.icon = mapButton:CreateTexture(nil, "ARTWORK")
+				mapButton.icon = mapButton:CreateTexture(nil, "BACKGROUND")
 				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-				mapButton.icon:SetAllPoints()
+				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
 				mapButton.data = {iconCoords = {.125, .875, 0, .5}}
 				mapButton.icon.dSetTexCoord = mapButton.icon.SetTexCoord
 				mapButton.icon.SetTexCoord = setTexCoord
 				mapButton:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
 				mapButton:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
-				local data = {
-					_Pushed = mapButton.puched,
-					Icon = mapButton.icon,
-					Highlight = mapButton.highlight,
-				}
-				self.MSQ_MButton_Data[mapButton] = data
+				local data = self:setMButtonRegions(mapButton, true)
+				self.MSQ_MButton_Data[mapButton] = self.MSQ_MButton_Data[mapButton] or {}
+				self.MSQ_MButton_Data[mapButton]._Pushed = mapButton.puched
 				self.MSQ_MButton:AddButton(mapButton, data, "Legacy",  true)
 				self:MSQ_MButton_Update(mapButton)
-			else
-				mapButton.icon = mapButton:GetNormalTexture()
-				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
-				mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-				mapButton.puched:SetTexCoord(.125, .875, .5, 1)
-				mapButton.highlight:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
-				mapButton.highlight:SetAllPoints()
 			end
 
 			self.SetClipsChildren(mapButton, true)
@@ -840,59 +902,6 @@ function hidingBar:addMButton(button)
 			end
 		end
 	end
-end
-
-
-function hidingBar:setMButtonRegions(btn, getData)
-	local name, texture, layer, border, background, icon, highlight
-	for _, region in ipairs({btn:GetRegions()}) do
-		if region:GetObjectType() == "Texture" then
-			name = region:GetDebugName():lower()
-			texture = region:GetTexture()
-			layer = region:GetDrawLayer()
-			if type(texture) == "string" and texture:find("MiniMap%-TrackingBorder") then
-				border = region
-			end
-			if type(texture) == "string" and texture:find("UI%-Minimap%-Background") or name:find("background") then
-				background = region
-			end
-			if name:find("icon") or type(texture) == "string" and texture:lower():find("icon") then
-				icon = region
-			end
-			if name:find("highlight") or layer == "HIGHLIGHT" then
-				highlight = region
-			end
-		end
-	end
-	if not icon then
-		local normal = btn:GetNormalTexture()
-		if normal then
-			normal.Hide = void
-			normal.SetAlpha = void
-			normal.SetTexture = void
-			icon = normal
-		else
-			background = nil
-		end
-	end
-	if not highlight then
-		btn:SetHighlightTexture("")
-		highlight = btn:GetHighlightTexture()
-	end
-	if border or background then
-		self.MSQ_MButton_Data[btn] = {
-			_Border = border,
-			_Background = background,
-		}
-	end
-
-	local data = {
-		Icon = icon,
-		Highlight = highlight,
-	}
-	if getData then return data end
-	self.MSQ_MButton:AddButton(btn, data, "Legacy", true)
-	self:MSQ_MButton_Update(btn)
 end
 
 
