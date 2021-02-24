@@ -104,6 +104,7 @@ if MSQ then
 			end
 			if data._Pushed then
 				data._Pushed:SetAlpha(0)
+				data._Pushed:SetTexture()
 			end
 		end
 	end
@@ -133,10 +134,18 @@ if MSQ then
 		if not icon then
 			local normal = btn:GetNormalTexture()
 			if normal then
-				normal.Hide = void
-				normal.SetAlpha = void
-				normal.SetTexture = void
-				icon = normal
+				icon = btn:CreateTexture(nil, "BACKGROUND")
+				icon:SetTexture(normal:GetTexture())
+				icon:SetTexCoord(normal:GetTexCoord())
+				icon:SetVertexColor(normal:GetVertexColor())
+				icon:SetSize(normal:GetSize())
+				for i = 1, normal:GetNumPoints() do
+					icon:SetPoint(normal:GetPoint(i))
+				end
+				local scale = normal:GetScale()
+				icon:SetScale(scale)
+				self.HookScript(btn, "OnMouseDown", function(self) icon:SetScale(scale * .9) end)
+				self.HookScript(btn, "OnMouseUp", function(self) icon:SetScale(scale) end)
 			else
 				background = nil
 			end
@@ -145,10 +154,12 @@ if MSQ then
 			btn:SetHighlightTexture("")
 			highlight = btn:GetHighlightTexture()
 		end
-		if border or background then
+		local puched = btn:GetPushedTexture()
+		if border or background or puched then
 			self.MSQ_MButton_Data[btn] = {
 				_Border = border,
 				_Background = background,
+				_Pushed = puched,
 			}
 		end
 
@@ -349,16 +360,7 @@ function hidingBar:init()
 				GameTimeFrame.icon.dSetTexCoord = GameTimeFrame.icon.SetTexCoord
 				GameTimeFrame.icon.SetTexCoord = setTexCoord
 				GameTimeFrame.icon:SetAllPoints()
-				GameTimeFrame.icon:SetPoint(normalTexture:GetPoint())
-				self.MSQ_MButton_Data[GameTimeFrame] = {
-					_Pushed = GameTimeFrame:GetPushedTexture()
-				}
-				local data = {
-					Icon = GameTimeFrame.icon,
-					Highlight = GameTimeFrame:GetHighlightTexture(),
-				}
-				self.MSQ_MButton:AddButton(GameTimeFrame, data, "Legacy", true)
-				self:MSQ_MButton_Update(GameTimeFrame)
+				self:setMButtonRegions(GameTimeFrame)
 			end
 
 			self.SetClipsChildren(GameTimeFrame, true)
@@ -554,15 +556,7 @@ function hidingBar:init()
 			end
 
 			if self.MSQ_MButton then
-				self.MSQ_MButton_Data[proxyMail] = {
-					_Border = proxyMail.border,
-				}
-				local data = {
-					Icon = proxyMail.icon,
-					Highlight = proxyMail.highlight,
-				}
-				self.MSQ_MButton:AddButton(proxyMail, data, "Legacy", true)
-				self:MSQ_MButton_Update(proxyMail)
+				self:setMButtonRegions(proxyMail)
 			end
 
 			proxyMail:SetClipsChildren(true)
@@ -591,15 +585,7 @@ function hidingBar:init()
 					normal:SetTexture()
 					zoom:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
 					zoom:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
-					self.MSQ_MButton_Data[zoom] = {
-						_Pushed = zoom:GetPushedTexture(),
-					}
-					local data = {
-						Icon = zoom.icon,
-						Highlight = zoom:GetHighlightTexture(),
-					}
-					self.MSQ_MButton:AddButton(zoom, data, "Legacy",  true)
-					self:MSQ_MButton_Update(zoom)
+					self:setMButtonRegions(zoom)
 				else
 					zoom.icon = normal
 				end
@@ -656,11 +642,7 @@ function hidingBar:init()
 				mapButton.icon.SetTexCoord = setTexCoord
 				mapButton:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
 				mapButton:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
-				local data = self:setMButtonRegions(mapButton, true)
-				self.MSQ_MButton_Data[mapButton] = self.MSQ_MButton_Data[mapButton] or {}
-				self.MSQ_MButton_Data[mapButton]._Pushed = mapButton.puched
-				self.MSQ_MButton:AddButton(mapButton, data, "Legacy",  true)
-				self:MSQ_MButton_Update(mapButton)
+				self:setMButtonRegions(mapButton)
 			end
 
 			self.SetClipsChildren(mapButton, true)
