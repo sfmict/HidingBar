@@ -139,11 +139,11 @@ if MSQ then
 				icon:SetTexCoord(normal:GetTexCoord())
 				icon:SetVertexColor(normal:GetVertexColor())
 				icon:SetSize(normal:GetSize())
+				local scale = normal:GetScale()
+				icon:SetScale(scale)
 				for i = 1, normal:GetNumPoints() do
 					icon:SetPoint(normal:GetPoint(i))
 				end
-				local scale = normal:GetScale()
-				icon:SetScale(scale)
 				self.HookScript(btn, "OnMouseDown", function(self) icon:SetScale(scale * .9) end)
 				self.HookScript(btn, "OnMouseUp", function(self) icon:SetScale(scale) end)
 			else
