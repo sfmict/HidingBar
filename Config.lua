@@ -244,6 +244,9 @@ config:SetScript("OnShow", function(self)
 	self.description:SetPoint("TOPLEFT", 8, -10)
 	self.description:SetJustifyH("LEFT")
 	self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+	if GetLocale() ~= "zhTW" then
+		self.description:SetFont(self.description:GetFont(), 12)
+	end
 
 	-- ORIENTATION TEXT
 	local orientationText = self.generalPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
