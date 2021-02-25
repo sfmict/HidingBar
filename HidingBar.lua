@@ -112,6 +112,7 @@ if MSQ then
 
 	function hidingBar:setMButtonRegions(btn, getData)
 		local name, texture, layer, border, background, icon, highlight
+
 		for _, region in ipairs({btn:GetRegions()}) do
 			if region:GetObjectType() == "Texture" then
 				name = region:GetDebugName():lower()
@@ -131,6 +132,7 @@ if MSQ then
 				end
 			end
 		end
+
 		if not icon then
 			local normal = btn:GetNormalTexture()
 			if normal then
@@ -139,21 +141,21 @@ if MSQ then
 				icon:SetTexCoord(normal:GetTexCoord())
 				icon:SetVertexColor(normal:GetVertexColor())
 				icon:SetSize(normal:GetSize())
-				local scale = normal:GetScale()
-				icon:SetScale(scale)
 				for i = 1, normal:GetNumPoints() do
 					icon:SetPoint(normal:GetPoint(i))
 				end
-				self.HookScript(btn, "OnMouseDown", function(self) icon:SetScale(scale * .9) end)
-				self.HookScript(btn, "OnMouseUp", function(self) icon:SetScale(scale) end)
+				self.HookScript(btn, "OnMouseDown", function() icon:SetScale(.9) end)
+				self.HookScript(btn, "OnMouseUp", function() icon:SetScale(1) end)
 			else
 				background = nil
 			end
 		end
+
 		if not highlight then
 			btn:SetHighlightTexture("")
 			highlight = btn:GetHighlightTexture()
 		end
+
 		local puched = btn:GetPushedTexture()
 		if border or background or puched then
 			self.MSQ_MButton_Data[btn] = {
@@ -1049,13 +1051,13 @@ end
 
 function hidingBar:setPointBtn(btn, order, orientation)
 	order = order - 1
-	local size = self.config.size
-	local x = order % size * self.config.buttonSize + offsetX
-	local y = -math.floor(order / size) * self.config.buttonSize - offsetY
+	local halfSize = self.config.buttonSize / 2
+	local x = order % self.config.size * self.config.buttonSize + halfSize + offsetX
+	local y = -math.floor(order / self.config.size) * self.config.buttonSize - halfSize - offsetY
 	if orientation then x, y = -y, -x end
 	self.ClearAllPoints(btn)
 	local scale = btn:GetScale()
-	self.SetPoint(btn, "TOPLEFT", x / scale, y / scale)
+	self.SetPoint(btn, "CENTER", self, "TOPLEFT", x / scale, y / scale)
 end
 
 
