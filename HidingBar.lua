@@ -766,9 +766,10 @@ do
 		if self.MSQ_Button then
 			self.defCoordsData[button.icon] = data
 			button.icon.SetTexCoord = self.setTexCoord
+			button:SetHighlightTexture("")
 			local buttonData = {
 				Icon = button.icon,
-				Highlight = button.highlight,
+				Highlight = button:GetHighlightTexture(),
 			}
 			self.MSQ_Button:AddButton(button, buttonData, "Legacy", true)
 		end

@@ -54,19 +54,12 @@
 	</Button>
 
 	<Button name="HidingBarAddonCreatedButtonTemplate" inherits="HidingBarAddonButtonTemplate" virtual="true">
-		<Layers>
-			<Layer level="OVERLAY">
-				<Texture parentKey="highlight" setAllPoints="true" hidden="true"/>
-			</Layer>
-		</Layers>
 		<Scripts>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
 			</OnLoad>
 			<OnEnter>
-				if self.__MSQ_Enabled then
-					self.highlight:Show()
-				else
+				if not self.__MSQ_Enabled then
 					self.icon:SetSize(32, 32)
 				end
 				if self.data.OnEnter then
@@ -87,7 +80,6 @@
 				end
 			</OnEnter>
 			<OnLeave>
-				self.highlight:Hide()
 				if not self.__MSQ_Enabled then
 					self.icon:SetSize(30, 30)
 				end
