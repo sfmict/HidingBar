@@ -61,6 +61,9 @@ L["Show to right"] = "Show to right"
 L["Show to up"] = "Show to up"
 L["Show to down"] = "Show to down"
 L["Button Size"] = "Button Size"
+L["About"] = "About"
+L["Help with translation of %s. Thanks."] = "Help with translation of %s. Thanks."
+L["Localization Translators:"] = "Localization Translators:"
 
 setmetatable(L, {__index = function(self, key)
 	self[key] = key or ""

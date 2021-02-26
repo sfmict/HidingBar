@@ -80,7 +80,7 @@ if MSQ then
 	end
 
 
-	hidingBar.defCoordsData,  hidingBar.MSQ_Coord = {}, {}
+	hidingBar.defCoordsData, hidingBar.MSQ_Coord = {}, {}
 	hidingBar.setTexCoord = function(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 		if not LRy then
 			ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
@@ -598,13 +598,13 @@ function hidingBar:init()
 					zoom:GetPushedTexture():SetDesaturated(false)
 				end
 				if not zoom:IsEnabled() then
+					getmetatable(zoom).__index.Enable(zoom)
 					zoom:Disable()
 				end
 
 				self.SetClipsChildren(zoom, true)
 				self.SetAlpha(zoom, 1)
 				self.SetHitRectInsets(zoom, 0, 0, 0, 0)
-				getmetatable(zoom).__index.Enable(zoom)
 				self.SetParent(zoom, self)
 				self.HookScript(zoom, "OnEnter", enter)
 				self.HookScript(zoom, "OnLeave", leave)

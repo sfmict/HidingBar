@@ -112,7 +112,7 @@ config:SetScript("OnShow", function(self)
 	info:SetPoint("TOPRIGHT", -16, 16)
 	info:SetTextColor(.5, .5, .5, 1)
 	info:SetJustifyH("RIGHT")
-	info:SetText(("%s %s: %s"):format(GetAddOnMetadata(addon, "Version"), L["author"], GetAddOnMetadata(addon, "Author")))
+	info:SetText(("%s"):format(GetAddOnMetadata(addon, "Version")))
 
 	-- TITLE
 	local title = self:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -244,7 +244,8 @@ config:SetScript("OnShow", function(self)
 	self.description:SetPoint("TOPLEFT", 8, -10)
 	self.description:SetJustifyH("LEFT")
 	self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
-	if GetLocale() ~= "zhTW" then
+	local locale = GetLocale()
+	if locale == "zhTW" or locale == "zhCN" then
 		self.description:SetFont(self.description:GetFont(), 12)
 	end
 
