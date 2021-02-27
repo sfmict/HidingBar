@@ -204,7 +204,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.config.frameStrata = self.config.frameStrata or 2
 		self.config.fadeOpacity = self.config.fadeOpacity or .2
 		self.config.lineWidth = self.config.lineWidth or 4
-		self.config.showHandler = self.config.showHandler or 0
+		self.config.showHandler = self.config.showHandler or 2
 		self.config.showDelay = self.config.showDelay or 0
 		self.config.hideDelay = self.config.hideDelay or .75
 		self.config.size = self.config.size or 10

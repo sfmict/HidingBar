@@ -1,3 +1,3 @@
 * Updated regions for Masque.
-* Updated translations.
+* Updated zhTW and zhCN translations.
 * Added a page about.
