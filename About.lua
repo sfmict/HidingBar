@@ -62,7 +62,7 @@ aboutConfig:SetScript("OnShow", function(self)
 
 	local langs, last = {
 		{"zhCN", "lambdapak"},
-		{"zhTW", "BNS333", "terry1314"},
+		{"zhTW", "BNS333, terry1314"},
 	}
 
 	for _, l in ipairs(langs) do

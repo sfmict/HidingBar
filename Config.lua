@@ -859,11 +859,76 @@ config:SetScript("OnShow", function(self)
 
 	local buttonsTabPanelScroll = CreateFrame("ScrollFrame", nil, self.buttonsTabPanel, "UIPanelScrollFrameTemplate")
 	buttonsTabPanelScroll:SetPoint("TOPLEFT", self.buttonsTabPanel, 4, -6)
-	buttonsTabPanelScroll:SetPoint("BOTTOMRIGHT", self.buttonsTabPanel, -26, 5)
+	buttonsTabPanelScroll:SetPoint("BOTTOMRIGHT", self.buttonsTabPanel, -26, 21)
 	buttonsTabPanelScroll.ScrollBar.bg = buttonsTabPanelScroll.ScrollBar:CreateTexture(nil, "BACKGROUND")
 	buttonsTabPanelScroll.ScrollBar.bg:SetAllPoints()
 	buttonsTabPanelScroll.ScrollBar.bg:SetTexture("interface/buttons/white8x8")
 	buttonsTabPanelScroll.ScrollBar.bg:SetVertexColor(0, 0, 0, .2)
+	buttonsTabPanelScroll.HScrollBar = CreateFrame("SLIDER", nil, buttonsTabPanelScroll)
+	local HScrollBar = buttonsTabPanelScroll.HScrollBar
+	HScrollBar:SetOrientation("horizontal")
+	HScrollBar:SetSize(0, 16)
+	HScrollBar:SetPoint("TOPLEFT", buttonsTabPanelScroll, "BOTTOMLEFT", 19, 0)
+	HScrollBar:SetPoint("TOPRIGHT", buttonsTabPanelScroll, "BOTTOMRIGHT", -12, 0)
+	HScrollBar:SetThumbTexture("Interface/Buttons/UI-ScrollBar-Knob")
+	HScrollBar:SetMinMaxValues(0, 0)
+	HScrollBar:SetValue(0)
+	HScrollBar.thumb = HScrollBar:GetThumbTexture()
+	HScrollBar.thumb:SetSize(18, 24)
+	HScrollBar.thumb:SetTexCoord(.20, .80, .125, 0.875)
+	HScrollBar.bg = HScrollBar:CreateTexture(nil, "BACKGROUND")
+	HScrollBar.bg:SetAllPoints()
+	HScrollBar.bg:SetTexture("interface/buttons/white8x8")
+	HScrollBar.bg:SetVertexColor(0, 0, 0, .2)
+	HScrollBar.leftBtn = CreateFrame("BUTTON", nil, HScrollBar, "UIPanelScrollUpButtonTemplate")
+	HScrollBar.leftBtn:SetPoint("RIGHT", HScrollBar, "LEFT", 0, 1)
+	HScrollBar.leftBtn:GetNormalTexture():SetRotation(math.pi/2)
+	HScrollBar.leftBtn:GetPushedTexture():SetRotation(math.pi/2)
+	HScrollBar.leftBtn:GetDisabledTexture():SetRotation(math.pi/2)
+	HScrollBar.leftBtn:GetHighlightTexture():SetRotation(math.pi/2)
+	HScrollBar.leftBtn:Disable()
+	HScrollBar.leftBtn:SetScript("OnClick", function(self)
+		local parent = self:GetParent()
+		parent:SetValue(parent:GetValue() - parent:GetWidth() / 2)
+		PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
+	end)
+	HScrollBar.rightBtn = CreateFrame("BUTTON", nil, HScrollBar, "UIPanelScrollDownButtonTemplate")
+	HScrollBar.rightBtn:SetPoint("LEFT", HScrollBar, "RIGHT", 0, 1)
+	HScrollBar.rightBtn:GetNormalTexture():SetRotation(math.pi/2)
+	HScrollBar.rightBtn:GetPushedTexture():SetRotation(math.pi/2)
+	HScrollBar.rightBtn:GetDisabledTexture():SetRotation(math.pi/2)
+	HScrollBar.rightBtn:GetHighlightTexture():SetRotation(math.pi/2)
+	HScrollBar.rightBtn:Disable()
+	HScrollBar.rightBtn:SetScript("OnClick", function(self)
+		local parent = self:GetParent()
+		parent:SetValue(parent:GetValue() + parent:GetWidth() / 2)
+		PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
+	end)
+	HScrollBar:SetScript("OnValueChanged", function(self, value)
+		self:GetParent():SetHorizontalScroll(value)
+	end)
+	buttonsTabPanelScroll:HookScript("OnScrollRangeChanged", function(self, xrange)
+		local hsb = self.HScrollBar
+		xrange = math.floor(xrange)
+		local value = math.min(xrange, hsb:GetValue())
+		hsb:SetMinMaxValues(0, xrange)
+		hsb:SetValue(value)
+
+		if xrange == 0 then
+			hsb.leftBtn:Disable()
+			hsb.rightBtn:Disable()
+		elseif xrange - value > .005 then
+			hsb.rightBtn:Enable()
+		else
+			hsb.rightBtn:Disable()
+		end
+	end)
+	buttonsTabPanelScroll:HookScript("OnHorizontalScroll", function(self, offset)
+		local hsb = self.HScrollBar
+		local min, max = hsb:GetMinMaxValues()
+		hsb.leftBtn:SetEnabled(offset ~= 0)
+		hsb.rightBtn:SetEnabled(hsb:GetValue() ~= max)
+	end)
 	buttonsTabPanelScroll.child = CreateFrame("FRAME")
 	buttonsTabPanelScroll.child:SetSize(1, 1)
 	buttonsTabPanelScroll:SetScrollChild(buttonsTabPanelScroll.child)
@@ -1027,7 +1092,7 @@ function config:dragBtn(btn)
 	elseif row > btn.maxRow then row = btn.maxRow end
 	if column < 1 then column = 1
 	elseif column > btn.maxColumn then column = btn.maxColumn end
-	local order = row * self.size + column - btn.orderDelta
+	local order = row * self.config.size + column - btn.orderDelta
 	if order < 1 then order = 1
 	elseif order > #btn.btnList then order = #btn.btnList end
 
@@ -1053,9 +1118,9 @@ function config:dragStart(btn, orderDelta)
 	btn:SetFrameLevel(btn.level + 2)
 	btn.orderDelta = orderDelta or 0
 	btn.maxColumn = #btn.btnList + btn.orderDelta
-	btn.minRow = math.floor(btn.orderDelta / self.size)
-	btn.maxRow = math.ceil(btn.maxColumn / self.size) - 1
-	if btn.maxColumn > self.size then btn.maxColumn = self.size end
+	btn.minRow = math.floor(btn.orderDelta / self.config.size)
+	btn.maxRow = math.ceil(btn.maxColumn / self.config.size) - 1
+	if btn.maxColumn > self.config.size then btn.maxColumn = self.config.size end
 	btn:SetScript("OnUpdate", function(btn) self:dragBtn(btn) end)
 	btn:StartMoving()
 end
@@ -1244,8 +1309,8 @@ function config:setPointBtn(btn, order, delay)
 	if btn.isDrag then return end
 	local scale = btn:GetScale()
 	order = order - 1
-	btn.x = (order % self.size * self.config.buttonSize + offsetX) / scale
-	btn.y = (-math.floor(order / self.size) * self.config.buttonSize - offsetY) / scale
+	btn.x = (order % self.config.size * self.config.buttonSize + offsetX) / scale
+	btn.y = (-math.floor(order / self.config.size) * self.config.buttonSize - offsetY) / scale
 	if self.orientation then btn.x, btn.y = -btn.y, -btn.x end
 
 	if delay and btn:IsVisible() then
@@ -1264,9 +1329,6 @@ end
 
 function config:applyLayout(delay)
 	if not self.buttonPanel then return end
-	local maxColumns, rows = math.floor(560 / self.config.buttonSize)
-	self.size = self.config.size
-	if self.size > maxColumns then self.size = maxColumns end
 	if self.config.orientation == 0 then
 		local anchor = self.config.barTypePosition == 2 and self.config.omb.anchor or self.config.anchor
 		self.orientation = anchor == "top" or anchor == "bottom"
@@ -1274,24 +1336,25 @@ function config:applyLayout(delay)
 		self.orientation = self.config.orientation == 2
 	end
 
+	local columns, rows = self.config.size
 	if self.config.mbtnPosition == 2 then
 		for i, btn in ipairs(self.mixedButtons) do
 			self:setPointBtn(btn, i, delay)
 		end
 		self.orderMBtnDelta = 0
-		rows = math.ceil(#self.mixedButtons / self.size)
+		rows = math.ceil(#self.mixedButtons / columns)
 	else
 		for i, btn in ipairs(self.buttons) do
 			self:setPointBtn(btn, i, delay)
 		end
-		self.orderMBtnDelta = self.config.mbtnPosition == 1 and #self.buttons or math.ceil(#self.buttons / self.size) * self.size
+		self.orderMBtnDelta = self.config.mbtnPosition == 1 and #self.buttons or math.ceil(#self.buttons / columns) * columns
 		for i, btn in ipairs(self.mbuttons) do
 			self:setPointBtn(btn, i + self.orderMBtnDelta, delay)
 		end
-		rows = math.ceil((#self.mbuttons + self.orderMBtnDelta) / self.size)
+		rows = math.ceil((#self.mbuttons + self.orderMBtnDelta) / columns)
 	end
 
-	local width = self.size * self.config.buttonSize + offsetX * 2
+	local width = columns * self.config.buttonSize + offsetX * 2
 	local height = rows * self.config.buttonSize + offsetY * 2
 	if self.orientation then width, height = height, width end
 	self.buttonPanel:SetSize(width, height)
