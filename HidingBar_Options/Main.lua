@@ -1263,6 +1263,8 @@ function main:initMButtons(update)
 						 or button.Icon
 						 or _G[name.."icon"]
 						 or _G[name.."Icon"]
+						 or button.__MSQ_Icon
+						 or button.GetNormalTexture and button:GetNormalTexture()
 						 or button.texture
 						 or button.Texture
 						 or button.background

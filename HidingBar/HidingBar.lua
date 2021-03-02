@@ -631,9 +631,10 @@ function hidingBar:init()
 			if self.MSQ_MButton then
 				mapButton.icon = mapButton:CreateTexture(nil, "BACKGROUND")
 				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
 				mapButton:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
 				mapButton:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
-				self:setMButtonRegions(mapButton, {.125, .875, 0, .5})
+				self:setMButtonRegions(mapButton)
 			end
 
 			self.SetClipsChildren(mapButton, true)
