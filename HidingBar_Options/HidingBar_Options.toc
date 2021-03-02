@@ -1,0 +1,10 @@
+## Interface: 90002
+## Title: HidingBar Options
+## Author: sfmict
+## Version: @project-version@
+## Notes: HidingBar Options
+## LoadOnDemand: 1
+## Dependencies: HidingBar
+templates.xml
+Main.lua
+About.lua

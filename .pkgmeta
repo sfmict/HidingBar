@@ -1,10 +1,10 @@
 package-as: HidingBar
 
 externals:
-	libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
-	libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
-	libs/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1
-	libs/LibDBIcon-1.0: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
+	HidingBar/libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
+	HidingBar/libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+	HidingBar/libs/LibDataBroker-1.1: https://github.com/tekkub/libdatabroker-1-1
+	HidingBar/libs/LibDBIcon-1.0: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
 
 enable-nolib-creation: no
 
@@ -15,7 +15,11 @@ manual-changelog:
 ignore:
 	- README.md
 	- CHANGELOG.md
-	- libs/LibStub/LibStub.toc
-	- libs/LibStub/tests
-	- libs/LibDataBroker-1.1/README.textile
-	- libs/LibDBIcon-1.0/lib.xml
+	- HidingBar/libs/LibStub/LibStub.toc
+	- HidingBar/libs/LibStub/tests
+	- HidingBar/libs/LibDataBroker-1.1/README.textile
+	- HidingBar/libs/LibDBIcon-1.0/lib.xml
+
+move-folders:
+	HidingBar/HidingBar: HidingBar
+	HidingBar/HidingBar_Options: HidingBar_Options
