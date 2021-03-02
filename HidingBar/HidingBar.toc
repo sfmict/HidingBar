@@ -9,5 +9,4 @@ embeds.xml
 locales.xml
 templates.xml
 Config.lua
-About.lua
 HidingBar.lua

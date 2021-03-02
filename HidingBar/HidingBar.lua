@@ -17,6 +17,7 @@ hidingBar.drag.fTimer = CreateFrame("FRAME")
 hidingBar.createdButtons, hidingBar.minimapButtons, hidingBar.mixedButtons = {}, {}, {}
 local createdButtonsByName, btnSettings = {}, {}
 local offsetX, offsetY = 2, 2
+hidingBar.cb = LibStub("CallbackHandler-1.0"):New(hidingBar, "on")
 local ldb = LibStub("LibDataBroker-1.1")
 local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0")
 local MSQ = LibStub("Masque", true)
@@ -239,9 +240,6 @@ function hidingBar:ADDON_LOADED(addonName)
 		self:setBackgroundColor()
 		self:setLineWidth()
 
-		config.hidingBar = self
-		config.config = self.config
-
 		C_Timer.After(0, function() self:init() end)
 	end
 end
@@ -263,7 +261,7 @@ function hidingBar:createOwnMinimapButton()
 			elseif button == "RightButton" then
 				if IsAltKeyDown() then
 					self:setLocked(not self.config.lock)
-					if config.lock then config.lock:SetChecked(self.config.lock) end
+					self.cb:Fire("LOCK_UPDATED", self.config.lock)
 				end
 				if IsShiftKeyDown() then
 					config:openConfig()
@@ -331,7 +329,7 @@ function hidingBar:init()
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
 				self:sort()
 				self:setButtonSize()
-				config:initMButtons(true)
+				self.cb:Fire("MBUTTONS_UPDATED")
 			end)
 		end
 	end
@@ -450,19 +448,18 @@ do
 			self:sort()
 			self:applyLayout()
 			self:leave()
-			config:createButton(name, button, update)
+			self.cb:Fire("BUTTON_ADDED", name, button, update)
 		end
 
 		if self.MSQ_Button then
 			self.defCoordsData[button.icon] = data
 			button.icon.SetTexCoord = self.setTexCoord
 			button:SetHighlightTexture(" ")
-			local highlight = button:GetHighlightTexture()
-			highlight:SetTexture()
 			local buttonData = {
 				Icon = button.icon,
-				Highlight = highlight,
+				Highlight = button:GetHighlightTexture(),
 			}
+			buttonData.Highlight:SetTexture()
 			self.MSQ_Button:AddButton(button, buttonData, "Legacy", true)
 		end
 
@@ -476,7 +473,7 @@ function hidingBar:ldbi_add(_, button, name)
 	self:addMButton(button)
 	self:sort()
 	self:setButtonSize()
-	config:createMButton(button:GetName(), button.icon, true)
+	self.cb:Fire("MBUTTON_ADDED", button:GetName(), button.icon, true)
 end
 
 
@@ -1066,7 +1063,7 @@ do
 			self.secondPosition = self.config.secondPosition / UIParent:GetScale()
 		end
 
-		config:updateCoords()
+		self.cb:Fire("COORDS_UPDATED")
 
 		local point = pointForExpand[anchor][self.config.expand]
 		self:ClearAllPoints()
@@ -1131,10 +1128,7 @@ function hidingBar:dragBar()
 			width, height = self:applyLayout()
 			self:updateDragBarPosition()
 
-			config:applyLayout(.3)
-			if config.hideToCombobox then
-				UIDropDownMenu_SetSelectedValue(config.hideToCombobox, self.config.anchor)
-			end
+			self.cb:Fire("ANCHOR_UPDATED", self.config.anchor)
 		end
 	end
 
@@ -1182,8 +1176,8 @@ hidingBar.drag:SetScript("OnMouseDown", function(_, button)
 		hidingBar:SetScript("OnUpdate", hidingBar.dragBar)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
-			self:setLocked(not hidingBar.config.lock)
-			if config.lock then config.lock:SetChecked(hidingBar.config.lock) end
+			hidingBar:setLocked(not hidingBar.config.lock)
+			hidingBar.cb:Fire("LOCK_UPDATED", hidingBar.config.lock)
 		end
 		if IsShiftKeyDown() then
 			config:openConfig()
