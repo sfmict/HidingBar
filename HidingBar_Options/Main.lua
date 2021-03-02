@@ -674,37 +674,29 @@ local function updateBarAnchor(btn)
 	main:hidingBarUpdate()
 end
 
+local hideToComboboxOpptions = {
+	left = L["Hiding to left"],
+	right = L["Hiding to right"],
+	top = L["Hiding to up"],
+	bottom = L["Hiding to down"],
+}
+
 UIDropDownMenu_Initialize(main.hideToCombobox, function(self, level)
 	local info = UIDropDownMenu_CreateInfo()
 
-	info.checked = nil
-	info.text = L["Hiding to left"]
-	info.value = "left"
-	info.func = updateBarAnchor
-	UIDropDownMenu_AddButton(info)
-
-	info.checked = nil
-	info.text = L["Hiding to right"]
-	info.value = "right"
-	info.func = updateBarAnchor
-	UIDropDownMenu_AddButton(info)
-
-	info.checked = nil
-	info.text = L["Hiding to up"]
-	info.value = "top"
-	info.func = updateBarAnchor
-	UIDropDownMenu_AddButton(info)
-
-	info.checked = nil
-	info.text = L["Hiding to down"]
-	info.value = "bottom"
-	info.func = updateBarAnchor
-	UIDropDownMenu_AddButton(info)
+	for value, text in pairs(hideToComboboxOpptions) do
+		info.checked = nil
+		info.text = text
+		info.value = value
+		info.func = updateBarAnchor
+		UIDropDownMenu_AddButton(info)
+	end
 end)
 UIDropDownMenu_SetSelectedValue(main.hideToCombobox, config.anchor)
 
 hidingBar:on("ANCHOR_UPDATED", function(_, value)
 	UIDropDownMenu_SetSelectedValue(main.hideToCombobox, value)
+	UIDropDownMenu_SetText(main.hideToCombobox, hideToComboboxOpptions[value])
 	main:applyLayout(.3)
 end)
 
