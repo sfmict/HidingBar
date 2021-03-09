@@ -48,7 +48,7 @@ if MSQ then
 	hidingBar.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
 	hidingBar.MSQ_Button:SetCallback(function()
 		hidingBar:enter()
-		hidingBar:leave()
+		hidingBar:leave(1.5)
 	end)
 
 
@@ -59,7 +59,7 @@ if MSQ then
 			hidingBar:MSQ_MButton_Update(btn)
 		end
 		hidingBar:enter()
-		hidingBar:leave()
+		hidingBar:leave(1.5)
 	end)
 
 
@@ -1093,7 +1093,6 @@ function hidingBar:applyLayout()
 		line = math.ceil((j + orderDelta) / self.config.size)
 	end
 
-	if not self.shown then self:Hide() end
 	self:refreshShown()
 
 	if maxButtons > self.config.size then maxButtons = self.config.size end
@@ -1270,6 +1269,9 @@ function hidingBar:setBarTypePosition(typePosition)
 				if not rFrame or type(rFrame) == "number" then
 					rFrame = (rFrame or 0) / scale
 					rPoint = (rPoint or 0) / scale
+				elseif not rPoint or type(rPoint) == "number" then
+					rPoint = (rPoint or 0) / scale
+					x = (x or 0) / scale
 				else
 					x = (x or 0) / scale
 					y = (y or 0) / scale
@@ -1523,7 +1525,7 @@ function hidingBar:enter(force)
 		self:updateDragBarPosition()
 	end
 end
-hidingBar:SetScript("OnEnter", hidingBar.enter)
+hidingBar:SetScript("OnEnter", enter)
 
 
 function hidingBar:hideBar(elapsed)
@@ -1539,28 +1541,30 @@ function hidingBar:hideBar(elapsed)
 end
 
 
-function hidingBar:leave()
+function hidingBar:leave(timer)
 	self.isMouse = false
 	if not self.isDrag and self:IsShown() and self.config.showHandler ~= 3 then
-		self.timer = self.config.hideDelay
+		self.timer = timer or self.config.hideDelay
 		self:SetScript("OnUpdate", self.hideBar)
 	end
 end
-hidingBar:SetScript("OnLeave", hidingBar.leave)
+hidingBar:SetScript("OnLeave", leave)
 
 
 function hidingBar:refreshShown()
-	if self.config.barTypePosition == 2 then
+	if not self.shown then
+		self:Hide()
+		self.drag:Hide()
+	elseif self.config.barTypePosition == 2 then
 		self.drag:Hide()
 		if self.config.showHandler == 3 then
 			self:enter(true)
-		end
-		if self:IsShown() then
+		elseif self:IsShown() then
 			self:leave()
 		end
 	elseif self.config.showHandler == 3 then
 		self:enter(true)
-		self.drag:SetShown(not self.config.lock and self.shown)
+		self.drag:SetShown(not self.config.lock)
 	else
 		if self:IsShown() then
 			self:leave()
@@ -1570,7 +1574,7 @@ function hidingBar:refreshShown()
 				UIFrameFadeOut(self.drag, 1.5, self.drag:GetAlpha(), self.config.fadeOpacity)
 			end
 		end
-		self.drag:SetShown(self.shown)
+		self.drag:Show()
 	end
 end
 
