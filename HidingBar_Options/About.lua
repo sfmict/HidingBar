@@ -1,4 +1,4 @@
-local addon, L = "HidingBar", HidingBarConfigAddon.L
+local addon, L = HidingBarConfigAddon.name, HidingBarConfigAddon.L
 local aboutConfig = CreateFrame("FRAME", addon.."ConfigAbout", InterfaceOptionsFramePanelContainer)
 aboutConfig:Hide()
 aboutConfig.name = L["About"]

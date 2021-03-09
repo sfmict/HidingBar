@@ -1,5 +1,5 @@
 local main, hidingBar = HidingBarConfigAddon, HidingBarAddon
-local addon, L, config = "HidingBar", main.L, hidingBar.config
+local addon, L, config = main.name, main.L, hidingBar.config
 main.noIcon = main:CreateTexture()
 main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
@@ -50,6 +50,7 @@ local function tabClick(tab)
 	end
 end
 
+
 local function createTabPanel(tabs, name)
 	local panel = CreateFrame("FRAME", nil, main, "HidingBarAddonOptionsPanel")
 	local tab = CreateFrame("BUTTON", nil, main, "HidingBarAddonTabTemplate")
@@ -73,7 +74,6 @@ local function createTabPanel(tabs, name)
 
 	return panel
 end
-
 local settingsTabs, buttonTabs = {}, {}
 
 -- DIALOGS
@@ -108,7 +108,7 @@ local info = main:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 info:SetPoint("TOPRIGHT", -16, 16)
 info:SetTextColor(.5, .5, .5, 1)
 info:SetJustifyH("RIGHT")
-info:SetText(("%s"):format(GetAddOnMetadata(addon, "Version")))
+info:SetText(GetAddOnMetadata(addon, "Version"))
 
 -- TITLE
 local title = main:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -1059,7 +1059,7 @@ end
 
 function main:hidingBarUpdate()
 	hidingBar:enter()
-	hidingBar:leave()
+	hidingBar:leave(1.5)
 end
 
 
