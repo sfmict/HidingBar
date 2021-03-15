@@ -191,6 +191,7 @@ hidingBar:RegisterEvent("ADDON_LOADED")
 function hidingBar:ADDON_LOADED(addonName)
 	if addonName == addon then
 		self:UnregisterEvent("ADDON_LOADED")
+		self.ADDON_LOADED = nil
 
 		local meta = {__index = function(self, key)
 			self[key] = {tstmp = 0}
@@ -249,6 +250,7 @@ end
 
 
 function hidingBar:createOwnMinimapButton()
+	self.createOwnMinimapButton = nil
 	self.ldb_icon = ldb:NewDataObject(addon, {
 		type = "data source",
 		text = addon,
@@ -299,6 +301,8 @@ end
 
 
 function hidingBar:init()
+	self.init = nil
+
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
