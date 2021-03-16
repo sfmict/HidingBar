@@ -210,7 +210,7 @@ if MSQ then
 			self.MSQ_MButton_Data[btn] = {
 				_Border = border,
 				_Background = background,
-				_Pushed = puched,c
+				_Pushed = puched,
 			}
 		end
 
