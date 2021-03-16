@@ -836,7 +836,6 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value)
 	if config.omb.size ~= value then
 		slider.label:SetText(value)
 		hidingBar:setOMBSize(value)
-		hidingBar:setBarTypePosition()
 	end
 end)
 

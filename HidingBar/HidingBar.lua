@@ -437,14 +437,14 @@ function hidingBar:init()
 					_Border = MiniMapTrackingButtonBorder,
 					_Background = MiniMapTrackingBackground,
 				}
+				self:setTexCurCoord(icon, icon:GetTexCoord())
+				icon.SetTexCoord = self.setTexCoord
 				local data = {
 					Icon = icon,
 					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
 				}
 				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
 				self:MSQ_MButton_Update(MiniMapTrackingButton)
-				self:setTexCurCoord(icon, icon:GetTexCoord())
-				icon.SetTexCoord = self.setTexCoord
 				self:MSQ_CoordUpdate(MiniMapTrackingButton)
 			end
 
@@ -550,14 +550,14 @@ function hidingBar:init()
 				self.MSQ_MButton_Data[queue] = {
 					_Border = QueueStatusMinimapButtonBorder,
 				}
+				self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
+				queue.icon.SetTexCoord = self.setTexCoord
 				local data = {
 					Icon = queue.icon,
 					Highlight = queue:GetHighlightTexture(),
 				}
 				self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
 				self:MSQ_MButton_Update(queue)
-				self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
-				queue.icon.SetTexCoord = self.setTexCoord
 				self:MSQ_CoordUpdate(queue)
 			end
 
@@ -1232,7 +1232,12 @@ end
 function hidingBar:setOMBSize(size)
 	if size then self.config.omb.size = size end
 	if self.omb then
+		local oldScale = self.omb:GetScale()
 		self.omb:SetScale(self.config.omb.size / self.omb:GetWidth())
+		for i = 1, self.omb:GetNumPoints() do
+			local point, rFrame, rPoint, x, y = self.omb:GetPoint(i)
+			self.omb:SetPoint(point, rFrame, rPoint, x * oldScale, y * oldScale)
+		end
 	end
 end
 
@@ -1328,7 +1333,6 @@ function hidingBar:setBarTypePosition(typePosition)
 				self:dSetPoint(point, rFrame, rPoint, x, y)
 			end
 			self:setOMBSize()
-			ldbi:Show(addon)
 			if MSQ then
 				self.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
 				self.MSQ_OMB:SetCallback(function()
