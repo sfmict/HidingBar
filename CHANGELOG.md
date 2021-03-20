@@ -1,1 +1,2 @@
-* Updated to 9.0.5
+* Updated icon texture coord system for Masque.
+* Fixed scaling of own minimap button.

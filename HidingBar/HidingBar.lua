@@ -1314,7 +1314,11 @@ function hidingBar:setBarTypePosition(typePosition)
 	if typePosition then self.config.barTypePosition = typePosition end
 
 	if self.config.barTypePosition == 2 then
-		ldbi:Show(addon)
+		if self.config.omb.hide then
+			self.config.omb.hide = false
+			ldbi:Show(addon)
+		end
+
 		if not self.omb then
 			self.omb = ldbi:GetMinimapButton(addon)
 			self.omb.dSetPoint = self.omb.SetPoint
@@ -1383,6 +1387,7 @@ function hidingBar:setBarTypePosition(typePosition)
 		self.position = position
 		self.secondPosition = secondPosition
 	else
+		self.config.omb.hide = true
 		ldbi:Hide(addon)
 		self.anchorObj = self.config
 		self.rFrame = UIParent
