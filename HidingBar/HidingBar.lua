@@ -44,6 +44,9 @@ local function leave() hidingBar:leave() end
 if MSQ then
 	hidingBar.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
 	hidingBar.MSQ_Button:SetCallback(function()
+		for btn in pairs(hidingBar.MSQ_Button.Buttons) do
+			hidingBar:MSQ_CoordUpdate(btn)
+		end
 		hidingBar:enter()
 		hidingBar:leave(1.5)
 	end)
@@ -54,10 +57,75 @@ if MSQ then
 	hidingBar.MSQ_MButton:SetCallback(function()
 		for btn in pairs(hidingBar.MSQ_MButton.Buttons) do
 			hidingBar:MSQ_MButton_Update(btn)
+			hidingBar:MSQ_CoordUpdate(btn)
 		end
 		hidingBar:enter()
 		hidingBar:leave(1.5)
 	end)
+
+
+	local prevCoord = {}
+	hidingBar.curCoord, hidingBar.MSQ_Coord = {}, {}
+	function hidingBar:MSQ_CoordUpdate(btn)
+		local icon = btn.__MSQ_Icon
+		if not icon then return end
+		if not self.MSQ_Coord[icon] then self.MSQ_Coord[icon] = {} end
+		for i = 1, 8 do
+			self.MSQ_Coord[icon][i] = self.curCoord[icon][i]
+		end
+		if prevCoord[icon] then
+			icon:SetTexCoord(unpack(prevCoord[icon]))
+		else
+			hidingBar.curCoord[icon] = nil
+		end
+	end
+
+
+	function hidingBar:setTexCurCoord(icon, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+		if not LRy then
+			ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
+		end
+		if self.curCoord[icon] then
+			if not prevCoord[icon] then prevCoord[icon] = {} end
+			for i = 1, 8 do
+				prevCoord[icon][i] = self.curCoord[icon][i]
+			end
+		else
+			self.curCoord[icon] = {}
+		end
+		self.curCoord[icon][1] = ULx
+		self.curCoord[icon][2] = ULy
+		self.curCoord[icon][3] = LLx
+		self.curCoord[icon][4] = LLy
+		self.curCoord[icon][5] = URx
+		self.curCoord[icon][6] = URy
+		self.curCoord[icon][7] = LRx
+		self.curCoord[icon][8] = LRy
+		return ULx, ULy, LLx, LLy, URx, URy, LRx, LRy
+	end
+
+
+	hidingBar.setTexCoord = function(self, ...)
+		local ULx, ULy, LLx, LLy, URx, URy, LRx, LRy = hidingBar:setTexCurCoord(self, ...)
+
+		if hidingBar.MSQ_Coord[self] then
+			local mULx, mULy, mLLx, mLLy, mURx, mURy, mLRx, mLRy = unpack(hidingBar.MSQ_Coord[self])
+			local top = URx - ULx
+			local right = LRy - URy
+			local bottom = LRx - LLx
+			local left = LLy - ULy
+			ULx = ULx + mULx * top
+			ULy = ULy + mULy * left
+			LLx = LLx + mLLx * bottom
+			LLy = ULy + mLLy * left
+			URx = ULx + mURx * top
+			URy = URy + mURy * right
+			LRx = LLx + mLRx * bottom
+			LRy = URy + mLRy * right
+		end
+
+		hidingBar.bg.SetTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+	end
 
 
 	function hidingBar:MSQ_MButton_Update(btn)
@@ -75,37 +143,6 @@ if MSQ then
 				data._Pushed:SetTexture()
 			end
 		end
-	end
-
-
-	hidingBar.defCoordsData, hidingBar.MSQ_Coord = {}, {}
-	hidingBar.setTexCoord = function(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
-		if not LRy then
-			ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
-		end
-		hidingBar.MSQ_Coord[self] = {ULx, ULy, LLx, LLy, URx, URy, LRx, LRy}
-
-		local data = hidingBar.defCoordsData[self]
-		if data and data.iconCoords then
-			local cULx, cULy, cLLx, cLLy, cURx, cURy, cLRx, cLRy = unpack(data.iconCoords)
-			if not cLRy then
-				cULy, cLLx, cURx, cURy, cLRx, cLRy = cLLx, cULx, cULy, cLLx, cULy, cLLy
-			end
-			local top = cURx - cULx
-			local right = cLRy - cURy
-			local bottom = cLRx - cLLx
-			local left = cLLy - cULy
-			ULx = cULx + ULx * top
-			ULy = cULy + ULy * left
-			LLx = cLLx + LLx * bottom
-			LLy = cULy + LLy * left
-			URx = cULx + URx * top
-			URy = cURy + URy * right
-			LRx = cLLx + LRx * bottom
-			LRy = cURy + LRy * right
-		end
-
-		hidingBar.bg.SetTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 	end
 
 
@@ -157,7 +194,11 @@ if MSQ then
 		end
 
 		if icon then
-			self.defCoordsData[icon] = {iconCoords = iconCoords or {icon:GetTexCoord()}}
+			if iconCoords then
+				self:setTexCurCoord(icon, unpack(iconCoords))
+			else
+				self:setTexCurCoord(icon, icon:GetTexCoord())
+			end
 			icon.SetTexCoord = self.setTexCoord
 		end
 
@@ -177,6 +218,7 @@ if MSQ then
 		if getData then return data end
 		self.MSQ_MButton:AddButton(btn, data, "Legacy", true)
 		self:MSQ_MButton_Update(btn)
+		self:MSQ_CoordUpdate(btn)
 	end
 end
 
@@ -188,6 +230,7 @@ hidingBar:RegisterEvent("ADDON_LOADED")
 function hidingBar:ADDON_LOADED(addonName)
 	if addonName == addon then
 		self:UnregisterEvent("ADDON_LOADED")
+		self.ADDON_LOADED = nil
 
 		local meta = {__index = function(self, key)
 			self[key] = {tstmp = 0}
@@ -246,6 +289,7 @@ end
 
 
 function hidingBar:createOwnMinimapButton()
+	self.createOwnMinimapButton = nil
 	self.ldb_icon = ldb:NewDataObject(addon, {
 		type = "data source",
 		text = addon,
@@ -296,6 +340,8 @@ end
 
 
 function hidingBar:init()
+	self.init = nil
+
 	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
 	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
@@ -372,11 +418,7 @@ function hidingBar:ldb_attrChange(_, name, key, value, data)
 		if key == "icon" then
 			button.icon:SetTexture(value)
 		elseif key == "iconCoords" then
-			if self.MSQ_Coord and self.MSQ_Coord[button.icon] then
-				button.icon:SetTexCoord(unpack(self.MSQ_Coord[button.icon]))
-			else
-				self.bg.SetTexCoord(button.icon, unpack(value))
-			end
+			button.icon:SetTexCoord(unpack(value))
 		elseif key == "iconR" then
 			local _, g, b = button.icon:GetVertexColor()
 			button.icon:SetVertexColor(value, g, b)
@@ -452,7 +494,7 @@ do
 		end
 
 		if self.MSQ_Button then
-			self.defCoordsData[button.icon] = data
+			if data.iconCoords then self:setTexCurCoord(button.icon, unpack(data.iconCoords)) end
 			button.icon.SetTexCoord = self.setTexCoord
 			button:SetHighlightTexture(" ")
 			local buttonData = {
@@ -461,6 +503,7 @@ do
 			}
 			buttonData.Highlight:SetTexture()
 			self.MSQ_Button:AddButton(button, buttonData, "Legacy", true)
+			self:MSQ_CoordUpdate(button)
 		end
 
 		return button
@@ -867,7 +910,12 @@ end
 function hidingBar:setOMBSize(size)
 	if size then self.config.omb.size = size end
 	if self.omb then
+		local oldScale = self.omb:GetScale()
 		self.omb:SetScale(self.config.omb.size / self.omb:GetWidth())
+		for i = 1, self.omb:GetNumPoints() do
+			local point, rFrame, rPoint, x, y = self.omb:GetPoint(i)
+			self.omb:SetPoint(point, rFrame, rPoint, x * oldScale, y * oldScale)
+		end
 	end
 end
 
@@ -944,7 +992,11 @@ function hidingBar:setBarTypePosition(typePosition)
 	if typePosition then self.config.barTypePosition = typePosition end
 
 	if self.config.barTypePosition == 2 then
-		ldbi:Show(addon)
+		if self.config.omb.hide then
+			self.config.omb.hide = false
+			ldbi:Show(addon)
+		end
+
 		if not self.omb then
 			self.omb = ldbi:GetMinimapButton(addon)
 			self.omb.dSetPoint = self.omb.SetPoint
@@ -965,9 +1017,13 @@ function hidingBar:setBarTypePosition(typePosition)
 			self:setOMBSize()
 			if MSQ then
 				self.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
-				self.MSQ_OMB:SetCallback(function() self:MSQ_MButton_Update(self.omb) end)
+				self.MSQ_OMB:SetCallback(function()
+					self:MSQ_MButton_Update(self.omb)
+					self:MSQ_CoordUpdate(self.omb)
+				end)
 				self.MSQ_OMB:AddButton(self.omb, self:setMButtonRegions(self.omb, nil, true), "Legacy", true)
 				self:MSQ_MButton_Update(self.omb)
+				self:MSQ_CoordUpdate(self.omb)
 			end
 		end
 
@@ -1009,6 +1065,7 @@ function hidingBar:setBarTypePosition(typePosition)
 		self.position = position
 		self.secondPosition = secondPosition
 	else
+		self.config.omb.hide = true
 		ldbi:Hide(addon)
 		self.anchorObj = self.config
 		self.rFrame = UIParent
