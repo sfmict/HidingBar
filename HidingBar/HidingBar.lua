@@ -67,19 +67,18 @@ if MSQ then
 	end)
 
 
-	local prevCoord = {}
-	hidingBar.curCoord, hidingBar.MSQ_Coord = {}, {}
+	local prevCoord, curCoord, MSQ_Coord = {}, {}, {}
 	function hidingBar:MSQ_CoordUpdate(btn)
 		local icon = btn.__MSQ_Icon
 		if not icon then return end
-		if not self.MSQ_Coord[icon] then self.MSQ_Coord[icon] = {} end
+		if not MSQ_Coord[icon] then MSQ_Coord[icon] = {} end
 		for i = 1, 8 do
-			self.MSQ_Coord[icon][i] = self.curCoord[icon][i]
+			MSQ_Coord[icon][i] = curCoord[icon][i]
 		end
 		if prevCoord[icon] then
 			icon:SetTexCoord(unpack(prevCoord[icon]))
 		else
-			hidingBar.curCoord[icon] = nil
+			curCoord[icon] = nil
 		end
 	end
 
@@ -88,22 +87,22 @@ if MSQ then
 		if not LRy then
 			ULy, LLx, URx, URy, LRx, LRy = LLx, ULx, ULy, LLx, ULy, LLy
 		end
-		if self.curCoord[icon] then
+		if curCoord[icon] then
 			if not prevCoord[icon] then prevCoord[icon] = {} end
 			for i = 1, 8 do
-				prevCoord[icon][i] = self.curCoord[icon][i]
+				prevCoord[icon][i] = curCoord[icon][i]
 			end
 		else
-			self.curCoord[icon] = {}
+			curCoord[icon] = {}
 		end
-		self.curCoord[icon][1] = ULx
-		self.curCoord[icon][2] = ULy
-		self.curCoord[icon][3] = LLx
-		self.curCoord[icon][4] = LLy
-		self.curCoord[icon][5] = URx
-		self.curCoord[icon][6] = URy
-		self.curCoord[icon][7] = LRx
-		self.curCoord[icon][8] = LRy
+		curCoord[icon][1] = ULx
+		curCoord[icon][2] = ULy
+		curCoord[icon][3] = LLx
+		curCoord[icon][4] = LLy
+		curCoord[icon][5] = URx
+		curCoord[icon][6] = URy
+		curCoord[icon][7] = LRx
+		curCoord[icon][8] = LRy
 		return ULx, ULy, LLx, LLy, URx, URy, LRx, LRy
 	end
 
@@ -111,8 +110,8 @@ if MSQ then
 	hidingBar.setTexCoord = function(self, ...)
 		local ULx, ULy, LLx, LLy, URx, URy, LRx, LRy = hidingBar:setTexCurCoord(self, ...)
 
-		if hidingBar.MSQ_Coord[self] then
-			local mULx, mULy, mLLx, mLLy, mURx, mURy, mLRx, mLRy = unpack(hidingBar.MSQ_Coord[self])
+		if MSQ_Coord[self] then
+			local mULx, mULy, mLLx, mLLy, mURx, mURy, mLRx, mLRy = unpack(MSQ_Coord[self])
 			local top = URx - ULx
 			local right = LRy - URy
 			local bottom = LRx - LLx

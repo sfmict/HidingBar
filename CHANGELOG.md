@@ -1,2 +1,3 @@
-* Updated icon texture coord system for Masque.
-* Fixed scaling of own minimap button.
+# HidingBar
+
+* Added localization for Germany, thx SlayerEGT
