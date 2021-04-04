@@ -62,6 +62,7 @@ aboutConfig:SetScript("OnShow", function(self)
 	translators:SetText(L["Localization Translators:"])
 
 	local langs, last = {
+		{"deDE", "SlayerEGT"},
 		{"zhCN", "lambdapak"},
 		{"zhTW", "BNS333, terry1314"},
 	}
