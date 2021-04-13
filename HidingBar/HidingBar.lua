@@ -175,8 +175,13 @@ if MSQ then
 			local normal = btn:GetNormalTexture()
 			if normal then
 				icon = btn:CreateTexture(nil, "BACKGROUND")
-				icon:SetTexture(normal:GetTexture())
-				icon:SetTexCoord(normal:GetTexCoord())
+				local atlas = normal:GetAtlas()
+				if atlas then
+					icon:SetAtlas(atlas)
+				else
+					icon:SetTexture(normal:GetTexture())
+					icon:SetTexCoord(normal:GetTexCoord())
+				end
 				icon:SetVertexColor(normal:GetVertexColor())
 				icon:SetSize(normal:GetSize())
 				for i = 1, normal:GetNumPoints() do
@@ -803,6 +808,7 @@ do
 		button.IsShown = IsShown
 		tinsert(self.createdButtons, button)
 		tinsert(self.mixedButtons, button)
+
 		if update then
 			self:sort()
 			self:applyLayout()

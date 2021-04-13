@@ -1225,8 +1225,13 @@ do
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.name = name
 		btn.title = name:gsub("LibDBIcon10_", "")
-		btn.icon:SetTexture(icon:GetTexture())
-		btn.icon:SetTexCoord(icon:GetTexCoord())
+		local atlas = icon:GetAtlas()
+		if atlas then
+			btn.icon:SetAtlas(atlas)
+		else
+			btn.icon:SetTexture(icon:GetTexture())
+			btn.icon:SetTexCoord(icon:GetTexCoord())
+		end
 		btn.color = {icon:GetVertexColor()}
 		btn.defBtnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)
