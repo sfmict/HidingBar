@@ -40,8 +40,14 @@ local ignoreFrameList = {
 
 
 local function void() end
-local function enter() hidingBar:enter() end
-local function leave() hidingBar:leave() end
+local function enter()
+	hidingBar.isMouse = true
+	hidingBar:enter()
+end
+local function leave()
+	hidingBar.isMouse = false
+	hidingBar:leave()
+end
 
 
 if MSQ then
@@ -800,9 +806,6 @@ do
 				button.icon:SetDesaturated(data.iconDesaturated)
 			end
 		end
-		if data.OnClick then
-			button:SetScript("OnClick", data.OnClick)
-		end
 		button:HookScript("OnEnter", enter)
 		button:HookScript("OnLeave", leave)
 		button.IsShown = IsShown
@@ -811,9 +814,8 @@ do
 
 		if update then
 			self:sort()
-			self:applyLayout()
-			self:leave()
-			self.cb:Fire("BUTTON_ADDED", name, button, update)
+			self:setButtonSize()
+			self.cb:Fire("BUTTON_ADDED", name, button, true)
 		end
 
 		if self.MSQ_Button then
@@ -1583,7 +1585,6 @@ end)
 
 
 function hidingBar:enter(force)
-	self.isMouse = true
 	if not self.isDrag and self.shown and (self.config.showHandler ~= 3 or force) then
 		UIFrameFadeRemoveFrame(self.drag)
 		self.drag:SetAlpha(1)
@@ -1610,7 +1611,6 @@ end
 
 
 function hidingBar:leave(timer)
-	self.isMouse = false
 	if not self.isDrag and self:IsShown() and self.config.showHandler ~= 3 then
 		self.timer = timer or self.config.hideDelay
 		self:SetScript("OnUpdate", self.hideBar)
@@ -1627,7 +1627,7 @@ function hidingBar:refreshShown()
 		self.drag:Hide()
 		if self.config.showHandler == 3 then
 			self:enter(true)
-		elseif self:IsShown() then
+		elseif self:IsShown() and not self.isMouse then
 			self:leave()
 		end
 	elseif self.config.showHandler == 3 then
@@ -1635,7 +1635,9 @@ function hidingBar:refreshShown()
 		self.drag:SetShown(not self.config.lock)
 	else
 		if self:IsShown() then
-			self:leave()
+			if not self.isMouse then
+				self:leave()
+			end
 		else
 			self:updateDragBarPosition()
 			if self.config.fade then

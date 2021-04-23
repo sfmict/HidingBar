@@ -1,3 +1,3 @@
 # HidingBar
 
-* Added localization for Germany, thx SlayerEGT
+* Fixed hiding of the bar when adding a button when the bar is displayed.

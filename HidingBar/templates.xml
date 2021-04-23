@@ -64,6 +64,11 @@
 			<OnMouseUp>
 				self.icon:SetScale(1)
 			</OnMouseUp>
+			<OnClick>
+				if type(self.data.OnClick) == "function" then
+					self.data.OnClick(self, button)
+				end
+			</OnClick>
 		</Scripts>
 	</Button>
 
