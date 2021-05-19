@@ -25,17 +25,14 @@ local MSQ = LibStub("Masque", true)
 
 local ignoreFrameList = {
 	["LibDBIcon10_HidingBar"] = true,
-	["GameTimeFrame"] = true,
-	["QueueStatusMinimapButton"] = true,
-	["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
-	["GarrisonLandingPageMinimapButton"] = true,
 	["MinimapZoomIn"] = true,
 	["MinimapZoomOut"] = true,
 	["MiniMapWorldMapButton"] = true,
 	["MiniMapMailFrame"] = true,
 	["MiniMapTracking"] = true,
+	["MiniMapBattlefieldFrame"] = true,
 }
 
 
@@ -306,7 +303,7 @@ function hidingBar:createOwnMinimapButton()
 	self.ldb_icon = ldb:NewDataObject(addon, {
 		type = "data source",
 		text = addon,
-		icon = "Interface/Icons/misc_arrowleft",
+		icon = "Interface/MINIMAP/Vehicle-SilvershardMines-Arrow",
 		OnClick = function(_, button)
 			if button == "LeftButton" then
 				if self:IsShown() and self.config.showHandler ~= 3 then
@@ -396,66 +393,15 @@ function hidingBar:init()
 	local t = time()
 
 	if self.config.grabDefMinimap then
-		-- CALENDAR BUTTON
-		if self:ignoreCheck("GameTimeFrame") then
-			local GameTimeFrame = GameTimeFrame
-			btnSettings[GameTimeFrame] = self.config.mbtnSettings["GameTimeFrame"]
-			btnSettings[GameTimeFrame].tstmp = t
-			local normalTexture = GameTimeFrame:GetNormalTexture()
-			normalTexture:SetTexCoord(0, .375, 0, .75)
-			local pushedTexture = GameTimeFrame:GetPushedTexture()
-			pushedTexture:SetTexCoord(.5, .875, 0, .75)
-			local highlightTexture = GameTimeFrame:GetHighlightTexture()
-			highlightTexture:SetTexCoord(0, 1, 0, .9375)
-			local text = select(5, GameTimeFrame:GetRegions())
-			text:SetPoint("CENTER", 0, -1)
-			GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
-			GameTimeCalendarInvitesTexture:SetPoint("CENTER")
-			GameTimeCalendarInvitesGlow.Show = void
-			GameTimeCalendarInvitesGlow:Hide()
-			self:setHooks(GameTimeFrame)
-
-			if self.MSQ_MButton then
-				self:setMButtonRegions(GameTimeFrame, {.0859375, .296875, .156255, .59375})
-			end
-
-			self.SetClipsChildren(GameTimeFrame, true)
-			self.SetAlpha(GameTimeFrame, 1)
-			self.SetHitRectInsets(GameTimeFrame, 0, 0, 0, 0)
-			self.SetParent(GameTimeFrame, self)
-			self.SetScript(GameTimeFrame, "OnUpdate", nil)
-			self.HookScript(GameTimeFrame, "OnEnter", enter)
-			self.HookScript(GameTimeFrame, "OnLeave", leave)
-			tinsert(self.minimapButtons, GameTimeFrame)
-			tinsert(self.mixedButtons, GameTimeFrame)
-		end
-
 		-- TRACKING BUTTON
 		if self:ignoreCheck("MiniMapTracking") then
 			local MiniMapTracking = MiniMapTracking
 			btnSettings[MiniMapTracking] = self.config.mbtnSettings["MiniMapTracking"]
 			btnSettings[MiniMapTracking].tstmp = t
-			local icon = MiniMapTrackingIcon
-			hooksecurefunc(icon, "SetPoint", function(icon)
-				icon:ClearAllPoints()
-				self.SetPoint(icon, "CENTER")
-			end)
 			self:setHooks(MiniMapTracking)
 
 			if self.MSQ_MButton then
-				self.MSQ_MButton_Data[MiniMapTrackingButton] = {
-					_Border = MiniMapTrackingButtonBorder,
-					_Background = MiniMapTrackingBackground,
-				}
-				self:setTexCurCoord(icon, icon:GetTexCoord())
-				icon.SetTexCoord = self.setTexCoord
-				local data = {
-					Icon = icon,
-					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
-				}
-				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
-				self:MSQ_MButton_Update(MiniMapTrackingButton)
-				self:MSQ_CoordUpdate(MiniMapTrackingButton)
+				self:setMButtonRegions(MiniMapTracking)
 			end
 
 			self.SetClipsChildren(MiniMapTracking, true)
@@ -463,124 +409,51 @@ function hidingBar:init()
 			self.SetHitRectInsets(MiniMapTracking, 0, 0, 0, 0)
 			self.SetParent(MiniMapTracking, self)
 			self.SetScript(MiniMapTracking, "OnUpdate", nil)
-			MiniMapTrackingButton:HookScript("OnMouseDown", function()
-				icon:SetScale(.9)
-			end)
-			MiniMapTrackingButton:HookScript("OnMouseUp", function()
-				icon:SetScale(1)
-			end)
-			MiniMapTrackingButton:HookScript("OnEnter", enter)
-			MiniMapTrackingButton:HookScript("OnLeave", leave)
+			self.HookScript(MiniMapTracking, "OnEnter", enter)
+			self.HookScript(MiniMapTracking, "OnLeave", leave)
 			tinsert(self.minimapButtons, MiniMapTracking)
 			tinsert(self.mixedButtons, MiniMapTracking)
 		end
 
-		-- GARRISON BUTTON
-		if self:ignoreCheck("GarrisonLandingPageMinimapButton") then
-			local garrison = GarrisonLandingPageMinimapButton
-			btnSettings[garrison] = self.config.mbtnSettings["GarrisonLandingPageMinimapButton"]
-			btnSettings[garrison].tstmp = t
-			garrison.show = garrison:IsShown()
-			self:setHooks(garrison)
-			garrison.Show = function(garrison)
-				if not garrison.show then
-					garrison.show = true
+		-- BATTLEFIELD FRAME
+		if self:ignoreCheck("MiniMapBattlefieldFrame") then
+			local battlefield = MiniMapBattlefieldFrame
+			btnSettings[battlefield] = self.config.mbtnSettings["MiniMapBattlefieldFrame"]
+			btnSettings[battlefield]. tstmp = t
+			battlefield.show = battlefield:IsShown()
+			self:setHooks(battlefield)
+
+			battlefield.Show = function(battlefield)
+				if not battlefield.show then
+					battlefield.show = true
 					self:applyLayout()
 				end
 			end
-			garrison.Hide = function(garrison)
-				if garrison.show then
-					garrison.show = false
+			battlefield.Hide = function(battlefield)
+				if battlefield.show then
+					battlefield.show = false
 					self:applyLayout()
 				end
 			end
-			garrison.IsShown = function(garrison)
-				local show = garrison.show and not btnSettings[garrison][1]
-				self.SetShown(garrison, show)
+			battlefield.IsShown = function(battlefield)
+				local show = battlefield.show and not btnSettings[battlefield][1]
+				self.SetShown(battlefield, show)
 				return show
 			end
-
-			self.SetClipsChildren(garrison, true)
-			self.SetAlpha(garrison, 1)
-			self.SetHitRectInsets(garrison, 0, 0, 0, 0)
-			self.SetParent(garrison, self)
-			self.SetScript(garrison, "OnUpdate", nil)
-			self.HookScript(garrison, "OnEnter", enter)
-			self.HookScript(garrison, "OnLeave", leave)
-			tinsert(self.minimapButtons, garrison)
-			tinsert(self.mixedButtons, garrison)
-		end
-
-		-- QUEUE STATUS
-		if self:ignoreCheck("QueueStatusMinimapButton") then
-			local queue = QueueStatusMinimapButton
-			btnSettings[queue] = self.config.mbtnSettings["QueueStatusMinimapButton"]
-			btnSettings[queue].tstmp = t
-			QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
-			queue.show = queue:IsShown()
-			queue.icon = queue.Eye.texture
-			self:setHooks(queue)
-			queue.Show = function(queue)
-				if not queue.show then
-					queue.show = true
-					self:applyLayout()
-				end
-			end
-			queue.Hide = function(queue)
-				if queue.show then
-					queue.show = false
-					if QueueStatusMinimapButtonDropDown == UIDROPDOWNMENU_OPEN_MENU then
-						CloseDropDownMenus()
-					end
-					self:applyLayout()
-				end
-			end
-			queue.IsShown = function(queue)
-				local show = queue.show and not btnSettings[queue][1]
-				self.SetShown(queue, show)
-				return show
-			end
-
-			queue.EyeHighlightAnim:SetScript("OnLoop", nil)
-			local f = CreateFrame("FRAME")
-			f.eyeAnim = f:CreateAnimationGroup()
-			f.eyeAnim:SetLooping(queue.EyeHighlightAnim:GetLooping())
-			f.timer = f.eyeAnim:CreateAnimation()
-			f.timer:SetDuration(1)
-			f.eyeAnim:SetScript("OnLoop", function()
-				if QueueStatusMinimapButton_OnGlowPulse(queue) then
-					PlaySound(SOUNDKIT.UI_GROUP_FINDER_RECEIVE_APPLICATION)
-				end
-			end)
-			hooksecurefunc(queue.EyeHighlightAnim, "Play", function() f.eyeAnim:Play() end)
-			hooksecurefunc(queue.EyeHighlightAnim, "Stop", function() f.eyeAnim:Stop() end)
-			f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
 
 			if self.MSQ_MButton then
-				self.MSQ_MButton_Data[queue] = {
-					_Border = QueueStatusMinimapButtonBorder,
-				}
-				self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
-				queue.icon.SetTexCoord = self.setTexCoord
-				local data = {
-					Icon = queue.icon,
-					Highlight = queue:GetHighlightTexture(),
-				}
-				self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
-				self:MSQ_MButton_Update(queue)
-				self:MSQ_CoordUpdate(queue)
+				self:setMButtonRegions(battlefield)
 			end
 
-			queue.icon:SetTexCoord(0, .125, 0, .25)
-			self.SetClipsChildren(queue, true)
-			self.SetAlpha(queue, 1)
-			self.SetHitRectInsets(queue, 0, 0, 0, 0)
-			self.SetParent(queue, self)
-			self.SetScript(queue, "OnUpdate", nil)
-			self.HookScript(queue, "OnEnter", enter)
-			self.HookScript(queue, "OnLeave", leave)
-			tinsert(self.minimapButtons, queue)
-			tinsert(self.mixedButtons, queue)
+			self.SetClipsChildren(battlefield, true)
+			self.SetAlpha(battlefield, 1)
+			self.SetHitRectInsets(battlefield, 0, 0, 0, 0)
+			self.SetParent(battlefield, self)
+			self.SetScript(battlefield, "OnUpdate", nil)
+			self.HookScript(battlefield, "OnEnter", enter)
+			self.HookScript(battlefield, "OnLeave", leave)
+			tinsert(self.minimapButtons, battlefield)
+			tinsert(self.mixedButtons, battlefield)
 		end
 
 		-- MAIL
@@ -1377,16 +1250,16 @@ function hidingBar:setBarTypePosition(typePosition)
 
 		if self.config.omb.anchor == "left" then
 			secondPosition = btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowright"
+			self.omb.icon:SetRotation(-math.pi/2)
 		elseif self.config.omb.anchor == "right" then
 			secondPosition = -btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowleft"
+			self.omb.icon:SetRotation(math.pi/2)
 		elseif self.config.omb.anchor == "top" then
 			secondPosition = -btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowdown"
+			self.omb.icon:SetRotation(math.pi)
 		else
 			secondPosition = btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowlup"
+			self.omb.icon:SetRotation(0)
 		end
 
 		self.anchorObj = self.config.omb

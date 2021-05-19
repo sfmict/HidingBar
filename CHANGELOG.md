@@ -1,4 +1,3 @@
-# HidingBar
+# HidingBar - Butrning Crusade
 
-* Fixed hiding of the bar when adding a button when the bar is displayed.
-* Added Korean localization.
+* First realise :).
