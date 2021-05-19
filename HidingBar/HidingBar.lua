@@ -10,7 +10,7 @@ hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag = CreateFrame("BUTTON", nil, UIParent)
 hidingBar.drag:SetClampedToScreen(true)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
-hidingBar.drag:SetFrameLevel(hidingBar:GetFrameLevel())
+hidingBar.drag:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
 hidingBar.drag.fTimer = CreateFrame("FRAME")
@@ -237,8 +237,8 @@ if MSQ then
 				_Pushed = puched,
 			}
 			if normal then
-				self.MSQ_MButton_Data._Normal = normal
-				self.MSQ_MButton_Data._Icon = icon
+				self.MSQ_MButton_Data[btn]._Normal = normal
+				self.MSQ_MButton_Data[btn]._Icon = icon
 			end
 		end
 
