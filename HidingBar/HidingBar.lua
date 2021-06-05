@@ -10,7 +10,7 @@ hidingBar.cover:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag = CreateFrame("BUTTON", nil, UIParent)
 hidingBar.drag:SetClampedToScreen(true)
 hidingBar.drag:SetHitRectInsets(-2, -2, -2, -2)
-hidingBar.drag:SetFrameLevel(hidingBar:GetFrameLevel())
+hidingBar.drag:SetFrameLevel(hidingBar:GetFrameLevel() + 10)
 hidingBar.drag.bg = hidingBar.drag:CreateTexture(nil, "OVERLAY")
 hidingBar.drag.bg:SetAllPoints()
 hidingBar.drag.fTimer = CreateFrame("FRAME")
@@ -143,16 +143,30 @@ if MSQ then
 			if data._Background then
 				data._Background:Hide()
 			end
+			if data._Normal then
+				data._Normal.SetAtlas = function(_, atlas)
+					data._Icon:SetAtlas(atlas)
+				end
+				data._Normal.SetTexture = function(_, texture)
+					data._Icon:SetTexture(texture)
+				end
+				data._Normal.SetTexCoord = function(_, ...)
+					data._Icon:SetTexCoord(...)
+				end
+			end
 			if data._Pushed then
 				data._Pushed:SetAlpha(0)
 				data._Pushed:SetTexture()
+				data._Pushed.SetAlpha = void
+				data._Pushed.SetAtlas = void
+				data._Pushed.SetTexture = void
 			end
 		end
 	end
 
 
 	function hidingBar:setMButtonRegions(btn, iconCoords, getData)
-		local name, texture, layer, border, background, icon, highlight
+		local name, texture, layer, border, background, icon, highlight, normal
 
 		for _, region in ipairs({btn:GetRegions()}) do
 			if region:GetObjectType() == "Texture" then
@@ -175,7 +189,7 @@ if MSQ then
 		end
 
 		if not icon then
-			local normal = btn:GetNormalTexture()
+			normal = btn:GetNormalTexture()
 			if normal then
 				icon = btn:CreateTexture(nil, "BACKGROUND")
 				local atlas = normal:GetAtlas()
@@ -213,12 +227,16 @@ if MSQ then
 		end
 
 		local puched = btn:GetPushedTexture()
-		if border or background or puched then
+		if border or background or puched or normal then
 			self.MSQ_MButton_Data[btn] = {
 				_Border = border,
 				_Background = background,
 				_Pushed = puched,
 			}
+			if normal then
+				self.MSQ_MButton_Data[btn]._Normal = normal
+				self.MSQ_MButton_Data[btn]._Icon = icon
+			end
 		end
 
 		local data = {
