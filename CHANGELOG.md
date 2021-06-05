@@ -1,3 +1,3 @@
 # HidingBar - Butrning Crusade
 
-* First realise :).
+* Added Spanish translation.
