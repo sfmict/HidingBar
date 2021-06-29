@@ -191,8 +191,8 @@ if MSQ then
 			end
 		end
 
-		if not icon then
-			normal = btn:GetNormalTexture()
+		normal = btn:GetNormalTexture()
+		if not icon or icon == normal then
 			if normal then
 				icon = btn:CreateTexture(nil, "BACKGROUND")
 				local atlas = normal:GetAtlas()
@@ -212,6 +212,8 @@ if MSQ then
 			else
 				background = nil
 			end
+		else
+			normal = nil
 		end
 
 		if not highlight then
