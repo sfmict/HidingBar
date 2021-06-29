@@ -1,3 +1,3 @@
 # HidingBar
 
-* Added Spanish translation.
+* Little fix for masque icon.
