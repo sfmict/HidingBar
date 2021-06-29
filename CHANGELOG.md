@@ -1,3 +1,3 @@
 # HidingBar - Classic
 
-* Added Spanish translation.
+* Little fix for masque icon.
