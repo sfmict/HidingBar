@@ -1,3 +1,3 @@
 # HidingBar - Butrning Crusade
 
-* Added Spanish translation.
+* Little fix for masque icon.
