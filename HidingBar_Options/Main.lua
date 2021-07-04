@@ -1069,7 +1069,7 @@ end
 
 function main:hidingBarUpdate()
 	hidingBar:enter()
-	hidingBar:leave(1.5)
+	hidingBar:leave(math.max(1.5, config.hideDelay))
 end
 
 

@@ -57,7 +57,7 @@ if MSQ then
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
 		hidingBar:enter()
-		hidingBar:leave(1.5)
+		hidingBar:leave(math.max(1.5, hidingBar.config.hideDelay))
 	end)
 
 
@@ -69,7 +69,7 @@ if MSQ then
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
 		hidingBar:enter()
-		hidingBar:leave(1.5)
+		hidingBar:leave(math.max(1.5, hidingBar.config.hideDelay))
 	end)
 
 
@@ -151,11 +151,14 @@ if MSQ then
 					data._Icon:SetAtlas(atlas)
 				end
 				data._Normal.SetTexture = function(_, texture)
-					data._Icon:SetTexture(texture)
+					if texture then
+						data._Icon:SetTexture(texture)
+					end
 				end
 				data._Normal.SetTexCoord = function(_, ...)
 					data._Icon:SetTexCoord(...)
 				end
+				data._Normal = nil
 			end
 			if data._Pushed then
 				data._Pushed:SetAlpha(0)
@@ -526,7 +529,7 @@ function hidingBar:init()
 					self:MSQ_MButton_Update(garrison)
 					self:MSQ_CoordUpdate(garrison)
 					self:enter()
-					self:leave(1.5)
+					self:leave(math.max(1.5, self.config.hideDelay))
 				end)
 				self.MSQ_Garrison:AddButton(garrison, self:setMButtonRegions(garrison, nil, true), "Legacy", true)
 				self:MSQ_MButton_Update(garrison)
@@ -881,7 +884,7 @@ end
 function hidingBar:grabMinimapAddonsButtons(parentFrame)
 	for _, child in ipairs({parentFrame:GetChildren()}) do
 		local width, height = child:GetSize()
-		if max(width, height) > 16 and math.abs(width - height) < 5 then
+		if math.max(width, height) > 16 and math.abs(width - height) < 5 then
 			self:addMButton(child)
 		end
 	end
