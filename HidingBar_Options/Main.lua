@@ -358,12 +358,12 @@ end)
 main.lineWidth = CreateFrame("SLIDER", nil, main.generalPanel, "HidingBarAddonSliderTemplate")
 main.lineWidth:SetPoint("TOPLEFT", main.fade, "BOTTOMLEFT", 0, -15)
 main.lineWidth:SetPoint("RIGHT", -30, 0)
-main.lineWidth:SetMinMaxValues(4, 10)
+main.lineWidth:SetMinMaxValues(4, 20)
 main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 main.lineWidth:SetValue(config.lineWidth)
 main.lineWidth.label:SetText(config.lineWidth)
 main.lineWidth:SetScript("OnValueChanged", function(slider, value)
-	value = math.floor(value * 10 + .5) / 10
+	value = math.floor(value + .5)
 	hidingBar:setLineWidth(value)
 	slider.label:SetText(value)
 	slider:SetValue(value)
@@ -1069,7 +1069,7 @@ end
 
 function main:hidingBarUpdate()
 	hidingBar:enter()
-	hidingBar:leave(1.5)
+	hidingBar:leave(math.max(1.5, config.hideDelay))
 end
 
 
