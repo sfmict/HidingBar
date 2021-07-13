@@ -57,7 +57,7 @@ if MSQ then
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
 		hidingBar:enter()
-		hidingBar:leave(1.5)
+		hidingBar:leave(math.max(1.5, hidingBar.config.hideDelay))
 	end)
 
 
@@ -69,7 +69,7 @@ if MSQ then
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
 		hidingBar:enter()
-		hidingBar:leave(1.5)
+		hidingBar:leave(math.max(1.5, hidingBar.config.hideDelay))
 	end)
 
 
@@ -151,11 +151,14 @@ if MSQ then
 					data._Icon:SetAtlas(atlas)
 				end
 				data._Normal.SetTexture = function(_, texture)
-					data._Icon:SetTexture(texture)
+					if texture then
+						data._Icon:SetTexture(texture)
+					end
 				end
 				data._Normal.SetTexCoord = function(_, ...)
 					data._Icon:SetTexCoord(...)
 				end
+				data._Normal = nil
 			end
 			if data._Pushed then
 				data._Pushed:SetAlpha(0)
@@ -526,7 +529,7 @@ function hidingBar:init()
 					self:MSQ_MButton_Update(garrison)
 					self:MSQ_CoordUpdate(garrison)
 					self:enter()
-					self:leave(1.5)
+					self:leave(math.max(1.5, self.config.hideDelay))
 				end)
 				self.MSQ_Garrison:AddButton(garrison, self:setMButtonRegions(garrison, nil, true), "Legacy", true)
 				self:MSQ_MButton_Update(garrison)
@@ -881,7 +884,7 @@ end
 function hidingBar:grabMinimapAddonsButtons(parentFrame)
 	for _, child in ipairs({parentFrame:GetChildren()}) do
 		local width, height = child:GetSize()
-		if max(width, height) > 16 and math.abs(width - height) < 5 then
+		if math.max(width, height) > 16 and math.abs(width - height) < 5 then
 			self:addMButton(child)
 		end
 	end
@@ -1682,9 +1685,12 @@ function hidingBar:refreshShown()
 end
 
 
-function hidingBar.drag:hoverHandler()
+function hidingBar.drag:hoverWithClick()
 	if self:IsShown() and hidingBar.config.fade then
 		UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), 1)
+	end
+	if hidingBar:IsShown() then
+		hidingBar:enter()
 	end
 end
 
@@ -1702,7 +1708,9 @@ function hidingBar.drag:showOnHoverWithDelay()
 	if hidingBar:IsShown() or hidingBar.config.showDelay == 0 then
 		hidingBar:enter()
 	else
-		self:hoverHandler()
+		if self:IsShown() and hidingBar.config.fade then
+			UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), 1)
+		end
 		self.fTimer.timer = hidingBar.config.showDelay
 		self.fTimer:SetScript("OnUpdate", self.showBarDelay)
 	end
@@ -1719,7 +1727,7 @@ function hidingBar.drag:setShowHandler(showHandler)
 		self:SetScript("OnEnter", self.showOnHoverWithDelay)
 		self:SetScript("OnClick", enter)
 	elseif hidingBar.config.showHandler == 1 then
-		self:SetScript("OnEnter", self.hoverHandler)
+		self:SetScript("OnEnter", self.hoverWithClick)
 		self:SetScript("OnClick", enter)
 	else
 		self:SetScript("OnEnter", self.showOnHoverWithDelay)
