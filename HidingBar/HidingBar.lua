@@ -1685,9 +1685,12 @@ function hidingBar:refreshShown()
 end
 
 
-function hidingBar.drag:hoverHandler()
+function hidingBar.drag:hoverWithClick()
 	if self:IsShown() and hidingBar.config.fade then
 		UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), 1)
+	end
+	if hidingBar:IsShown() then
+		hidingBar:enter()
 	end
 end
 
@@ -1705,7 +1708,9 @@ function hidingBar.drag:showOnHoverWithDelay()
 	if hidingBar:IsShown() or hidingBar.config.showDelay == 0 then
 		hidingBar:enter()
 	else
-		self:hoverHandler()
+		if self:IsShown() and hidingBar.config.fade then
+			UIFrameFadeOut(self, hidingBar.config.showDelay, self:GetAlpha(), 1)
+		end
 		self.fTimer.timer = hidingBar.config.showDelay
 		self.fTimer:SetScript("OnUpdate", self.showBarDelay)
 	end
@@ -1722,7 +1727,7 @@ function hidingBar.drag:setShowHandler(showHandler)
 		self:SetScript("OnEnter", self.showOnHoverWithDelay)
 		self:SetScript("OnClick", enter)
 	elseif hidingBar.config.showHandler == 1 then
-		self:SetScript("OnEnter", self.hoverHandler)
+		self:SetScript("OnEnter", self.hoverWithClick)
 		self:SetScript("OnClick", enter)
 	else
 		self:SetScript("OnEnter", self.showOnHoverWithDelay)
