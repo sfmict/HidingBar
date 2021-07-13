@@ -1,3 +1,4 @@
 # HidingBar - Classic
 
-* Little fix for masque icon.
+* Fixed missing icon when updating Masque style.
+* Fixed OnEnter handler.
