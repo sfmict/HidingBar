@@ -1,4 +1,4 @@
-# HidingBar - Butrning Crusade
+# HidingBar - Burning Crusade
 
 * Fixed missing icon when updating Masque style.
 * Fixed OnEnter handler.
