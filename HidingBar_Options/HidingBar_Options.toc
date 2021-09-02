@@ -5,6 +5,7 @@
 ## Notes: HidingBar Options
 ## LoadOnDemand: 1
 ## Dependencies: HidingBar
+embeds.xml
 templates.xml
 Main.lua
 About.lua

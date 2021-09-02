@@ -40,6 +40,7 @@
 		</CheckedTexture>
 		<Scripts>
 			<OnLoad>
+				self:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 				self:RegisterForDrag("LeftButton")
 				self.updateChecked = function(self, checked)
 					if checked then
@@ -53,10 +54,6 @@
 			</OnLoad>
 			<OnEnter>
 				self.icon:SetSize(32, 32)
-				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-				GameTooltip:SetText(self.title)
-				GameTooltip:AddLine("DataBroker", .5, .5, .5)
-				GameTooltip:Show()
 			</OnEnter>
 			<OnLeave>
 				self.icon:SetSize(30, 30)
@@ -120,12 +117,6 @@
 				end
 				hooksecurefunc(self, "SetChecked", self.updateChecked)
 			</OnLoad>
-			<OnEnter>
-				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
-				GameTooltip:SetText(self.title)
-				GameTooltip:AddLine("Minimap", .5, .5, .5)
-				GameTooltip:Show()
-			</OnEnter>
 			<OnLeave>
 				GameTooltip:Hide()
 			</OnLeave>
