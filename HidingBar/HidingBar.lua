@@ -51,8 +51,10 @@ if MSQ then
 		for btn in pairs(hidingBar.MSQ_Button.Buttons) do
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
-		hidingBar:enter()
-		hidingBar:leave(math.max(1.5, hidingBar.config.hideDelay))
+		for _, bar in ipairs(hidingBar.bars) do
+			bar:enter()
+			bar:leave(math.max(1.5, bar.config.hideDelay))
+		end
 	end)
 
 
@@ -63,8 +65,10 @@ if MSQ then
 			hidingBar:MSQ_MButton_Update(btn)
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
-		hidingBar:enter()
-		hidingBar:leave(math.max(1.5, hidingBar.config.hideDelay))
+		for _, bar in ipairs(hidingBar.bars) do
+			bar:enter()
+			bar:leave(math.max(1.5, bar.config.hideDelay))
+		end
 	end)
 
 
@@ -439,7 +443,6 @@ function hidingBar:init()
 				self:setMButtonRegions(GameTimeFrame, {.0859375, .296875, .156255, .59375})
 			end
 
-			self.SetClipsChildren(GameTimeFrame, true)
 			self.SetAlpha(GameTimeFrame, 1)
 			self.SetHitRectInsets(GameTimeFrame, 0, 0, 0, 0)
 			self.SetScript(GameTimeFrame, "OnUpdate", nil)
@@ -475,7 +478,6 @@ function hidingBar:init()
 				self:MSQ_CoordUpdate(MiniMapTrackingButton)
 			end
 
-			self.SetClipsChildren(MiniMapTracking, true)
 			self.SetAlpha(MiniMapTracking, 1)
 			self.SetHitRectInsets(MiniMapTracking, 0, 0, 0, 0)
 			self.SetScript(MiniMapTracking, "OnUpdate", nil)
@@ -499,13 +501,13 @@ function hidingBar:init()
 			garrison.Show = function(garrison)
 				if not garrison.show then
 					garrison.show = true
-					self:applyLayout()
+					garrison:GetParent():applyLayout()
 				end
 			end
 			garrison.Hide = function(garrison)
 				if garrison.show then
 					garrison.show = false
-					self:applyLayout()
+					garrison:GetParent():applyLayout()
 				end
 			end
 			garrison.IsShown = function(garrison)
@@ -519,15 +521,16 @@ function hidingBar:init()
 				self.MSQ_Garrison:SetCallback(function()
 					self:MSQ_MButton_Update(garrison)
 					self:MSQ_CoordUpdate(garrison)
-					self:enter()
-					self:leave(math.max(1.5, self.pConfig.hideDelay))
+					for _, bar in ipairs(self.bars) do
+						bar:enter()
+						bar:leave(math.max(1.5, bar.config.hideDelay))
+					end
 				end)
 				self.MSQ_Garrison:AddButton(garrison, self:setMButtonRegions(garrison, nil, true), "Legacy", true)
 				self:MSQ_MButton_Update(garrison)
 				self:MSQ_CoordUpdate(garrison)
 			end
 
-			self.SetClipsChildren(garrison, true)
 			self.SetAlpha(garrison, 1)
 			self.SetHitRectInsets(garrison, 0, 0, 0, 0)
 			self.SetScript(garrison, "OnUpdate", nil)
@@ -547,7 +550,7 @@ function hidingBar:init()
 			queue.Show = function(queue)
 				if not queue.show then
 					queue.show = true
-					self:applyLayout()
+					queue:GetParent():applyLayout()
 				end
 			end
 			queue.Hide = function(queue)
@@ -556,7 +559,7 @@ function hidingBar:init()
 					if QueueStatusMinimapButtonDropDown == UIDROPDOWNMENU_OPEN_MENU then
 						CloseDropDownMenus()
 					end
-					self:applyLayout()
+					queue:GetParent():applyLayout()
 				end
 			end
 			queue.IsShown = function(queue)
@@ -596,7 +599,6 @@ function hidingBar:init()
 			end
 
 			queue.icon:SetTexCoord(0, .125, 0, .25)
-			self.SetClipsChildren(queue, true)
 			self.SetAlpha(queue, 1)
 			self.SetHitRectInsets(queue, 0, 0, 0, 0)
 			self.SetScript(queue, "OnUpdate", nil)
@@ -622,13 +624,13 @@ function hidingBar:init()
 			proxyMail.Show = function(proxyMail)
 				if not proxyMail.show then
 					proxyMail.show = true
-					self:applyLayout()
+					proxyMail:GetParent():applyLayout()
 				end
 			end
 			proxyMail.Hide = function(proxyMail)
 				if proxyMail.show then
 					proxyMail.show = false
-					self:applyLayout()
+					proxyMail:GetParent():applyLayout()
 				end
 			end
 			proxyMail.IsShown = function(proxyMail)
@@ -641,7 +643,6 @@ function hidingBar:init()
 				self:setMButtonRegions(proxyMail)
 			end
 
-			proxyMail:SetClipsChildren(true)
 			proxyMail:HookScript("OnEnter", enter)
 			proxyMail:HookScript("OnLeave", leave)
 			tinsert(self.minimapButtons, proxyMail)
@@ -681,7 +682,6 @@ function hidingBar:init()
 					zoom:Disable()
 				end
 
-				self.SetClipsChildren(zoom, true)
 				self.SetAlpha(zoom, 1)
 				self.SetHitRectInsets(zoom, 0, 0, 0, 0)
 				self.HookScript(zoom, "OnEnter", enter)
@@ -714,7 +714,6 @@ function hidingBar:init()
 				self:setMButtonRegions(mapButton)
 			end
 
-			self.SetClipsChildren(mapButton, true)
 			self.SetAlpha(mapButton, 1)
 			self.SetHitRectInsets(mapButton, 0, 0, 0, 0)
 			self.HookScript(mapButton, "OnEnter", enter)
@@ -758,6 +757,7 @@ function hidingBar:setProfile(profileName)
 		local data = self.pConfig.btnSettings[btn.name]
 		data.tstmp = t
 		btnSettings[btn] = data
+		btn:SetClipsChildren(data[4])
 	end
 
 	for _, btn in ipairs(self.minimapButtons) do
@@ -766,6 +766,7 @@ function hidingBar:setProfile(profileName)
 			local data = self.pConfig.mbtnSettings[name]
 			data.tstmp = t
 			btnSettings[btn] = data
+			btn:SetClipsChildren(data[4])
 		end
 	end
 
@@ -913,6 +914,7 @@ do
 			local btnData = self.pConfig.btnSettings[name]
 			btnData.tstmp = time()
 			btnSettings[button] = btnData
+			button:SetClipsChildren(btnData[4])
 			self:sort()
 			local bar = self.barByName[btnData[3]] or self.defaultBar
 			button:SetParent(bar)
@@ -943,6 +945,7 @@ function hidingBar:ldbi_add(_, button, name)
 	local btnData = self.pConfig.mbtnSettings[button:GetName()]
 	btnData.tstmp = time()
 	btnSettings[button] = btnData
+	button:SetClipsChildren(btnData[4])
 	self:addMButton(button)
 	self:sort()
 	local bar = self.barByName[btnData[3]] or self.defaultBar
@@ -978,11 +981,14 @@ function hidingBar:addMButton(button)
 				self:setMButtonRegions(button)
 			end
 
+			local function OnEnter() enter(button) end
+			local function OnLeave() leave(button) end
+
 			local function setMouseEvents(frame)
 				if frame:IsMouseEnabled() then
 					self.SetHitRectInsets(frame, 0, 0, 0, 0)
-					self.HookScript(frame, "OnEnter", enter)
-					self.HookScript(frame, "OnLeave", leave)
+					self.HookScript(frame, "OnEnter", OnEnter)
+					self.HookScript(frame, "OnLeave", OnLeave)
 				end
 				for _, fchild in ipairs({frame:GetChildren()}) do
 					setMouseEvents(fchild)
@@ -992,7 +998,6 @@ function hidingBar:addMButton(button)
 
 			self.SetFixedFrameStrata(button, false)
 			self.SetFixedFrameLevel(button, false)
-			self.SetClipsChildren(button, true)
 			self.SetAlpha(button, 1)
 			tinsert(self.minimapButtons, button)
 			tinsert(self.mixedButtons, button)
@@ -1025,7 +1030,6 @@ function hidingBar:addMButton(button)
 
 				self.SetFixedFrameStrata(button, false)
 				self.SetFixedFrameLevel(button, false)
-				self.SetClipsChildren(button, true)
 				self.SetAlpha(button, 1)
 				self.SetHitRectInsets(button, 0, 0, 0, 0)
 				tinsert(self.minimapButtons, button)
@@ -1075,6 +1079,8 @@ do
 				animationGroup.Play = void
 			end
 		end
+		btn.SetFixedFrameStrata = void
+		btn.SetFixedFrameLevel = void
 		btn.SetHitRectInsets = void
 		btn.ClearAllPoints = void
 		btn.StartMoving = void
@@ -1116,6 +1122,13 @@ function hidingBar:sort()
 	end
 	sort(self.minimapButtons, btnSort)
 	sort(self.mixedButtons, btnSort)
+end
+
+
+function hidingBar:setClipButtons()
+	for _, btn in ipairs(self.mixedButtons) do
+		btn:SetClipsChildren(btnSettings[btn][4])
+	end
 end
 
 

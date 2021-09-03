@@ -117,7 +117,7 @@ StaticPopupDialogs[main.addonName.."DELETE_PROFILE"] = {
 	button2 = CANCEL,
 	hideOnEscape = 1,
 	whileDead = 1,
-	OnAccept = function(_, cb) cb() end,
+	OnAccept = function(self, cb) self:Hide() cb() end,
 }
 StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 	text = addon..": "..L["Add bar"],
@@ -143,7 +143,7 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 local function barExistsAccept(popup)
 	if not popup then return end
 	popup:Hide()
-	main:createPar()
+	main:createBar()
 end
 StaticPopupDialogs[main.addonName.."BAR_EXISTS"] = {
 	text = addon..": "..L["A bar with the same name exists."],
@@ -159,7 +159,7 @@ StaticPopupDialogs[main.addonName.."DELETE_BAR"] = {
 	button2 = CANCEL,
 	hideOnEscape = 1,
 	whileDead = 1,
-	OnAccept = function(_, cb) cb() end,
+	OnAccept = function(self, cb) self:Hide() cb() end,
 }
 StaticPopupDialogs[main.addonName.."GET_RELOAD"] = {
 	text = addon..": "..L["RELOAD_INTERFACE_QUESTION"],
@@ -486,10 +486,10 @@ ignoreDescription:SetText(L["IGNORE_DESCRIPTION"])
 -------------------------------------------
 -- GRAB SETTINGS TAB PANEL
 -------------------------------------------
-main.grabSettingsPanel = createTabPanel(buttonsTabs, L["Grab settings"])
+main.grabOptionsPanel = createTabPanel(buttonsTabs, L["Grab options"])
 
 -- GRAB DEFAULT BUTTONS
-main.grabDefault = CreateFrame("CheckButton", nil, main.grabSettingsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabDefault = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
 main.grabDefault:SetPoint("TOPLEFT", 8, -8)
 main.grabDefault.Text:SetText(L["Grab default buttons on minimap"])
 main.grabDefault:SetScript("OnClick", function(btn)
@@ -498,7 +498,7 @@ main.grabDefault:SetScript("OnClick", function(btn)
 end)
 
 -- GRAB ADDONS BUTTONS
-main.grab = CreateFrame("CheckButton", nil, main.grabSettingsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grab = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
 main.grab:SetPoint("TOPLEFT", main.grabDefault, "BOTTOMLEFT", 0, 0)
 main.grab.Text:SetText(L["Grab addon buttons on minimap"])
 main.grab:SetScript("OnClick", function(btn)
@@ -510,7 +510,7 @@ main.grab:SetScript("OnClick", function(btn)
 end)
 
 -- GRAB AFTER N SECOND
-main.grabAfter = CreateFrame("CheckButton", nil, main.grabSettingsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabAfter = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
 main.grabAfter:SetPoint("TOPLEFT", main.grab, "BOTTOMLEFT", 20, 0)
 main.grabAfter.Text:SetText(L["Try to grab after"])
 main.grabAfter:SetHitRectInsets(0, -main.grabAfter.Text:GetWidth(), 0, 0)
@@ -519,7 +519,7 @@ main.grabAfter:SetScript("OnClick", function(btn)
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
-main.afterNumber = CreateFrame("EditBox", nil, main.grabSettingsPanel, "HidingBarAddonNumberTextBox")
+main.afterNumber = CreateFrame("EditBox", nil, main.grabOptionsPanel, "HidingBarAddonNumberTextBox")
 main.afterNumber:SetPoint("LEFT", main.grabAfter.Text, "RIGHT", 3, 0)
 main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
 	if userInput then
@@ -531,7 +531,7 @@ main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
 	end
 end)
 
-main.grabAfterTextSec = main.grabSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+main.grabAfterTextSec = main.grabOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 main.grabAfterTextSec:SetPoint("LEFT", main.afterNumber, "RIGHT", 3, 0)
 main.grabAfterTextSec:SetText(L["sec."])
 
@@ -545,7 +545,7 @@ main.grabAfter:HookScript("OnDisable", function(btn)
 end)
 
 -- GRAB WITHOUT NAME
-main.grabWithoutName = CreateFrame("CheckButton", nil, main.grabSettingsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabWithoutName = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
 main.grabWithoutName:SetPoint("TOPLEFT", main.grabAfter, "BOTTOMLEFT", 0, 0)
 main.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
 main.grabWithoutName:SetScript("OnClick", function(btn)
@@ -693,7 +693,7 @@ local function orientationChange(btn)
 	main:hidingBarUpdate()
 end
 
-orientationCombobox:ddInitialize(function(self)
+orientationCombobox:ddSetInitFunc(function(self)
 	local info = {}
 	for i = 0, #self.texts do
 		info.text = self.texts[i]
@@ -718,7 +718,7 @@ local function fsChange(btn)
 	main.barFrame:setFrameStrata(btn.value)
 end
 
-fsCombobox:ddInitialize(function(self)
+fsCombobox:ddSetInitFunc(function(self)
 	local info = {}
 	for i = 0, #self.texts do
 		info.text = self.texts[i]
@@ -796,7 +796,7 @@ local function updateShowHandler(btn)
 	main.barFrame.drag:setShowHandler(btn.value)
 end
 
-showHandlerCombobox:ddInitialize(function(self)
+showHandlerCombobox:ddSetInitFunc(function(self)
 	local info = {}
 	for i = 0, #self.texts do
 		info.text = self.texts[i]
@@ -975,7 +975,7 @@ local function updateBarAnchor(btn)
 	main:hidingBarUpdate()
 end
 
-main.hideToCombobox:ddInitialize(function(self)
+main.hideToCombobox:ddSetInitFunc(function(self)
 	local info = {}
 	for _, value in ipairs({"left", "right", "top", "bottom"}) do
 		info.text = self.texts[value]
@@ -1133,9 +1133,24 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.value = btn
 		self:ddAddButton(info, level)
 
-		info.keepShownOnClick = nil
+		info.notCheckable = nil
+		info.isNotRadio = true
 		info.hasArrow = nil
-		
+		info.text = L["Clip button"]
+		info.checked = btn.settings[4]
+		info.func = function(_,_,_, checked)
+			btn.settings[4] = checked and true or nil
+			hidingBar:setClipButtons()
+		end
+		info.OnTooltipShow = function(_, tooltip)
+			tooltip:AddLine(L["Prevents button elements from going over the edges."], nil, nil, nil, true)
+		end
+		self:ddAddButton(info, level)
+
+		info.notCheckable = true
+		info.keepShownOnClick = nil
+		info.OnTooltipShow = nil
+
 		if btn.toIgnore then
 			info.text = L["Add to ignore list"]
 			info.func = function()
@@ -1263,14 +1278,18 @@ function main:setProfile()
 			default = profile
 		end
 	end
-
 	currentProfile = currentProfile or default
+
+	local function compare(o1, o2)
+		return (o1 and 1 or 0) ~= (o2 and 1 or 0)
+	end
+
 	if self.currentProfile then
-		if self.pConfig.grabDefMinimap ~= currentProfile.config.grabDefMinimap
+		if compare(self.pConfig.grabDefMinimap, currentProfile.config.grabDefMinimap)
 		or self.pConfig.grabMinimap ~= currentProfile.config.grabMinimap
 		or self.pConfig.grabMinimap and
-			(self.pConfig.grabMinimapWithoutName ~= currentProfile.config.grabMinimapWithoutName
-			or self.pConfig.grabMinimapAfter ~= currentProfile.config.grabMinimapAfter
+			(compare(self.pConfig.grabMinimapWithoutName, currentProfile.config.grabMinimapWithoutName)
+			or compare(self.pConfig.grabMinimapAfter, currentProfile.config.grabMinimapAfter)
 			or self.pConfig.grabMinimapAfter and self.pConfig.grabMinimapAfterN ~= currentProfile.config.grabMinimapAfterN)
 		then
 			StaticPopup_Show(main.addonName.."GET_RELOAD")
@@ -1321,14 +1340,12 @@ function main:createBar()
 			tinsert(self.currentProfile.bars, bar)
 			hidingBar:checkProfile(self.currentProfile)
 			sort(self.currentProfile.bars, function(a, b) return a.name < b.name end)
-			hidingBar:updateBars()
-			main:setBar(bar)
 		end
 	end)
-	if dialog and self.lastbarName then
-		dialog.editBox:SetText(self.lastbarName)
+	if dialog and self.lastBarName then
+		dialog.editBox:SetText(self.lastBarName)
 		dialog.editBox:HighlightText()
-		self.lastbarName = nil
+		self.lastBarName = nil
 	end
 end
 
@@ -1341,7 +1358,6 @@ function main:removeBar(barName)
 				if bar.isDefault then
 					main.currentProfile.bars[1].isDefault = true
 				end
-				hidingBar:updateBars()
 				break
 			end
 		end
@@ -1350,8 +1366,16 @@ function main:removeBar(barName)
 				settings[3] = nil
 			end
 		end
+		for _, settings in pairs(main.pConfig.mbtnSettings) do
+			if settings[3] == barName then
+				settings[3] = nil
+			end
+		end
+		hidingBar:updateBars()
 		if self.currentBar.name == barName then
 			self:setBar()
+		else
+			self:setBar(self.currentBar)
 		end
 	end)
 end
@@ -1366,10 +1390,55 @@ function main:setBar(bar)
 			end
 		end
 	end
-	self.currentBar = bar
-	self.bConfig = self.currentBar.config
-	self.barFrame = hidingBar.barByName[self.currentBar.name]
-	barCombobox:ddSetSelectedText(self.currentBar.name)
+
+	if self.currentBar ~= bar then
+		self.currentBar = bar
+		self.bConfig = self.currentBar.config
+		self.barFrame = hidingBar.barByName[self.currentBar.name]
+		barCombobox:ddSetSelectedText(self.currentBar.name)
+
+		self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
+		expandToCombobox:ddSetSelectedValue(self.bConfig.expand)
+		expandToCombobox:ddSetSelectedText(expandToCombobox.texts[self.bConfig.expand])
+		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
+		bgColor.color:SetColorTexture(unpack(self.bConfig.bgColor))
+		local hexColor = toHex(self.bConfig.lineColor)
+		self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+		orientationCombobox:ddSetSelectedValue(self.bConfig.orientation)
+		orientationCombobox:ddSetSelectedText(orientationCombobox.texts[self.bConfig.orientation])
+		fsCombobox:ddSetSelectedValue(self.bConfig.frameStrata)
+		fsCombobox:ddSetSelectedText(fsCombobox.texts[self.bConfig.frameStrata])
+		lock:SetChecked(self.bConfig.lock)
+		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+		self.fade:SetChecked(self.bConfig.fade)
+		self.fadeOpacity:SetValue(self.bConfig.fadeOpacity)
+		self.fadeOpacity.label:SetText(self.bConfig.fadeOpacity)
+		self.fadeOpacity:SetEnabled(self.bConfig.fade)
+		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
+		self.lineWidth:SetValue(self.bConfig.lineWidth)
+		self.lineWidth.label:SetText(self.bConfig.lineWidth)
+		showHandlerCombobox:ddSetSelectedValue(self.bConfig.showHandler)
+		showHandlerCombobox:ddSetSelectedText(showHandlerCombobox.texts[self.bConfig.showHandler])
+		delayToShowEditBox:SetNumber(self.bConfig.showDelay)
+		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
+
+		buttonNumber:SetValue(self.bConfig.size)
+		buttonNumber.label:SetText(self.bConfig.size)
+		buttonSize:SetValue(self.bConfig.buttonSize)
+		buttonSize.label:SetText(self.bConfig.buttonSize)
+		mbtnPostionCombobox:ddSetSelectedValue(self.bConfig.mbtnPosition)
+		mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
+
+		main.hideToCombobox:ddSetSelectedValue(self.bConfig.anchor)
+		main.hideToCombobox:ddSetSelectedText(main.hideToCombobox.texts[self.bConfig.anchor])
+		main.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
+		main.ombShowToCombobox:ddSetSelectedText(main.ombShowToCombobox.texts[self.bConfig.omb.anchor])
+		main.ombSize:SetValue(self.bConfig.omb.size)
+		main.ombSize.label:SetText(self.bConfig.omb.size)
+
+		updateBarTypePosition()
+		self:updateCoords()
+	end
 
 	for _, btn in ipairs(self.mixedButtons) do
 		local show = btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault
@@ -1378,47 +1447,6 @@ function main:setBar(bar)
 			btn:SetChecked(btn.settings[1])
 		end
 	end
-
-	self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
-	expandToCombobox:ddSetSelectedValue(self.bConfig.expand)
-	expandToCombobox:ddSetSelectedText(expandToCombobox.texts[self.bConfig.expand])
-	lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
-	bgColor.color:SetColorTexture(unpack(self.bConfig.bgColor))
-	local hexColor = toHex(self.bConfig.lineColor)
-	self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
-	orientationCombobox:ddSetSelectedValue(self.bConfig.orientation)
-	orientationCombobox:ddSetSelectedText(orientationCombobox.texts[self.bConfig.orientation])
-	fsCombobox:ddSetSelectedValue(self.bConfig.frameStrata)
-	fsCombobox:ddSetSelectedText(fsCombobox.texts[self.bConfig.frameStrata])
-	lock:SetChecked(self.bConfig.lock)
-	self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
-	self.fade:SetChecked(self.bConfig.fade)
-	self.fadeOpacity:SetValue(self.bConfig.fadeOpacity)
-	self.fadeOpacity.label:SetText(self.bConfig.fadeOpacity)
-	self.fadeOpacity:SetEnabled(self.bConfig.fade)
-	self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
-	self.lineWidth:SetValue(self.bConfig.lineWidth)
-	self.lineWidth.label:SetText(self.bConfig.lineWidth)
-	showHandlerCombobox:ddSetSelectedValue(self.bConfig.showHandler)
-	showHandlerCombobox:ddSetSelectedText(showHandlerCombobox.texts[self.bConfig.showHandler])
-	delayToShowEditBox:SetNumber(self.bConfig.showDelay)
-	delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
-
-	buttonNumber:SetValue(self.bConfig.size)
-	buttonNumber.label:SetText(self.bConfig.size)
-	buttonSize:SetValue(self.bConfig.buttonSize)
-	buttonSize.label:SetText(self.bConfig.buttonSize)
-	mbtnPostionCombobox:ddSetSelectedValue(self.bConfig.mbtnPosition)
-	mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
-	main.hideToCombobox:ddSetSelectedValue(self.bConfig.anchor)
-	main.hideToCombobox:ddSetSelectedText(main.hideToCombobox.texts[self.bConfig.anchor])
-	main.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
-	main.ombShowToCombobox:ddSetSelectedText(main.ombShowToCombobox.texts[self.bConfig.omb.anchor])
-	main.ombSize:SetValue(self.bConfig.omb.size)
-	main.ombSize.label:SetText(self.bConfig.omb.size)
-
-	updateBarTypePosition()
-	self:updateCoords()
 
 	self:setButtonSize()
 	self:applyLayout()
