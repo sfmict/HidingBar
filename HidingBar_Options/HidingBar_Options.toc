@@ -1,10 +1,11 @@
-## Interface: 11306
+## Interface: 11307
 ## Title: HidingBar Options
 ## Author: sfmict
 ## Version: @project-version@
 ## Notes: HidingBar Options
 ## LoadOnDemand: 1
 ## Dependencies: HidingBar
+embeds.xml
 templates.xml
 Main.lua
 About.lua

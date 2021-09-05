@@ -17,10 +17,10 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: sfmict/my-tools
-        token: ${{ secrets.GITHUB_OAUTH }}
+        token: ${{ secrets.OAUTH }}
         path: my-tools
 
     - name: files
       run: bash my-tools/release.sh
       env:
-        GITHUB_OAUTH: ${{ secrets.GITHUB_OAUTH }}
+        GITHUB_OAUTH: ${{ secrets.OAUTH }}

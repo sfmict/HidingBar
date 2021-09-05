@@ -3,6 +3,7 @@ local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFrameP
 config.name = addon
 config:Hide()
 config.L = L
+config.noIcon = config:CreateTexture()
 
 
 config:SetScript("OnShow", function(self)
