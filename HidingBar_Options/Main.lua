@@ -5,6 +5,7 @@ main.noIcon:SetTexCoord(.05, .95, .05, .95)
 main.noIcon:Hide()
 main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
 local offsetX, offsetY = 4, 4
+local lsfdd = LibStub("LibSFDropDown-1.1")
 
 
 main.optionsPanelBackdrop = {
@@ -200,7 +201,7 @@ title:SetJustifyH("LEFT")
 title:SetText(L["%s Configuration"]:format(addon))
 
 -- PROFILES COMBOBOX
-local profilesCombobox = LibStub("LibSFDropDown-1.0"):CreateStreatchButton(main, 150, 22)
+local profilesCombobox = lsfdd:CreateStretchButton(main, 150, 22)
 profilesCombobox:SetPoint("TOPRIGHT", -16, -12)
 
 profilesCombobox:ddSetInitFunc(function(self, level)
@@ -356,7 +357,7 @@ barPanelScroll.child:SetSize(1, 1)
 barPanelScroll:SetScrollChild(barPanelScroll.child)
 
 -- BAR COMBOBOX
-local barCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(barPanelScroll.child, 120)
+local barCombobox = lsfdd:CreateButton(barPanelScroll.child, 120)
 barCombobox:SetPoint("TOPLEFT", 3, -6)
 
 barCombobox:ddSetInitFunc(function(self)
@@ -576,7 +577,7 @@ expandToText:SetWidth(114)
 expandToText:SetText(L["Expand to"])
 
 -- EXPAND TO COMBOBOX
-local expandToCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(main.barSettingsPanel, 120)
+local expandToCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
 expandToCombobox:SetPoint("TOPRIGHT", expandToText, "BOTTOMRIGHT", 2, -5)
 expandToCombobox.texts = {[0] = L["Right / Bottom"], L["Left / Top"], L["Both direction"]}
 
@@ -682,7 +683,7 @@ orientationText:SetPoint("TOPLEFT", main.description, "BOTTOMLEFT", 0, -23)
 orientationText:SetText(L["Orientation"])
 
 -- ORIENTATION COMBOBOX
-local orientationCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(main.barSettingsPanel, 120)
+local orientationCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
 orientationCombobox:SetPoint("LEFT", orientationText, "RIGHT", 3, 0)
 orientationCombobox.texts = {[0] = L["Auto"], L["Horizontal"], L["Vertical"]}
 
@@ -709,7 +710,7 @@ fsText:SetPoint("LEFT", orientationCombobox, "RIGHT", 10, 0)
 fsText:SetText(L["Strata of panel"])
 
 -- FRAME STRATA COMBOBOX
-local fsCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(main.barSettingsPanel, 120)
+local fsCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
 fsCombobox:SetPoint("LEFT", fsText, "RIGHT", 3, 0)
 fsCombobox.texts = {[0] = "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP"}
 
@@ -787,7 +788,7 @@ showHandlerText:SetPoint("TOPLEFT", main.lineWidth, "BOTTOMLEFT", 0, -20)
 showHandlerText:SetText(L["Show on"])
 
 -- SHOW HANDLER
-local showHandlerCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(main.barSettingsPanel, 120)
+local showHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
 showHandlerCombobox:SetPoint("LEFT", showHandlerText, "RIGHT", 3, 0)
 showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], L["Allways"]}
 
@@ -897,7 +898,7 @@ mbtnPostionText:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -20)
 mbtnPostionText:SetText(L["Position of minimap buttons"])
 
 -- POSITION OF MINIMAP BUTTON
-local mbtnPostionCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(main.buttonSettingsPanel, 120)
+local mbtnPostionCombobox = lsfdd:CreateButton(main.buttonSettingsPanel, 120)
 mbtnPostionCombobox:SetPoint("LEFT", mbtnPostionText, "RIGHT", 3, 0)
 mbtnPostionCombobox.texts = {[0] = L["A new line"], L["Followed"], L["Mixed"]}
 
@@ -959,7 +960,7 @@ main.freeMove:SetScript("OnClick", function()
 end)
 
 -- HIDE TO
-main.hideToCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(main.positionBarPanel, 120)
+main.hideToCombobox = lsfdd:CreateButton(main.positionBarPanel, 120)
 main.hideToCombobox:SetPoint("TOPLEFT", main.freeMove, "BOTTOMLEFT", 23, -3)
 main.hideToCombobox.texts = {
 	left = L["Hiding to left"],
@@ -1074,7 +1075,7 @@ main.likeMB:SetScript("OnClick", function()
 end)
 
 -- MINIMAP BUTTON SHOW TO
-main.ombShowToCombobox = LibStub("LibSFDropDown-1.0"):CreateButton(main.positionBarPanel, 120)
+main.ombShowToCombobox = lsfdd:CreateButton(main.positionBarPanel, 120)
 main.ombShowToCombobox:SetPoint("TOPLEFT", main.likeMB, "BOTTOMLEFT", 23, -3)
 main.ombShowToCombobox.texts = {
 	right = L["Show to left"],
@@ -1118,7 +1119,7 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -- CONTEXT MENU
-local contextmenu = LibStub("LibSFDropDown-1.0"):SetMixin({})
+local contextmenu = lsfdd:SetMixin({})
 contextmenu:ddSetDisplayMode("menu")
 contextmenu:ddHideWhenButtonHidden(main.buttonPanel)
 
@@ -1574,8 +1575,6 @@ end
 
 function main:sort(buttons)
 	sort(buttons, function(a, b)
-		if not a.settings then fprint(a.name, "Asd") end
-		if not b.settings then fprint(b.name, "dsa") end
 		local o1, o2 = a.settings[2], b.settings[2]
 		return o1 and not o2
 			 or o1 and o2 and o1 < o2

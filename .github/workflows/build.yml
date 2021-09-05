@@ -23,4 +23,4 @@ jobs:
     - name: files
       run: bash my-tools/release.sh
       env:
-        GITHUB_OAUTH: ${{ secrets.GITHUB_OAUTH }}
+        GITHUB_OAUTH: ${{ secrets.OAUTH }}
