@@ -426,7 +426,7 @@ function hidingBar:init()
 				local LFGFrame = MiniMapLFGFrame
 				local parent = LFGFrame:GetParent()
 				local left = LFGFrame:GetLeft() - parent:GetLeft()
-				local top = LFGFrame:GetTop() -parent:GetTop()
+				local top = LFGFrame:GetTop() - parent:GetTop()
 				LFGFrame:ClearAllPoints()
 				LFGFrame:SetPoint("TOPLEFT", left, top)
 			end
