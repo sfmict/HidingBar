@@ -35,13 +35,17 @@ local ignoreFrameList = {
 local function void() end
 local function enter(btn)
 	local bar = btn:GetParent()
-	bar.isMouse = true
-	bar:enter()
+	if bar:IsShown() then
+		bar.isMouse = true
+		bar:enter()
+	end
 end
 local function leave(btn)
 	local bar = btn:GetParent()
-	bar.isMouse = false
-	bar:leave()
+	if bar:IsShown() then
+		bar.isMouse = false
+		bar:leave()
+	end
 end
 
 
@@ -412,8 +416,16 @@ function hidingBar:init()
 			C_Timer.After(tonumber(self.pConfig.grabMinimapAfterN) or 1, function()
 				self:grabMinimapAddonsButtons(Minimap)
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
+				for _, btn in ipairs(self.minimapButtons) do
+					self:setMBtnSettings(btn)
+					local btnData = btnSettings[btn]
+					local name = btnData and btnData[3]
+					self.SetParent(btn, self.barByName[name] or self.defaultBar)
+				end
 				self:sort()
-				self:setButtonSize()
+				for _, bar in ipairs(self.bars) do
+					bar:setButtonSize()
+				end
 				self.cb:Fire("MBUTTONS_UPDATED")
 			end)
 		end
@@ -752,24 +764,15 @@ function hidingBar:setProfile(profileName)
 
 	if self.init then self:init() end
 
-	local t = time()
 	for _, btn in ipairs(self.createdButtons) do
-		local data = self.pConfig.btnSettings[btn.name]
-		data.tstmp = t
-		btnSettings[btn] = data
-		btn:SetClipsChildren(data[4])
+		self:setBtnSettings(btn)
 	end
 
 	for _, btn in ipairs(self.minimapButtons) do
-		local name = btn:GetName()
-		if name then
-			local data = self.pConfig.mbtnSettings[name]
-			data.tstmp = t
-			btnSettings[btn] = data
-			btn:SetClipsChildren(data[4])
-		end
+		self:setMBtnSettings(btn)
 	end
 
+	local t = time()
 	local tstmp = tonumber(self.db.tstmp) or t
 	local maxTime = 7776000 -- 60 * 60 * 24 * 90 = 90 days and remove
 	for k, s in pairs(self.pConfig.btnSettings) do
@@ -828,6 +831,25 @@ function hidingBar:updateBars()
 			bar.drag:Hide()
 			ldbi:Hide(bar.ombName)
 		end
+	end
+end
+
+
+function hidingBar:setBtnSettings(btn)
+	local data = self.pConfig.btnSettings[btn.name]
+	data.tstmp = time()
+	btnSettings[btn] = data
+	btn:SetClipsChildren(data[4])
+end
+
+
+function hidingBar:setMBtnSettings(btn)
+	local name = btn:GetName()
+	if name then
+		local data = self.pConfig.mbtnSettings[name]
+		data.tstmp = time()
+		btnSettings[btn] = data
+		btn:SetClipsChildren(data[4])
 	end
 end
 
@@ -911,11 +933,9 @@ do
 		tinsert(self.mixedButtons, button)
 
 		if update then
-			local btnData = self.pConfig.btnSettings[name]
-			btnData.tstmp = time()
-			btnSettings[button] = btnData
-			button:SetClipsChildren(btnData[4])
+			self:setBtnSettings(button)
 			self:sort()
+			local btnData = btnSettings[button]
 			local bar = self.barByName[btnData[3]] or self.defaultBar
 			button:SetParent(bar)
 			bar:setButtonSize()
@@ -942,13 +962,12 @@ end
 
 function hidingBar:ldbi_add(_, button, name)
 	if name:match("^"..addon.."%d+$") then return end
-	local btnData = self.pConfig.mbtnSettings[button:GetName()]
-	btnData.tstmp = time()
-	btnSettings[button] = btnData
-	button:SetClipsChildren(btnData[4])
+	self:setMBtnSettings(button)
 	self:addMButton(button)
 	self:sort()
-	local bar = self.barByName[btnData[3]] or self.defaultBar
+	local btnData = btnSettings[button]
+	local name = btnData and btnData[3]
+	local bar = self.barByName[name] or self.defaultBar
 	self.SetParent(button, bar)
 	bar:setButtonSize()
 	self.cb:Fire("MBUTTON_ADDED", button:GetName(), button.icon, true)
