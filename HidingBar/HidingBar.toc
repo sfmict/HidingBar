@@ -1,9 +1,10 @@
-## Interface: 20501
+## Interface: 20502
 ## Title: HidingBar
 ## Author: sfmict
 ## Version: @project-version@
 ## Notes: Convenient hiding panel
 ## SavedVariables: HidingBarDB
+## SavedVariablesPerCharacter: HidingBarDBChar
 ## OptionalDeps: Masque
 embeds.xml
 locales.xml
