@@ -1,3 +1,3 @@
 # HidingBar
 
-* Fixed option "Try to grab after n sec.".
+* Added option "Add buttons from DataBroker".

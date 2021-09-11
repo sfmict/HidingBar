@@ -137,7 +137,7 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 		self:GetParent():Hide()
 	end,
 	OnShow = function(self)
-		self.editBox:SetText("Bar "..(#main.currentProfile.bars + 1))
+		self.editBox:SetText(L["Bar"].." "..(#main.currentProfile.bars + 1))
 		self.editBox:HighlightText()
 	end,
 }
@@ -485,13 +485,22 @@ ignoreDescription:SetJustifyH("LEFT")
 ignoreDescription:SetText(L["IGNORE_DESCRIPTION"])
 
 -------------------------------------------
--- GRAB SETTINGS TAB PANEL
+-- ADD BUTTONS OPTIONS TAB PANEL
 -------------------------------------------
-main.grabOptionsPanel = createTabPanel(buttonsTabs, L["Grab options"])
+main.addBtnOptionsPanel = createTabPanel(buttonsTabs, L["Options of adding buttons"])
+
+-- ADD FROM DATA BROKER
+main.addBtnFromDataBroker = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.addBtnFromDataBroker:SetPoint("TOPLEFT", 8, -8)
+main.addBtnFromDataBroker.Text:SetText(L["Add buttons from DataBroker"])
+main.addBtnFromDataBroker:SetScript("OnClick", function(btn)
+	main.pConfig.addFromDataBroker = btn:GetChecked()
+	StaticPopup_Show(main.addonName.."GET_RELOAD")
+end)
 
 -- GRAB DEFAULT BUTTONS
-main.grabDefault = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
-main.grabDefault:SetPoint("TOPLEFT", 8, -8)
+main.grabDefault = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabDefault:SetPoint("TOPLEFT", main.addBtnFromDataBroker, "BOTTOMLEFT")
 main.grabDefault.Text:SetText(L["Grab default buttons on minimap"])
 main.grabDefault:SetScript("OnClick", function(btn)
 	main.pConfig.grabDefMinimap = btn:GetChecked()
@@ -499,8 +508,8 @@ main.grabDefault:SetScript("OnClick", function(btn)
 end)
 
 -- GRAB ADDONS BUTTONS
-main.grab = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
-main.grab:SetPoint("TOPLEFT", main.grabDefault, "BOTTOMLEFT", 0, 0)
+main.grab = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grab:SetPoint("TOPLEFT", main.grabDefault, "BOTTOMLEFT")
 main.grab.Text:SetText(L["Grab addon buttons on minimap"])
 main.grab:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
@@ -511,7 +520,7 @@ main.grab:SetScript("OnClick", function(btn)
 end)
 
 -- GRAB AFTER N SECOND
-main.grabAfter = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabAfter = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
 main.grabAfter:SetPoint("TOPLEFT", main.grab, "BOTTOMLEFT", 20, 0)
 main.grabAfter.Text:SetText(L["Try to grab after"])
 main.grabAfter:SetHitRectInsets(0, -main.grabAfter.Text:GetWidth(), 0, 0)
@@ -520,7 +529,7 @@ main.grabAfter:SetScript("OnClick", function(btn)
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
-main.afterNumber = CreateFrame("EditBox", nil, main.grabOptionsPanel, "HidingBarAddonNumberTextBox")
+main.afterNumber = CreateFrame("EditBox", nil, main.addBtnOptionsPanel, "HidingBarAddonNumberTextBox")
 main.afterNumber:SetPoint("LEFT", main.grabAfter.Text, "RIGHT", 3, 0)
 main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
 	if userInput then
@@ -532,7 +541,7 @@ main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
 	end
 end)
 
-main.grabAfterTextSec = main.grabOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+main.grabAfterTextSec = main.addBtnOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 main.grabAfterTextSec:SetPoint("LEFT", main.afterNumber, "RIGHT", 3, 0)
 main.grabAfterTextSec:SetText(L["sec."])
 
@@ -546,8 +555,8 @@ main.grabAfter:HookScript("OnDisable", function(btn)
 end)
 
 -- GRAB WITHOUT NAME
-main.grabWithoutName = CreateFrame("CheckButton", nil, main.grabOptionsPanel, "HidingBarAddonCheckButtonTemplate")
-main.grabWithoutName:SetPoint("TOPLEFT", main.grabAfter, "BOTTOMLEFT", 0, 0)
+main.grabWithoutName = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabWithoutName:SetPoint("TOPLEFT", main.grabAfter, "BOTTOMLEFT")
 main.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
 main.grabWithoutName:SetScript("OnClick", function(btn)
 	main.pConfig.grabMinimapWithoutName = btn:GetChecked()
@@ -1202,14 +1211,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 end)
 
 
--- INIT
-C_Timer.After(.01, function()
-	main:initButtons()
-	main:initMButtons()
-	main:setProfile()
-end)
-
-
+-- METHODS
 local function copyTable(t)
 	local n = {}
 	for k, v in pairs(t) do
@@ -1286,7 +1288,8 @@ function main:setProfile()
 	end
 
 	if self.currentProfile then
-		if compare(self.pConfig.grabDefMinimap, currentProfile.config.grabDefMinimap)
+		if self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
+		or compare(self.pConfig.grabDefMinimap, currentProfile.config.grabDefMinimap)
 		or self.pConfig.grabMinimap ~= currentProfile.config.grabMinimap
 		or self.pConfig.grabMinimap and
 			(compare(self.pConfig.grabMinimapWithoutName, currentProfile.config.grabMinimapWithoutName)
@@ -1311,6 +1314,7 @@ function main:setProfile()
 	end
 
 	self.ignoreScroll:update()
+	self.addBtnFromDataBroker:SetChecked(self.pConfig.addFromDataBroker)
 	self.grabDefault:SetChecked(self.pConfig.grabDefMinimap)
 	self.grab:SetChecked(self.pConfig.grabMinimap)
 	self.grabAfter:SetChecked(self.pConfig.grabMinimapAfter)
@@ -1838,4 +1842,21 @@ function main:applyLayout(delay)
 	local height = rows * self.bConfig.buttonSize + offsetY * 2
 	if self.orientation then width, height = height, width end
 	self.buttonPanel:SetSize(width, height)
+end
+
+
+-- INIT
+do
+	local function init()
+		main:initButtons()
+		main:initMButtons()
+		main:setProfile()
+		hidingBar.off(main, "INIT")
+	end
+
+	if hidingBar.init then
+		hidingBar.on(main, "INIT", init)
+	else
+		init()
+	end
 end
