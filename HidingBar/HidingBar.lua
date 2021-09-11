@@ -10,7 +10,7 @@ hidingBar.createdButtons, hidingBar.minimapButtons, hidingBar.mixedButtons = {},
 hidingBar.bars, hidingBar.barByName = {}, {}
 local createdButtonsByName, btnSettings = {}, {}
 local offsetX, offsetY = 2, 2
-hidingBar.cb = LibStub("CallbackHandler-1.0"):New(hidingBar, "on")
+hidingBar.cb = LibStub("CallbackHandler-1.0"):New(hidingBar, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
 local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0")
 local MSQ = LibStub("Masque", true)
@@ -277,7 +277,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.profiles = self.db.profiles
 		if #self.profiles == 0 then
 			self.profiles[1] = {
-				name = "Profile 1",
+				name = L["Profile"],
 				isDefault = true,
 			}
 		end
@@ -319,19 +319,21 @@ end
 
 function hidingBar:checkProfile(profile)
 	profile.config = profile.config or {}
-	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
+	if profile.config.addFromDataBroker == nil then
+		profile.config.addFromDataBroker = true
+	end
 	if profile.config.grabMinimap == nil then
 		profile.config.grabMinimap = true
 	end
-	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
 	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
+	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
 	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, self.btnConfigMeta)
 	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, self.btnConfigMeta)
 
 	profile.bars = profile.bars or {}
 	if #profile.bars == 0 then
 		profile.bars[1] = {
-			name = "Bar 1",
+			name = L["Bar"].." 1",
 			isDefault = true,
 		}
 	end
@@ -383,15 +385,17 @@ end
 function hidingBar:init()
 	self.init = nil
 
-	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
-	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
-	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
-	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
-	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
-	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
-	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconDesaturated", "ldb_attrChange")
-	for name, data in ldb:DataObjectIterator() do
-		self:ldb_add(nil, name, data)
+	if self.pConfig.addFromDataBroker then
+		for name, data in ldb:DataObjectIterator() do
+			self:ldb_add(nil, name, data)
+		end
+		ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
+		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
+		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
+		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
+		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
+		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
+		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconDesaturated", "ldb_attrChange")
 	end
 
 	if self.pConfig.grabMinimap then
@@ -428,8 +432,6 @@ function hidingBar:init()
 			end)
 		end
 	end
-
-	local t = time()
 
 	if self.pConfig.grabDefMinimap then
 		-- TRACKING BUTTON
@@ -646,6 +648,7 @@ function hidingBar:init()
 	end
 
 	self:RegisterEvent("UI_SCALE_CHANGED")
+	self.cb:Fire("INIT")
 end
 
 
@@ -711,7 +714,8 @@ function hidingBar:updateBars()
 			bar:createOwnMinimapButton()
 		end
 
-		for _, btn in ipairs(hidingBar.mixedButtons) do
+		for j = 1, #hidingBar.mixedButtons do
+			local btn = hidingBar.mixedButtons[j]
 			local data = btnSettings[btn]
 			local name = data and data[3]
 			if bar.name == name or not name and barSettings.isDefault then
