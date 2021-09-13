@@ -411,7 +411,6 @@ end)
 -- BUTTON PANEL
 main.buttonPanel = CreateFrame("Frame", nil, barPanelScroll.child, "HidingBarAddonPanel")
 main.buttonPanel:SetPoint("TOPLEFT", barCombobox, "BOTTOMLEFT", 2, -5)
-main.buttonPanel:SetSize(20, 20)
 
 -------------------------------------------
 -- IGNORE TAB PANEL
@@ -1539,6 +1538,8 @@ end
 
 
 function main:dragStart(btn, orderDelta)
+	GameTooltip:Hide()
+	contextmenu:ddCloseMenus()
 	btn.isDrag = true
 	local list = self.bConfig.mbtnPosition == 2 and self.mixedButtons or btn.defBtnList
 	btn.btnList = {}
@@ -1598,6 +1599,7 @@ do
 			contextmenu:ddCloseMenus()
 		elseif button == "RightButton" then
 			btn:SetChecked(not btn:GetChecked())
+			if btn.isDrag then return end
 			contextmenu:ddToggle(1, btn, btn)
 		end
 	end
@@ -1611,6 +1613,7 @@ do
 	end
 
 	local function btnEnter(btn)
+		if btn.isDrag then return end
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:SetText(btn.title)
 		GameTooltip:AddLine(L["Source:"]..GRAY_FONT_COLOR:WrapTextInColorCode(" DataBroker"), .3, .5, .7)
@@ -1665,6 +1668,7 @@ do
 			contextmenu:ddCloseMenus()
 		elseif button == "RightButton" then
 			btn:SetChecked(not btn:GetChecked())
+			if btn.isDrag then return end
 			contextmenu:ddToggle(1, btn, btn)
 		end
 	end
@@ -1678,6 +1682,7 @@ do
 	end
 
 	local function btnEnter(btn)
+		if btn.isDrag then return end
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:SetText(btn.title)
 		GameTooltip:AddLine(L["Source:"]..GRAY_FONT_COLOR:WrapTextInColorCode(" Minimap"), .3, .5, .7)

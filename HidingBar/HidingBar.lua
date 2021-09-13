@@ -1,6 +1,9 @@
 local addon, L = ...
 local config, UIParent = _G[addon.."ConfigAddon"], UIParent
 local hidingBar = CreateFrame("FRAME", addon.."Addon")
+local cover = CreateFrame("FRAME")
+cover:Hide()
+cover:EnableMouse(true)
 local fTimer = CreateFrame("FRAME")
 hidingBar.btnConfigMeta = {__index = function(self, key)
 	self[key] = {tstmp = 0}
@@ -279,7 +282,7 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.profiles = self.db.profiles
 		if #self.profiles == 0 then
 			self.profiles[1] = {
-				name = L["Profile"],
+				name = L["Profile"].." 1",
 				isDefault = true,
 			}
 		end
@@ -422,9 +425,7 @@ function hidingBar:init()
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
 				for _, btn in ipairs(self.minimapButtons) do
 					self:setMBtnSettings(btn)
-					local btnData = btnSettings[btn]
-					local name = btnData and btnData[3]
-					self.SetParent(btn, self.barByName[name] or self.defaultBar)
+					self:setBtnParent(btn)
 				end
 				self:sort()
 				for _, bar in ipairs(self.bars) do
@@ -804,18 +805,13 @@ function hidingBar:updateBars()
 			bar:createOwnMinimapButton()
 		end
 
-		for j = 1, #hidingBar.mixedButtons do
-			local btn = hidingBar.mixedButtons[j]
-			local data = btnSettings[btn]
-			local name = data and data[3]
-			if bar.name == name or not name and barSettings.isDefault then
-				self.SetParent(btn, bar)
-			end
-		end
-
 		if barSettings.isDefault then
 			self.defaultBar = bar
 		end
+	end
+
+	for i = 1, #hidingBar.mixedButtons do
+		self:setBtnParent(hidingBar.mixedButtons[i])
 	end
 
 	for i = 1, #self.bars do
@@ -840,21 +836,27 @@ end
 
 
 function hidingBar:setBtnSettings(btn)
-	local data = self.pConfig.btnSettings[btn.name]
-	data.tstmp = time()
-	btnSettings[btn] = data
-	btn:SetClipsChildren(data[4])
+	local btnData = self.pConfig.btnSettings[btn.name]
+	btnData.tstmp = time()
+	btnSettings[btn] = btnData
+	btn:SetClipsChildren(btnData[4])
 end
 
 
 function hidingBar:setMBtnSettings(btn)
 	local name = btn:GetName()
 	if name then
-		local data = self.pConfig.mbtnSettings[name]
-		data.tstmp = time()
-		btnSettings[btn] = data
-		btn:SetClipsChildren(data[4])
+		local btnData = self.pConfig.mbtnSettings[name]
+		btnData.tstmp = time()
+		btnSettings[btn] = btnData
+		btn:SetClipsChildren(btnData[4])
 	end
+end
+
+
+function hidingBar:setBtnParent(btn)
+	local btnData = btnSettings[btn]
+	self.SetParent(btn, self.barByName[btnData and btnData[3]] or self.defaultBar)
 end
 
 
@@ -938,11 +940,9 @@ do
 
 		if update then
 			self:setBtnSettings(button)
+			self:setBtnParent(button)
 			self:sort()
-			local btnData = btnSettings[button]
-			local bar = self.barByName[btnData[3]] or self.defaultBar
-			button:SetParent(bar)
-			bar:setButtonSize()
+			button:GetParent():setButtonSize()
 			self.cb:Fire("BUTTON_ADDED", name, button, true)
 		end
 
@@ -968,12 +968,9 @@ function hidingBar:ldbi_add(_, button, name)
 	if name:match("^"..addon.."%d+$") then return end
 	self:setMBtnSettings(button)
 	self:addMButton(button)
+	self:setBtnParent(button)
 	self:sort()
-	local btnData = btnSettings[button]
-	local name = btnData and btnData[3]
-	local bar = self.barByName[name] or self.defaultBar
-	self.SetParent(button, bar)
-	bar:setButtonSize()
+	button:GetParent():setButtonSize()
 	self.cb:Fire("MBUTTON_ADDED", button:GetName(), button.icon, true)
 end
 
@@ -1029,7 +1026,9 @@ function hidingBar:addMButton(button)
 			local function getMouseEnabled(frame)
 				if frame:IsMouseEnabled() then
 					tinsert(mouseEnabled, frame)
-					if frame:HasScript("OnClick") and frame:GetScript("OnClick") then
+					if frame:HasScript("OnClick") and frame:GetScript("OnClick")
+					or frame:HasScript("OnMouseUp") and frame:GetScript("OnMouseUp")
+					or frame:HasScript("OnMouseDown") and frame:GetScript("OnMouseDown") then
 						clickable = true
 					end
 				end
@@ -1065,8 +1064,8 @@ end
 
 do
 	local function IsShown(btn)
-		local data = btnSettings[btn]
-		local show = not (data and data[1])
+		local btnData = btnSettings[btn]
+		local show = not (btnData and btnData[1])
 		hidingBar.SetShown(btn, show)
 		return show
 	end
@@ -1150,7 +1149,10 @@ end
 
 function hidingBar:setClipButtons()
 	for _, btn in ipairs(self.mixedButtons) do
-		btn:SetClipsChildren(btnSettings[btn][4])
+		local btnData = btnSettings[btn]
+		if btnData then
+			btn:SetClipsChildren(btnData[4])
+		end
 	end
 end
 
@@ -1894,7 +1896,10 @@ local function drag_OnMouseDown(self, button)
 	local bar = self.bar
 	if button == "LeftButton" and not bar.config.lock and bar:IsShown() then
 		bar.isDrag = true
-		bar.cover:Show()
+		cover:SetFrameStrata(bar:GetFrameStrata())
+		cover:SetFrameLevel(bar:GetFrameLevel() + 10)
+		cover:SetAllPoints(bar)
+		cover:Show()
 		bar:SetScript("OnUpdate", bar.dragBar)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
@@ -1912,7 +1917,7 @@ local function drag_OnMouseUp(self, button)
 	local bar = self.bar
 	if button == "LeftButton" and bar.isDrag then
 		bar.isDrag = false
-		bar.cover:Hide()
+		cover:Hide()
 		bar:SetScript("OnUpdate", nil)
 		if not bar.isMouse then
 			bar:leave()
@@ -1939,12 +1944,6 @@ function hidingBar:createBar()
 	for k, v in pairs(hidingBarMixin) do
 		bar[k] = v
 	end
-
-	bar.cover = CreateFrame("FRAME", nil, bar)
-	bar.cover:Hide()
-	bar.cover:SetAllPoints()
-	bar.cover:EnableMouse(true)
-	bar.cover:SetFrameLevel(bar:GetFrameLevel() + 10)
 
 	bar.drag = CreateFrame("BUTTON", nil, UIParent)
 	bar.drag.bar = bar
