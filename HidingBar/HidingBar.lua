@@ -466,6 +466,7 @@ function hidingBar:init()
 			local LFGFrame = MiniMapLFGFrame
 			self:setHooks(LFGFrame)
 			LFGFrame.icon = MiniMapLFGFrameIconTexture
+			LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
 
 			LFGFrame.Show = function(LFGFrame)
 				if not LFGFrame.show then
