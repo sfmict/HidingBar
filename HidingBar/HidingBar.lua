@@ -20,7 +20,6 @@ local MSQ = LibStub("Masque", true)
 
 
 local ignoreFrameList = {
-	["LibDBIcon10_HidingBar"] = true,
 	["GameTimeFrame"] = true,
 	["QueueStatusMinimapButton"] = true,
 	["HelpOpenTicketButton"] = true,
@@ -380,8 +379,9 @@ end
 
 function hidingBar:ignoreCheck(name)
 	if not name then return self.pConfig.grabMinimapWithoutName end
+	if name:match("^LibDBIcon10_HidingBar%d+$") then return end
 	for i = 1, #self.pConfig.ignoreMBtn do
-		if name:find(self.pConfig.ignoreMBtn[i]) then return end
+		if name:match(self.pConfig.ignoreMBtn[i]) then return end
 	end
 	return true
 end
@@ -801,6 +801,7 @@ function hidingBar:updateBars()
 		bar.name = barSettings.name
 		bar.config = barSettings.config
 		self.barByName[bar.name] = bar
+
 		if bar.createOwnMinimapButton then
 			bar:createOwnMinimapButton()
 		end
@@ -966,8 +967,8 @@ end
 
 function hidingBar:ldbi_add(_, button, name)
 	if name:match("^"..addon.."%d+$") then return end
-	self:setMBtnSettings(button)
 	self:addMButton(button)
+	self:setMBtnSettings(button)
 	self:setBtnParent(button)
 	self:sort()
 	button:GetParent():setButtonSize()
