@@ -21,17 +21,14 @@ local MSQ = LibStub("Masque", true)
 
 
 local ignoreFrameList = {
-	["GameTimeFrame"] = true,
-	["QueueStatusMinimapButton"] = true,
-	["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
-	["GarrisonLandingPageMinimapButton"] = true,
 	["MinimapZoomIn"] = true,
 	["MinimapZoomOut"] = true,
 	["MiniMapWorldMapButton"] = true,
 	["MiniMapMailFrame"] = true,
-	["MiniMapTracking"] = true,
+	["MiniMapTrackingFrame"] = true,
+	["MiniMapBattlefieldFrame"] = true,
 }
 
 
@@ -443,190 +440,41 @@ function hidingBar:init()
 	end
 
 	if self.pConfig.grabDefMinimap then
-		-- CALENDAR BUTTON
-		if self:ignoreCheck("GameTimeFrame") then
-			local GameTimeFrame = GameTimeFrame
-			local normalTexture = GameTimeFrame:GetNormalTexture()
-			normalTexture:SetTexCoord(0, .375, 0, .75)
-			local pushedTexture = GameTimeFrame:GetPushedTexture()
-			pushedTexture:SetTexCoord(.5, .875, 0, .75)
-			local highlightTexture = GameTimeFrame:GetHighlightTexture()
-			highlightTexture:SetTexCoord(0, 1, 0, .9375)
-			local text = select(5, GameTimeFrame:GetRegions())
-			text:SetPoint("CENTER", 0, -1)
-			GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
-			GameTimeCalendarInvitesTexture:SetPoint("CENTER")
-			GameTimeCalendarInvitesGlow.Show = void
-			GameTimeCalendarInvitesGlow:Hide()
-			self:setHooks(GameTimeFrame)
+		-- BATTLEFIELD FRAME
+		if self:ignoreCheck("MiniMapBattlefieldFrame") then
+			local battlefield = MiniMapBattlefieldFrame
+			battlefield.icon = MiniMapBattlefieldIcon
+			battlefield.show = battlefield:IsShown()
+			self:setHooks(battlefield)
 
-			if self.MSQ_MButton then
-				self:setMButtonRegions(GameTimeFrame, {.0859375, .296875, .156255, .59375})
-			end
-
-			self.SetAlpha(GameTimeFrame, 1)
-			self.SetHitRectInsets(GameTimeFrame, 0, 0, 0, 0)
-			self.SetScript(GameTimeFrame, "OnUpdate", nil)
-			self.HookScript(GameTimeFrame, "OnEnter", enter)
-			self.HookScript(GameTimeFrame, "OnLeave", leave)
-			tinsert(self.minimapButtons, GameTimeFrame)
-			tinsert(self.mixedButtons, GameTimeFrame)
-		end
-
-		-- TRACKING BUTTON
-		if self:ignoreCheck("MiniMapTracking") then
-			local MiniMapTracking = MiniMapTracking
-			local icon = MiniMapTrackingIcon
-			hooksecurefunc(icon, "SetPoint", function(icon)
-				icon:ClearAllPoints()
-				self.SetPoint(icon, "CENTER")
-			end)
-			self:setHooks(MiniMapTracking)
-
-			if self.MSQ_MButton then
-				self.MSQ_MButton_Data[MiniMapTrackingButton] = {
-					_Border = MiniMapTrackingButtonBorder,
-					_Background = MiniMapTrackingBackground,
-				}
-				self:setTexCurCoord(icon, icon:GetTexCoord())
-				icon.SetTexCoord = self.setTexCoord
-				local data = {
-					Icon = icon,
-					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
-				}
-				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
-				self:MSQ_MButton_Update(MiniMapTrackingButton)
-				self:MSQ_CoordUpdate(MiniMapTrackingButton)
-			end
-
-			self.SetAlpha(MiniMapTracking, 1)
-			self.SetHitRectInsets(MiniMapTracking, 0, 0, 0, 0)
-			self.SetScript(MiniMapTracking, "OnUpdate", nil)
-			MiniMapTrackingButton:HookScript("OnMouseDown", function()
-				icon:SetScale(.9)
-			end)
-			MiniMapTrackingButton:HookScript("OnMouseUp", function()
-				icon:SetScale(1)
-			end)
-			MiniMapTrackingButton:HookScript("OnEnter", function() enter(MiniMapTracking) end)
-			MiniMapTrackingButton:HookScript("OnLeave", function() leave(MiniMapTracking) end)
-			tinsert(self.minimapButtons, MiniMapTracking)
-			tinsert(self.mixedButtons, MiniMapTracking)
-		end
-
-		-- GARRISON BUTTON
-		if self:ignoreCheck("GarrisonLandingPageMinimapButton") then
-			local garrison = GarrisonLandingPageMinimapButton
-			garrison.show = garrison:IsShown()
-			self:setHooks(garrison)
-			garrison.Show = function(garrison)
-				if not garrison.show then
-					garrison.show = true
-					garrison:GetParent():applyLayout()
+			battlefield.Show = function(battlefield)
+				if not battlefield.show then
+					battlefield.show = true
+					battlefield:GetParent():applyLayout()
 				end
 			end
-			garrison.Hide = function(garrison)
-				if garrison.show then
-					garrison.show = false
-					garrison:GetParent():applyLayout()
+			battlefield.Hide = function(battlefield)
+				if battlefield.show then
+					battlefield.show = false
+					battlefield:GetParent():applyLayout()
 				end
 			end
-			garrison.IsShown = function(garrison)
-				local show = garrison.show and not btnSettings[garrison][1]
-				self.SetShown(garrison, show)
+			battlefield.IsShown = function(battlefield)
+				local show = battlefield.show and not btnSettings[battlefield][1]
+				self.SetShown(battlefield, show)
 				return show
 			end
 
-			if MSQ then
-				self.MSQ_Garrison = MSQ:Group(addon, GARRISON_FOLLOWERS, "GarrisonLandingPageMinimapButton")
-				self.MSQ_Garrison:SetCallback(function()
-					self:MSQ_MButton_Update(garrison)
-					self:MSQ_CoordUpdate(garrison)
-					for _, bar in ipairs(self.bars) do
-						bar:enter()
-						bar:leave(math.max(1.5, bar.config.hideDelay))
-					end
-				end)
-				self.MSQ_Garrison:AddButton(garrison, self:setMButtonRegions(garrison, nil, true), "Legacy", true)
-				self:MSQ_MButton_Update(garrison)
-				self:MSQ_CoordUpdate(garrison)
-			end
-
-			self.SetAlpha(garrison, 1)
-			self.SetHitRectInsets(garrison, 0, 0, 0, 0)
-			self.SetScript(garrison, "OnUpdate", nil)
-			self.HookScript(garrison, "OnEnter", enter)
-			self.HookScript(garrison, "OnLeave", leave)
-			tinsert(self.minimapButtons, garrison)
-			tinsert(self.mixedButtons, garrison)
-		end
-
-		-- QUEUE STATUS
-		if self:ignoreCheck("QueueStatusMinimapButton") then
-			local queue = QueueStatusMinimapButton
-			QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
-			queue.show = queue:IsShown()
-			queue.icon = queue.Eye.texture
-			self:setHooks(queue)
-			queue.Show = function(queue)
-				if not queue.show then
-					queue.show = true
-					queue:GetParent():applyLayout()
-				end
-			end
-			queue.Hide = function(queue)
-				if queue.show then
-					queue.show = false
-					if QueueStatusMinimapButtonDropDown == UIDROPDOWNMENU_OPEN_MENU then
-						CloseDropDownMenus()
-					end
-					queue:GetParent():applyLayout()
-				end
-			end
-			queue.IsShown = function(queue)
-				local show = queue.show and not btnSettings[queue][1]
-				self.SetShown(queue, show)
-				return show
-			end
-
-			queue.EyeHighlightAnim:SetScript("OnLoop", nil)
-			local f = CreateFrame("FRAME")
-			f.eyeAnim = f:CreateAnimationGroup()
-			f.eyeAnim:SetLooping(queue.EyeHighlightAnim:GetLooping())
-			f.timer = f.eyeAnim:CreateAnimation()
-			f.timer:SetDuration(1)
-			f.eyeAnim:SetScript("OnLoop", function()
-				if QueueStatusMinimapButton_OnGlowPulse(queue) then
-					PlaySound(SOUNDKIT.UI_GROUP_FINDER_RECEIVE_APPLICATION)
-				end
-			end)
-			hooksecurefunc(queue.EyeHighlightAnim, "Play", function() f.eyeAnim:Play() end)
-			hooksecurefunc(queue.EyeHighlightAnim, "Stop", function() f.eyeAnim:Stop() end)
-			f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
-
 			if self.MSQ_MButton then
-				self.MSQ_MButton_Data[queue] = {
-					_Border = QueueStatusMinimapButtonBorder,
-				}
-				self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
-				queue.icon.SetTexCoord = self.setTexCoord
-				local data = {
-					Icon = queue.icon,
-					Highlight = queue:GetHighlightTexture(),
-				}
-				self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
-				self:MSQ_MButton_Update(queue)
-				self:MSQ_CoordUpdate(queue)
+				self:setMButtonRegions(battlefield)
 			end
 
-			queue.icon:SetTexCoord(0, .125, 0, .25)
-			self.SetAlpha(queue, 1)
-			self.SetHitRectInsets(queue, 0, 0, 0, 0)
-			self.SetScript(queue, "OnUpdate", nil)
-			self.HookScript(queue, "OnEnter", enter)
-			self.HookScript(queue, "OnLeave", leave)
-			tinsert(self.minimapButtons, queue)
-			tinsert(self.mixedButtons, queue)
+			self.SetAlpha(battlefield, 1)
+			self.SetHitRectInsets(battlefield, 0, 0, 0, 0)
+			self.HookScript(battlefield, "OnEnter", enter)
+			self.HookScript(battlefield, "OnLeave", leave)
+			tinsert(self.minimapButtons, battlefield)
+			tinsert(self.mixedButtons, battlefield)
 		end
 
 		-- MAIL

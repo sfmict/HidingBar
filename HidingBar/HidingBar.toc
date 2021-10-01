@@ -1,4 +1,4 @@
-## Interface: 90100
+## Interface: 11400
 ## Title: HidingBar
 ## Author: sfmict
 ## Version: @project-version@
