@@ -1023,7 +1023,7 @@ function hidingBarMixin:createOwnMinimapButton()
 	self.ldb_icon = ldb:NewDataObject(self.ombName, {
 		type = "data source",
 		text = self.ombName,
-		icon = "Interface/Icons/misc_arrowleft",
+		icon = "Interface/MINIMAP/Vehicle-SilvershardMines-Arrow",
 		OnClick = function(_, button)
 			if button == "LeftButton" then
 				if self:IsShown() and self.config.showHandler ~= 3 then
@@ -1421,16 +1421,16 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 
 		if self.config.omb.anchor == "left" then
 			secondPosition = btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowright"
+			self.omb.icon:SetRotation(-math.pi/2)
 		elseif self.config.omb.anchor == "right" then
 			secondPosition = -btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowleft"
+			self.omb.icon:SetRotation(math.pi/2)
 		elseif self.config.omb.anchor == "top" then
 			secondPosition = -btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowdown"
+			self.omb.icon:SetRotation(math.pi)
 		else
 			secondPosition = btnSize
-			self.ldb_icon.icon = "Interface/Icons/misc_arrowlup"
+			self.omb.icon:SetRotation(0)
 		end
 
 		self.anchorObj = self.config.omb
