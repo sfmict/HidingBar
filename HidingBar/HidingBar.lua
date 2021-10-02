@@ -5,7 +5,7 @@ local cover = CreateFrame("FRAME")
 cover:Hide()
 cover:EnableMouse(true)
 local fTimer = CreateFrame("FRAME")
-hidingBar.btnConfigMeta = {__index = function(self, key)
+local btnSettingsMeta = {__index = function(self, key)
 	self[key] = {tstmp = 0}
 	return self[key]
 end}
@@ -13,6 +13,7 @@ hidingBar.createdButtons, hidingBar.minimapButtons, hidingBar.mixedButtons = {},
 hidingBar.bars, hidingBar.barByName = {}, {}
 local createdButtonsByName, btnSettings = {}, {}
 local offsetX, offsetY = 2, 2
+local matchName = addon.."%d+$"
 hidingBar.cb = LibStub("CallbackHandler-1.0"):New(hidingBar, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
 local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0")
@@ -175,49 +176,47 @@ if MSQ then
 
 
 	function hidingBar:setMButtonRegions(btn, iconCoords, getData)
-		local name, texture, layer, border, background, icon, highlight, normal
+		local name, texture, tIsString, layer, border, background, icon, highlight, normal
 
 		for _, region in ipairs({btn:GetRegions()}) do
 			if region:GetObjectType() == "Texture" then
 				name = region:GetDebugName():lower()
 				texture = region:GetTexture()
+				tIsString = type(texture) == "string"
+				if tIsString then texture = texture:lower() end
 				layer = region:GetDrawLayer()
-				if texture == 136430 or type(texture) == "string" and texture:find("MiniMap%-TrackingBorder") then
+				if texture == 136430 or tIsString and texture:find("minimap-trackingborder", 1, true) then
 					border = region
 				end
-				if texture == 136467 or type(texture) == "string" and texture:find("UI%-Minimap%-Background") or name:find("background") then
+				if texture == 136467 or tIsString and texture:find("ui-minimap-background", 1, true) or name:find("background", 1, true) then
 					background = region
 				end
-				if name:find("icon") or type(texture) == "string" and texture:lower():find("icon") then
+				if name:find("icon", 1, true) or tIsString and texture:find("icon", 1, true) then
 					icon = region
 				end
-				if name:find("highlight") or layer == "HIGHLIGHT" then
+				if name:find("highlight", 1, true) or layer == "HIGHLIGHT" then
 					highlight = region
 				end
 			end
 		end
 
 		normal = btn:GetNormalTexture()
-		if not icon or icon == normal then
-			if normal then
-				icon = btn:CreateTexture(nil, "BACKGROUND")
-				local atlas = normal:GetAtlas()
-				if atlas then
-					icon:SetAtlas(atlas)
-				else
-					icon:SetTexture(normal:GetTexture())
-					icon:SetTexCoord(normal:GetTexCoord())
-				end
-				icon:SetVertexColor(normal:GetVertexColor())
-				icon:SetSize(normal:GetSize())
-				for i = 1, normal:GetNumPoints() do
-					icon:SetPoint(normal:GetPoint(i))
-				end
-				self.HookScript(btn, "OnMouseDown", function() icon:SetScale(.9) end)
-				self.HookScript(btn, "OnMouseUp", function() icon:SetScale(1) end)
+		if normal and (not icon or icon == normal) then
+			icon = btn:CreateTexture(nil, "BACKGROUND")
+			local atlas = normal:GetAtlas()
+			if atlas then
+				icon:SetAtlas(atlas)
 			else
-				background = nil
+				icon:SetTexture(normal:GetTexture())
+				icon:SetTexCoord(normal:GetTexCoord())
 			end
+			icon:SetVertexColor(normal:GetVertexColor())
+			icon:SetSize(normal:GetSize())
+			for i = 1, normal:GetNumPoints() do
+				icon:SetPoint(normal:GetPoint(i))
+			end
+			self.HookScript(btn, "OnMouseDown", function() icon:SetScale(.9) end)
+			self.HookScript(btn, "OnMouseUp", function() icon:SetScale(1) end)
 		else
 			normal = nil
 		end
@@ -235,6 +234,8 @@ if MSQ then
 				self:setTexCurCoord(icon, icon:GetTexCoord())
 			end
 			icon.SetTexCoord = self.setTexCoord
+		else
+			background = nil
 		end
 
 		local puched = btn:GetPushedTexture()
@@ -329,8 +330,8 @@ function hidingBar:checkProfile(profile)
 	end
 	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
 	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
-	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, self.btnConfigMeta)
-	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, self.btnConfigMeta)
+	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, btnSettingsMeta)
+	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, btnSettingsMeta)
 
 	profile.bars = profile.bars or {}
 	if #profile.bars == 0 then
@@ -377,7 +378,7 @@ end
 
 function hidingBar:ignoreCheck(name)
 	if not name then return self.pConfig.grabMinimapWithoutName end
-	if name:match("^LibDBIcon10_HidingBar%d+$") then return end
+	if name:match(matchName) then return end
 	for i = 1, #self.pConfig.ignoreMBtn do
 		if name:match(self.pConfig.ignoreMBtn[i]) then return end
 	end
@@ -419,17 +420,22 @@ function hidingBar:init()
 
 		if self.pConfig.grabMinimapAfter then
 			C_Timer.After(tonumber(self.pConfig.grabMinimapAfterN) or 1, function()
+				local oldNumButtons = #self.minimapButtons
+
 				self:grabMinimapAddonsButtons(Minimap)
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
-				for _, btn in ipairs(self.minimapButtons) do
-					self:setMBtnSettings(btn)
-					self:setBtnParent(btn)
+
+				if oldNumButtons ~= #self.minimapButtons then
+					for _, btn in ipairs(self.minimapButtons) do
+						self:setMBtnSettings(btn)
+						self:setBtnParent(btn)
+					end
+					self:sort()
+					for _, bar in ipairs(self.bars) do
+						bar:setButtonSize()
+					end
+					self.cb:Fire("MBUTTONS_UPDATED")
 				end
-				self:sort()
-				for _, bar in ipairs(self.bars) do
-					bar:setButtonSize()
-				end
-				self.cb:Fire("MBUTTONS_UPDATED")
 			end)
 		end
 	end
@@ -664,6 +670,7 @@ function hidingBar:setProfile(profileName)
 		local profile = self.profiles[i]
 		if profile.name == currentProfileName then
 			currentProfile = profile
+			break
 		end
 		if profile.isDefault then
 			default = profile
@@ -708,7 +715,6 @@ function hidingBar:updateBars()
 	for i = 1, #self.currentProfile.bars do
 		local bar = self.bars[i]
 		local barSettings = self.currentProfile.bars[i]
-		if not bar then bar = hidingBar:createBar() end
 		bar.name = barSettings.name
 		bar.config = barSettings.config
 		self.barByName[bar.name] = bar
@@ -877,7 +883,7 @@ end
 
 
 function hidingBar:ldbi_add(_, button, name)
-	if name:match("^"..addon.."%d+$") then return end
+	if name:match(matchName) then return end
 	self:addMButton(button)
 	self:setMBtnSettings(button)
 	self:setBtnParent(button)
@@ -957,15 +963,14 @@ function hidingBar:addMButton(button)
 				local function OnLeave() leave(button) end
 
 				for _, frame in ipairs(mouseEnabled) do
-					frame:SetHitRectInsets(0, 0, 0, 0)
-					frame:HookScript("OnEnter", OnEnter)
-					frame:HookScript("OnLeave", OnLeave)
+					self.SetHitRectInsets(frame, 0, 0, 0, 0)
+					self.HookScript(frame, "OnEnter", OnEnter)
+					self.HookScript(frame, "OnLeave", OnLeave)
 				end
 
 				self.SetFixedFrameStrata(button, false)
 				self.SetFixedFrameLevel(button, false)
 				self.SetAlpha(button, 1)
-				self.SetHitRectInsets(button, 0, 0, 0, 0)
 				tinsert(self.minimapButtons, button)
 				tinsert(self.mixedButtons, button)
 			end
@@ -1848,7 +1853,7 @@ local function drag_OnLeave(self)
 end
 
 
-function hidingBar:createBar()
+setmetatable(hidingBar.bars, {__index = function(self, key)
 	local bar = CreateFrame("FRAME", nil, UIParent, "HidingBarAddonPanel")
 	bar:SetClampedToScreen(true)
 	bar:SetScript("OnEnter", bar_OnEnter)
@@ -1871,8 +1876,7 @@ function hidingBar:createBar()
 		bar.drag[k] = v
 	end
 
-	bar.id = #hidingBar.bars + 1
-	hidingBar.bars[bar.id] = bar
-
+	bar.id = key
+	self[key] = bar
 	return bar
-end
+end})
