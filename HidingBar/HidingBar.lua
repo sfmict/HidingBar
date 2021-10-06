@@ -240,12 +240,12 @@ if MSQ then
 			background = nil
 		end
 
-		local puched = btn:GetPushedTexture()
-		if border or background or puched or normal then
+		local pushed = btn:GetPushedTexture()
+		if border or background or pushed or normal then
 			self.MSQ_MButton_Data[btn] = {
 				_Border = border,
 				_Background = background,
-				_Pushed = puched,
+				_Pushed = pushed,
 			}
 			if normal then
 				self.MSQ_MButton_Data[btn]._Normal = normal
