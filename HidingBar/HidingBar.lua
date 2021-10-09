@@ -817,8 +817,8 @@ function hidingBar:updateBars()
 		end
 	end
 
-	for i = 1, #hidingBar.mixedButtons do
-		self:setBtnParent(hidingBar.mixedButtons[i])
+	for i = 1, #self.mixedButtons do
+		self:setBtnParent(self.mixedButtons[i])
 	end
 
 	for i = 1, #self.bars do
