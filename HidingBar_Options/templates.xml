@@ -449,6 +449,10 @@
 		</Scripts>
 	</Button>
 
+	<Button name="HidingBarAddonCustomGrabButtonTemplate" inherits="HidingBarAddonIgnoreButtonTemplate" virtual="true">
+		<Size x="550" y="18"/>
+	</Button>
+
 	<ScrollFrame name="HidingBarAddonHybridScrollTemplate" inherits="HybridScrollFrameTemplate" virtual="true">
 		<Frames>
 			<Slider parentKey="scrollBar" inherits="HybridScrollBarTrimTemplate">

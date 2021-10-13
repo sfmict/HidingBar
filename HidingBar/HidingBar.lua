@@ -332,6 +332,7 @@ function hidingBar:checkProfile(profile)
 	end
 	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
 	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
+	profile.config.customGrabList = profile.config.customGrabList or {}
 	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, btnSettingsMeta)
 	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, btnSettingsMeta)
 
@@ -389,8 +390,6 @@ end
 
 
 function hidingBar:init()
-	self.init = nil
-
 	if self.pConfig.addFromDataBroker then
 		for name, data in ldb:DataObjectIterator() do
 			self:ldb_add(nil, name, data)
@@ -440,6 +439,10 @@ function hidingBar:init()
 				end
 			end)
 		end
+	end
+
+	for i = 1, #self.pConfig.customGrabList do
+		self:addCustomGrabButton(self.pConfig.customGrabList[i])
 	end
 
 	if self.pConfig.grabDefMinimap then
@@ -745,7 +748,6 @@ function hidingBar:init()
 	end
 
 	self:RegisterEvent("UI_SCALE_CHANGED")
-	self.cb:Fire("INIT")
 end
 
 
@@ -796,6 +798,11 @@ function hidingBar:setProfile(profileName)
 
 	self:sort()
 	self:updateBars()
+
+	if self.init then
+		self.cb:Fire("INIT")
+		self.init = nil
+	end
 end
 
 
@@ -971,14 +978,27 @@ do
 end
 
 
+function hidingBar:addCustomGrabButton(name)
+	local button = _G[name]
+	if button then
+		for j = 1, #self.minimapButtons do
+			if button == self.minimapButtons[j] then
+				return
+			end
+		end
+		return self:addMButton(button, true)
+	end
+end
+
+
 function hidingBar:ldbi_add(_, button, name)
-	if name:match(matchName) then return end
-	self:addMButton(button)
-	self:setMBtnSettings(button)
-	self:setBtnParent(button)
-	self:sort()
-	button:GetParent():setButtonSize()
-	self.cb:Fire("MBUTTON_ADDED", button:GetName(), button.icon, true)
+	if not name:match(matchName) and self:addMButton(button) then
+		self:setMBtnSettings(button)
+		self:setBtnParent(button)
+		self:sort()
+		button:GetParent():setButtonSize()
+		self.cb:Fire("MBUTTON_ADDED", button:GetName(), button.icon, true)
+	end
 end
 
 
@@ -992,12 +1012,13 @@ function hidingBar:grabMinimapAddonsButtons(parentFrame)
 end
 
 
-function hidingBar:addMButton(button)
+function hidingBar:addMButton(button, force)
 	local name = button:GetName()
 	if not ignoreFrameList[name] and self:ignoreCheck(name) then
 		if button:HasScript("OnClick") and button:GetScript("OnClick")
 		or button:HasScript("OnMouseUp") and button:GetScript("OnMouseUp")
-		or button:HasScript("OnMouseDown") and button:GetScript("OnMouseDown") then
+		or button:HasScript("OnMouseDown") and button:GetScript("OnMouseDown")
+		or force then
 			local btn = self.minimapButtons[button[0]]
 			self.minimapButtons[button[0]] = nil
 			if btn ~= button then
@@ -1028,6 +1049,7 @@ function hidingBar:addMButton(button)
 			self.SetAlpha(button, 1)
 			tinsert(self.minimapButtons, button)
 			tinsert(self.mixedButtons, button)
+			return true
 		else
 			local mouseEnabled, clickable = {}
 			local function getMouseEnabled(frame)
@@ -1062,6 +1084,7 @@ function hidingBar:addMButton(button)
 				self.SetAlpha(button, 1)
 				tinsert(self.minimapButtons, button)
 				tinsert(self.mixedButtons, button)
+				return true
 			end
 		end
 	end

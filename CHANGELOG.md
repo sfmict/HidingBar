@@ -1,3 +1,4 @@
 # HidingBar
 
-* Fixed an error with the "Try to grab after n sec." option.
+* Little fixes.
+* Added option "Add button manually".

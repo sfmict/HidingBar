@@ -186,6 +186,22 @@ StaticPopupDialogs[main.addonName.."REMOVE_IGNORE_MBTN"] = {
 	whileDead = 1,
 	OnAccept = function(self, cb) self:Hide() cb() end,
 }
+StaticPopupDialogs[main.addonName.."ADD_CUSTOM_GRAB_BTN"] = {
+	text = addon..": "..L["ADD_CUSTOM_GRAB_BTN_QUESTION"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hideOnEscape = 1,
+	whileDead = 1,
+	OnAccept = function(self, cb) self:Hide() cb() end,
+}
+StaticPopupDialogs[main.addonName.."REMOVE_CUSTOM_GRAB_BTN"] = {
+	text = addon..": "..L["REMOVE_CUSTOM_GRAB_BTN_QUESTION"],
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hideOnEscape = 1,
+	whileDead = 1,
+	OnAccept = function(self, cb) self:Hide() cb() end,
+}
 
 -- ADDON INFO
 local info = main:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -488,9 +504,20 @@ ignoreDescription:SetText(L["IGNORE_DESCRIPTION"])
 -------------------------------------------
 main.addBtnOptionsPanel = createTabPanel(buttonsTabs, L["Options of adding buttons"])
 
+local addBtnOptionsScroll = CreateFrame("ScrollFrame", nil, main.addBtnOptionsPanel, "UIPanelScrollFrameTemplate")
+addBtnOptionsScroll:SetPoint("TOPLEFT", main.addBtnOptionsPanel, 4, -6)
+addBtnOptionsScroll:SetPoint("BOTTOMRIGHT", main.addBtnOptionsPanel, -26, 5)
+addBtnOptionsScroll.ScrollBar.bg = addBtnOptionsScroll.ScrollBar:CreateTexture(nil, "BACKGROUND")
+addBtnOptionsScroll.ScrollBar.bg:SetAllPoints()
+addBtnOptionsScroll.ScrollBar.bg:SetTexture("interface/buttons/white8x8")
+addBtnOptionsScroll.ScrollBar.bg:SetVertexColor(0, 0, 0, .2)
+addBtnOptionsScroll.child = CreateFrame("FRAME")
+addBtnOptionsScroll.child:SetSize(1, 1)
+addBtnOptionsScroll:SetScrollChild(addBtnOptionsScroll.child)
+
 -- ADD FROM DATA BROKER
-main.addBtnFromDataBroker = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
-main.addBtnFromDataBroker:SetPoint("TOPLEFT", 8, -8)
+main.addBtnFromDataBroker = CreateFrame("CheckButton", nil, addBtnOptionsScroll.child, "HidingBarAddonCheckButtonTemplate")
+main.addBtnFromDataBroker:SetPoint("TOPLEFT", 4, -2)
 main.addBtnFromDataBroker.Text:SetText(L["Add buttons from DataBroker"])
 main.addBtnFromDataBroker:SetScript("OnClick", function(btn)
 	main.pConfig.addFromDataBroker = btn:GetChecked()
@@ -498,7 +525,7 @@ main.addBtnFromDataBroker:SetScript("OnClick", function(btn)
 end)
 
 -- GRAB DEFAULT BUTTONS
-main.grabDefault = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabDefault = CreateFrame("CheckButton", nil, addBtnOptionsScroll.child, "HidingBarAddonCheckButtonTemplate")
 main.grabDefault:SetPoint("TOPLEFT", main.addBtnFromDataBroker, "BOTTOMLEFT")
 main.grabDefault.Text:SetText(L["Grab default buttons on minimap"])
 main.grabDefault:SetScript("OnClick", function(btn)
@@ -507,7 +534,7 @@ main.grabDefault:SetScript("OnClick", function(btn)
 end)
 
 -- GRAB ADDONS BUTTONS
-main.grab = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grab = CreateFrame("CheckButton", nil, addBtnOptionsScroll.child, "HidingBarAddonCheckButtonTemplate")
 main.grab:SetPoint("TOPLEFT", main.grabDefault, "BOTTOMLEFT")
 main.grab.Text:SetText(L["Grab addon buttons on minimap"])
 main.grab:SetScript("OnClick", function(btn)
@@ -519,7 +546,7 @@ main.grab:SetScript("OnClick", function(btn)
 end)
 
 -- GRAB AFTER N SECOND
-main.grabAfter = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabAfter = CreateFrame("CheckButton", nil, addBtnOptionsScroll.child, "HidingBarAddonCheckButtonTemplate")
 main.grabAfter:SetPoint("TOPLEFT", main.grab, "BOTTOMLEFT", 20, 0)
 main.grabAfter.Text:SetText(L["Try to grab after"])
 main.grabAfter:SetHitRectInsets(0, -main.grabAfter.Text:GetWidth(), 0, 0)
@@ -528,7 +555,7 @@ main.grabAfter:SetScript("OnClick", function(btn)
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
-main.afterNumber = CreateFrame("EditBox", nil, main.addBtnOptionsPanel, "HidingBarAddonNumberTextBox")
+main.afterNumber = CreateFrame("EditBox", nil, addBtnOptionsScroll.child, "HidingBarAddonNumberTextBox")
 main.afterNumber:SetPoint("LEFT", main.grabAfter.Text, "RIGHT", 3, 0)
 main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
 	if userInput then
@@ -540,7 +567,7 @@ main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
 	end
 end)
 
-main.grabAfterTextSec = main.addBtnOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+main.grabAfterTextSec = addBtnOptionsScroll.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 main.grabAfterTextSec:SetPoint("LEFT", main.afterNumber, "RIGHT", 3, 0)
 main.grabAfterTextSec:SetText(L["sec."])
 
@@ -554,13 +581,138 @@ main.grabAfter:HookScript("OnDisable", function(btn)
 end)
 
 -- GRAB WITHOUT NAME
-main.grabWithoutName = CreateFrame("CheckButton", nil, main.addBtnOptionsPanel, "HidingBarAddonCheckButtonTemplate")
+main.grabWithoutName = CreateFrame("CheckButton", nil, addBtnOptionsScroll.child, "HidingBarAddonCheckButtonTemplate")
 main.grabWithoutName:SetPoint("TOPLEFT", main.grabAfter, "BOTTOMLEFT")
 main.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
 main.grabWithoutName:SetScript("OnClick", function(btn)
 	main.pConfig.grabMinimapWithoutName = btn:GetChecked()
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
+
+-- ADD BUTTON MANUALLY
+local addButtonManuallyText = addBtnOptionsScroll.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+addButtonManuallyText:SetPoint("TOPLEFT", main.grabWithoutName, "BOTTOMLEFT", -13, -15)
+addButtonManuallyText:SetText(L["Add button manually"])
+
+-- MANUALLY GRAB EDITBOX
+local editBoxGrab = CreateFrame("EditBox", nil, addBtnOptionsScroll.child, "HidingBarAddonAddTextBox")
+editBoxGrab:SetWidth(368)
+editBoxGrab:SetPoint("TOPLEFT", addButtonManuallyText, 0, -12)
+editBoxGrab:SetScript("OnTextChanged", function(editBox)
+	local textExists = editBox:GetText() ~= ""
+	main.customGrabBtn:SetEnabled(textExists)
+	editBox.clearButton:SetShown(editBox:HasFocus() or textExists)
+end)
+editBoxGrab:SetScript("OnEnterPressed", function(editBox)
+	local text = editBox:GetText()
+	if text ~= "" then
+		main:addCustomGrabName(text)
+		editBox:SetText("")
+	end
+	EditBox_ClearFocus(editBox)
+end)
+
+-- CUSTOM GRAB BTN
+main.customGrabBtn = CreateFrame("BUTTON", nil, addBtnOptionsScroll.child, "UIPanelButtonTemplate")
+main.customGrabBtn:SetSize(80, 22)
+main.customGrabBtn:SetPoint("LEFT", editBoxGrab, "RIGHT")
+main.customGrabBtn:SetText(ADD)
+main.customGrabBtn:Disable()
+main.customGrabBtn:SetScript("OnClick", function()
+	local text = editBoxGrab:GetText()
+	if text ~= "" then
+		main:addCustomGrabName(text)
+		editBoxGrab:SetText("")
+	end
+	EditBox_ClearFocus(editBoxGrab)
+end)
+
+-- CUSTOM POINT BTN
+local coverGreen = CreateFrame("BUTTON")
+coverGreen.bg = coverGreen:CreateTexture(nil, "BACKGROUND")
+coverGreen.bg:SetAllPoints()
+coverGreen.bg:SetColorTexture(.2, 1, .2, .7)
+coverGreen:Hide()
+coverGreen:SetScript("OnLeave", function(btn)
+	btn:Hide()
+end)
+coverGreen:SetScript("OnClick", function(btn)
+	main:addCustomGrabName(btn:GetParent():GetName())
+	main.customGrabPointBtn:Click()
+end)
+
+local ignoredNames = {
+	"StaticPopup.+",
+}
+
+main.customGrabPointBtn = CreateFrame("BUTTON", nil, addBtnOptionsScroll.child, "UIPanelButtonTemplate")
+main.customGrabPointBtn:SetSize(120, 22)
+main.customGrabPointBtn:SetPoint("LEFT", main.customGrabBtn, "RIGHT")
+main.customGrabPointBtn:SetText(L["Point to button"])
+main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
+	if not btn.isPoint then return end
+	local focus = GetMouseFocus()
+	if focus then
+		local name = focus:GetName()
+		if name and not focus:IsProtected() and (focus:HasScript("OnClick") and focus:GetScript("OnClick")
+			or focus:HasScript("OnMouseUp") and focus:GetScript("OnMouseUp")
+			or focus:HasScript("OnMouseDown") and focus:GetScript("OnMouseDown"))
+		then
+			for i = 1, #ignoredNames do
+				if name:match(ignoredNames[i]) then return end
+			end
+
+			for i = 1, #hidingBar.bars do
+				local bar = hidingBar.bars[i]
+				if bar:IsShown() and bar:IsMouseOver() then return end
+			end
+
+			coverGreen:SetParent(focus)
+			coverGreen:SetAllPoints(focus)
+			coverGreen:Show()
+			coverGreen:Raise()
+		end
+	end
+end)
+main.customGrabPointBtn:SetScript("OnHide", function(btn)
+	if btn.isPoint then btn:Click() end
+end)
+main.customGrabPointBtn:SetScript("OnClick", function(btn)
+	if btn.isPoint then
+		btn.isPoint = nil
+		btn:SetText(L["Point to button"])
+	else
+		btn.isPoint = true
+		btn:SetText(CANCEL)
+	end
+end)
+
+-- CUSTOM GRAB SCROLL
+main.customGrabScroll = CreateFrame("ScrollFrame", nil, addBtnOptionsScroll.child, "HidingBarAddonHybridScrollTemplate")
+main.customGrabScroll.scrollBar.doNotHide = true
+main.customGrabScroll:SetSize(545, 195)
+main.customGrabScroll:SetPoint("TOPLEFT", editBoxGrab, "BOTTOMLEFT", -2, -2)
+main.customGrabScroll.update = function(scroll)
+	local offset = HybridScrollFrame_GetOffset(scroll)
+	local numButtons = #main.pConfig.customGrabList
+
+	for i, btn in ipairs(scroll.buttons) do
+		local index = i + offset
+		if index <= numButtons then
+			btn:SetText(main.pConfig.customGrabList[index])
+			btn.removeButton:SetScript("OnClick", function()
+				main:removeCustomGrabName(index)
+			end)
+			btn:Enable()
+		else
+			btn:SetText(EMPTY)
+			btn:Disable()
+		end
+	end
+
+	HybridScrollFrame_Update(scroll, scroll.buttonHeight * numButtons, scroll:GetHeight())
+end
+HybridScrollFrame_CreateButtons(main.customGrabScroll, "HidingBarAddonCustomGrabButtonTemplate")
 
 -------------------------------------------
 -- BAR SETTINGS TAB PANEL
@@ -1321,6 +1473,7 @@ function main:setProfile()
 	self.grabAfter:SetEnabled(self.pConfig.grabMinimap)
 	self.grabWithoutName:SetEnabled(self.pConfig.grabMinimap)
 	self.grabWithoutName:SetChecked(self.pConfig.grabMinimapWithoutName)
+	self.customGrabScroll:update()
 
 	self:sort(self.buttons)
 	self:sort(self.mbuttons)
@@ -1502,6 +1655,41 @@ function main:removeIgnoreName(index)
 end
 
 
+function main:addCustomGrabName(name)
+	StaticPopup_Show(main.addonName.."ADD_CUSTOM_GRAB_BTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name), nil, function()
+		for _, n in ipairs(self.pConfig.customGrabList) do
+			if name == n then return end
+		end
+		tinsert(self.pConfig.customGrabList, name)
+		sort(self.pConfig.customGrabList)
+		self.customGrabScroll:update()
+		if hidingBar:addCustomGrabButton(name) then
+			local btn = _G[name]
+			hidingBar:setMBtnSettings(btn)
+			hidingBar:setBtnParent(btn)
+			hidingBar:sort()
+			btn:GetParent():setButtonSize()
+			self:initMButtons(true)
+		end
+	end)
+end
+
+
+function main:removeCustomGrabName(index)
+	local name = self.pConfig.customGrabList[index]
+	StaticPopup_Show(main.addonName.."REMOVE_CUSTOM_GRAB_BTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name), nil, function()
+		for i = 1, #self.pConfig.customGrabList do
+			if name == self.pConfig.customGrabList[i] then
+				tremove(self.pConfig.customGrabList, i)
+				break
+			end
+		end
+		self.customGrabScroll:update()
+		StaticPopup_Show(main.addonName.."GET_RELOAD")
+	end)
+end
+
+
 function main:hidingBarUpdate()
 	for _, bar in ipairs(hidingBar.bars) do
 		bar:enter()
@@ -1644,6 +1832,7 @@ do
 		buttonsByName[name] = btn
 		tinsert(self.buttons, btn)
 		tinsert(self.mixedButtons, btn)
+
 		if update and self.barFrame then
 			btn.settings = self.pConfig.btnSettings[name]
 			btn:SetChecked(btn.settings[1])
