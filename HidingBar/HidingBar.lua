@@ -193,17 +193,17 @@ if MSQ then
 				if texture == 136467 or tIsString and texture:find("ui-minimap-background", 1, true) or name:find("background", 1, true) then
 					background = region
 				end
-				if name:find("icon", 1, true) or tIsString and texture:find("icon", 1, true) then
+				if name:find("icon", 1, true) or not icon and tIsString and texture:find("icon", 1, true) then
 					icon = region
 				end
-				if name:find("highlight", 1, true) or layer == "HIGHLIGHT" then
+				if layer == "HIGHLIGHT" or not highlight and name:find("highlight", 1, true) then
 					highlight = region
 				end
 			end
 		end
 
 		normal = btn:GetNormalTexture()
-		if normal then
+		if normal and (not icon or icon ~= btn.icon) then
 			icon = btn:CreateTexture(nil, "BACKGROUND")
 			local atlas = normal:GetAtlas()
 			if atlas then
