@@ -203,7 +203,7 @@ if MSQ then
 		end
 
 		normal = btn:GetNormalTexture()
-		if normal and (not icon or icon == normal) then
+		if normal then
 			icon = btn:CreateTexture(nil, "BACKGROUND")
 			local atlas = normal:GetAtlas()
 			if atlas then
