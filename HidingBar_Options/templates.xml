@@ -434,7 +434,7 @@
 				self.highlight:Show()
 				self.removeButton:SetAlpha(1)
 				if self.text:GetStringWidth() > self.text:GetWidth() then
-					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", -305, 0)
+					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", -self:GetWidth(), 0)
 					GameTooltip:SetText(self:GetText())
 					GameTooltip:Show()
 				end
@@ -454,6 +454,17 @@
 	</Button>
 
 	<ScrollFrame name="HidingBarAddonHybridScrollTemplate" inherits="HybridScrollFrameTemplate" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="bg" alpha=".5">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="0"/>
+						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+					</Anchors>
+					<Color r=".1" g=".1" b=".1"/>
+				</Texture>
+			</Layer>
+		</Layers>
 		<Frames>
 			<Slider parentKey="scrollBar" inherits="HybridScrollBarTrimTemplate">
 				<Anchors>

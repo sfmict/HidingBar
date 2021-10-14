@@ -466,7 +466,7 @@ main.ignoreBtn:SetScript("OnClick", function()
 end)
 
 -- IGNORE SCROLL
-main.ignoreScroll = CreateFrame("ScrollFrame", nil, main.ignoreTabPanel, "HidingBarAddonHybridScrollTemplate")
+main.ignoreScroll = CreateFrame("ScrollFrame", "HidingBarAddonIgnoreListScroll", main.ignoreTabPanel, "HidingBarAddonHybridScrollTemplate")
 main.ignoreScroll.scrollBar.doNotHide = true
 main.ignoreScroll:SetSize(300, 200)
 main.ignoreScroll:SetPoint("TOPLEFT", editBoxIgnore, "BOTTOMLEFT", -2, -2)
@@ -688,7 +688,7 @@ main.customGrabPointBtn:SetScript("OnClick", function(btn)
 end)
 
 -- CUSTOM GRAB SCROLL
-main.customGrabScroll = CreateFrame("ScrollFrame", nil, addBtnOptionsScroll.child, "HidingBarAddonHybridScrollTemplate")
+main.customGrabScroll = CreateFrame("ScrollFrame", "HidingBarAddonCustomGrabScroll", addBtnOptionsScroll.child, "HidingBarAddonHybridScrollTemplate")
 main.customGrabScroll.scrollBar.doNotHide = true
 main.customGrabScroll:SetSize(545, 195)
 main.customGrabScroll:SetPoint("TOPLEFT", editBoxGrab, "BOTTOMLEFT", -2, -2)
