@@ -629,6 +629,8 @@ end)
 
 -- CUSTOM POINT BTN
 local coverGreen = CreateFrame("BUTTON")
+coverGreen:SetFrameStrata("TOOLTIP")
+coverGreen:SetFrameLevel(10000)
 coverGreen.bg = coverGreen:CreateTexture(nil, "BACKGROUND")
 coverGreen.bg:SetAllPoints()
 coverGreen.bg:SetColorTexture(.2, 1, .2, .7)
@@ -637,7 +639,7 @@ coverGreen:SetScript("OnLeave", function(btn)
 	btn:Hide()
 end)
 coverGreen:SetScript("OnClick", function(btn)
-	main:addCustomGrabName(btn:GetParent():GetName())
+	main:addCustomGrabName(btn.name)
 	main.customGrabPointBtn:Click()
 end)
 
@@ -667,10 +669,9 @@ main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
 				if bar:IsShown() and bar:IsMouseOver() then return end
 			end
 
-			coverGreen:SetParent(focus)
+			coverGreen.name = name
 			coverGreen:SetAllPoints(focus)
 			coverGreen:Show()
-			coverGreen:Raise()
 		end
 	end
 end)

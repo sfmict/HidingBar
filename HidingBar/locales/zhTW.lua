@@ -66,6 +66,7 @@ L["BUTTON_TOOLTIP"] = "|cffffd200滑鼠左鍵|r來 啟用/停用 按鈕或重新
 L["IGNORE_DESCRIPTION"] = "您可以指定名稱的一部分。\n\n舉例|cffffd200HidingBar|r將會忽略：\n|cffffd200HidingBar1|r\n|cffffd200HidingBar2|r\n|cffffd200HidingBar3|r\n..."
 L["DataBroker Buttons"] = "DataBroker按鈕"
 L["Minimap Buttons"] = "小地圖按鈕"
+L["Manually Grabbed Buttons"] = "手動抓取按鈕"
 L["Own Minimap Button"] = "自己的小地圖按鈕"
 L["Show on"] = "顯示在"
 L["Hover"] = "懸浮"
