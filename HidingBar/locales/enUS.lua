@@ -62,6 +62,7 @@ L["BUTTON_TOOLTIP"] = "|cffffd200LMB|r to enable / disable buttons or drag to re
 L["IGNORE_DESCRIPTION"] = "You can specify a part of the name.\n\nFor example |cffffd200HidingBar|r will ignore:\n|cffffd200HidingBar1|r\n|cffffd200HidingBar2|r\n|cffffd200HidingBar3|r\n..."
 L["DataBroker Buttons"] = "DataBroker Buttons"
 L["Minimap Buttons"] = "Minimap Buttons"
+L["Manually Grabed Buttons"] = "Manually Grabed Buttons"
 L["Own Minimap Button"] = "Own Minimap Button"
 L["Show on"] = "Show on"
 L["Hover"] = "Hover"

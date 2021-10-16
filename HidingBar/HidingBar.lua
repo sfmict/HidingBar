@@ -65,11 +65,24 @@ if MSQ then
 	end)
 
 
+	hidingBar.MSQ_Button_Data = {}
 	hidingBar.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
-	hidingBar.MSQ_MButton_Data = {}
 	hidingBar.MSQ_MButton:SetCallback(function()
 		for btn in pairs(hidingBar.MSQ_MButton.Buttons) do
-			hidingBar:MSQ_MButton_Update(btn)
+			hidingBar:MSQ_Button_Update(btn)
+			hidingBar:MSQ_CoordUpdate(btn)
+		end
+		for _, bar in ipairs(hidingBar.bars) do
+			bar:enter()
+			bar:leave(math.max(1.5, bar.config.hideDelay))
+		end
+	end)
+
+
+	hidingBar.MSQ_CGButton = MSQ:Group(addon, L["Manually Grabed Buttons"], "CGButtons")
+	hidingBar.MSQ_CGButton:SetCallback(function()
+		for btn in pairs(hidingBar.MSQ_CGButton.Buttons) do
+			hidingBar:MSQ_Button_Update(btn)
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
 		for _, bar in ipairs(hidingBar.bars) do
@@ -142,9 +155,9 @@ if MSQ then
 	end
 
 
-	function hidingBar:MSQ_MButton_Update(btn)
+	function hidingBar:MSQ_Button_Update(btn)
 		if not btn.__MSQ_Enabled then return end
-		local data = self.MSQ_MButton_Data[btn]
+		local data = self.MSQ_Button_Data[btn]
 		if data then
 			if data._Border then
 				data._Border:Hide()
@@ -177,7 +190,7 @@ if MSQ then
 	end
 
 
-	function hidingBar:setMButtonRegions(btn, iconCoords, getData)
+	function hidingBar:setMButtonRegions(btn, iconCoords, MSQ_Group)
 		local name, texture, tIsString, layer, border, background, icon, highlight, normal
 
 		for _, region in ipairs({btn:GetRegions()}) do
@@ -242,14 +255,14 @@ if MSQ then
 
 		local pushed = btn:GetPushedTexture()
 		if border or background or pushed or normal then
-			self.MSQ_MButton_Data[btn] = {
+			self.MSQ_Button_Data[btn] = {
 				_Border = border,
 				_Background = background,
 				_Pushed = pushed,
 			}
 			if normal then
-				self.MSQ_MButton_Data[btn]._Normal = normal
-				self.MSQ_MButton_Data[btn]._Icon = icon
+				self.MSQ_Button_Data[btn]._Normal = normal
+				self.MSQ_Button_Data[btn]._Icon = icon
 			end
 		end
 
@@ -257,9 +270,8 @@ if MSQ then
 			Icon = icon,
 			Highlight = highlight,
 		}
-		if getData then return data end
-		self.MSQ_MButton:AddButton(btn, data, "Legacy", true)
-		self:MSQ_MButton_Update(btn)
+		(MSQ_Group or self.MSQ_MButton):AddButton(btn, data, "Legacy", true)
+		self:MSQ_Button_Update(btn)
 		self:MSQ_CoordUpdate(btn)
 	end
 end
@@ -487,7 +499,7 @@ function hidingBar:init()
 			self:setHooks(MiniMapTracking)
 
 			if self.MSQ_MButton then
-				self.MSQ_MButton_Data[MiniMapTrackingButton] = {
+				self.MSQ_Button_Data[MiniMapTrackingButton] = {
 					_Border = MiniMapTrackingButtonBorder,
 					_Background = MiniMapTrackingBackground,
 				}
@@ -498,7 +510,7 @@ function hidingBar:init()
 					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
 				}
 				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
-				self:MSQ_MButton_Update(MiniMapTrackingButton)
+				self:MSQ_Button_Update(MiniMapTrackingButton)
 				self:MSQ_CoordUpdate(MiniMapTrackingButton)
 			end
 
@@ -543,16 +555,14 @@ function hidingBar:init()
 			if MSQ then
 				self.MSQ_Garrison = MSQ:Group(addon, GARRISON_FOLLOWERS, "GarrisonLandingPageMinimapButton")
 				self.MSQ_Garrison:SetCallback(function()
-					self:MSQ_MButton_Update(garrison)
+					self:MSQ_Button_Update(garrison)
 					self:MSQ_CoordUpdate(garrison)
 					for _, bar in ipairs(self.bars) do
 						bar:enter()
 						bar:leave(math.max(1.5, bar.config.hideDelay))
 					end
 				end)
-				self.MSQ_Garrison:AddButton(garrison, self:setMButtonRegions(garrison, nil, true), "Legacy", true)
-				self:MSQ_MButton_Update(garrison)
-				self:MSQ_CoordUpdate(garrison)
+				self:setMButtonRegions(garrison, nil, self.MSQ_Garrison)
 			end
 
 			self.SetAlpha(garrison, 1)
@@ -608,7 +618,7 @@ function hidingBar:init()
 			f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
 
 			if self.MSQ_MButton then
-				self.MSQ_MButton_Data[queue] = {
+				self.MSQ_Button_Data[queue] = {
 					_Border = QueueStatusMinimapButtonBorder,
 				}
 				self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
@@ -618,7 +628,7 @@ function hidingBar:init()
 					Highlight = queue:GetHighlightTexture(),
 				}
 				self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
-				self:MSQ_MButton_Update(queue)
+				self:MSQ_Button_Update(queue)
 				self:MSQ_CoordUpdate(queue)
 			end
 
@@ -986,7 +996,7 @@ function hidingBar:addCustomGrabButton(name)
 				return
 			end
 		end
-		return self:addMButton(button, true)
+		return self:addMButton(button, true, self.MSQ_CGButton)
 	end
 end
 
@@ -1012,7 +1022,7 @@ function hidingBar:grabMinimapAddonsButtons(parentFrame)
 end
 
 
-function hidingBar:addMButton(button, force)
+function hidingBar:addMButton(button, force, MSQ_Group)
 	local name = button:GetName()
 	if not ignoreFrameList[name] and self:ignoreCheck(name) then
 		if button:HasScript("OnClick") and button:GetScript("OnClick")
@@ -1026,7 +1036,7 @@ function hidingBar:addMButton(button, force)
 			end
 
 			if self.MSQ_MButton and button:GetObjectType() == "Button" then
-				self:setMButtonRegions(button)
+				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
 			local function OnEnter() enter(button) end
@@ -1565,13 +1575,11 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 				if not hidingBar.MSQ_OMB then
 					hidingBar.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
 					hidingBar.MSQ_OMB:SetCallback(function()
-						hidingBar:MSQ_MButton_Update(self.omb)
+						hidingBar:MSQ_Button_Update(self.omb)
 						hidingBar:MSQ_CoordUpdate(self.omb)
 					end)
 				end
-				hidingBar.MSQ_OMB:AddButton(self.omb, hidingBar:setMButtonRegions(self.omb, nil, true), "Legacy", true)
-				hidingBar:MSQ_MButton_Update(self.omb)
-				hidingBar:MSQ_CoordUpdate(self.omb)
+				hidingBar:setMButtonRegions(self.omb, nil, hidingBar.MSQ_OMB)
 			end
 		end
 
