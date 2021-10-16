@@ -79,7 +79,7 @@ if MSQ then
 	end)
 
 
-	hidingBar.MSQ_CGButton = MSQ:Group(addon, L["Manually Grabed Buttons"], "CGButtons")
+	hidingBar.MSQ_CGButton = MSQ:Group(addon, L["Manually Grabbed Buttons"], "CGButtons")
 	hidingBar.MSQ_CGButton:SetCallback(function()
 		for btn in pairs(hidingBar.MSQ_CGButton.Buttons) do
 			hidingBar:MSQ_Button_Update(btn)
