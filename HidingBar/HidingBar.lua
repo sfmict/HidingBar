@@ -290,14 +290,10 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.charDB = HidingBarDBChar
 		HidingBarDB = HidingBarDB or {}
 		self.db = HidingBarDB
-		self.db.profiles = self.db.profiles or {}
+		self.db.profiles = self.db.profiles or {
+			{name = L["Profile"].." 1", isDefault = true},
+		}
 		self.profiles = self.db.profiles
-		if #self.profiles == 0 then
-			self.profiles[1] = {
-				name = L["Profile"].." 1",
-				isDefault = true,
-			}
-		end
 
 		for i = 1, #self.profiles do
 			self:checkProfile(self.profiles[i])
@@ -348,13 +344,9 @@ function hidingBar:checkProfile(profile)
 	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, btnSettingsMeta)
 	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, btnSettingsMeta)
 
-	profile.bars = profile.bars or {}
-	if #profile.bars == 0 then
-		profile.bars[1] = {
-			name = L["Bar"].." 1",
-			isDefault = true,
-		}
-	end
+	profile.bars = profile.bars or {
+		{name = L["Bar"].." 1", isDefault = true},
+	}
 
 	for i = 1, #profile.bars do
 		local bar = profile.bars[i]

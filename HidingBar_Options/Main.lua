@@ -1435,12 +1435,24 @@ function main:setProfile()
 	end
 	currentProfile = currentProfile or default
 
-	local function compare(o1, o2)
-		return (o1 and 1 or 0) ~= (o2 and 1 or 0)
-	end
-
 	if self.currentProfile then
-		if self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
+		local compareCustomGrabList = false
+		if #self.pConfig.customGrabList ~= #currentProfile.config.customGrabList then
+			compareCustomGrabList = true
+		else
+			for i, name in ipairs(self.pConfig.customGrabList) do
+				if name ~= currentProfile.config.customGrabList[i] then
+					compareCustomGrabList = true
+				end
+			end
+		end
+
+		local function compare(o1, o2)
+			return (o1 and 1 or 0) ~= (o2 and 1 or 0)
+		end
+
+		if compareCustomGrabList
+		or self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
 		or compare(self.pConfig.grabDefMinimap, currentProfile.config.grabDefMinimap)
 		or self.pConfig.grabMinimap ~= currentProfile.config.grabMinimap
 		or self.pConfig.grabMinimap and
