@@ -1,3 +1,4 @@
 # HidingBar - Classic
 
-* Updated to 1.14.
+* Little fixes.
+* Added option "Add button manually".

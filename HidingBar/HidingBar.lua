@@ -62,11 +62,24 @@ if MSQ then
 	end)
 
 
+	hidingBar.MSQ_Button_Data = {}
 	hidingBar.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
-	hidingBar.MSQ_MButton_Data = {}
 	hidingBar.MSQ_MButton:SetCallback(function()
 		for btn in pairs(hidingBar.MSQ_MButton.Buttons) do
-			hidingBar:MSQ_MButton_Update(btn)
+			hidingBar:MSQ_Button_Update(btn)
+			hidingBar:MSQ_CoordUpdate(btn)
+		end
+		for _, bar in ipairs(hidingBar.bars) do
+			bar:enter()
+			bar:leave(math.max(1.5, bar.config.hideDelay))
+		end
+	end)
+
+
+	hidingBar.MSQ_CGButton = MSQ:Group(addon, L["Manually Grabbed Buttons"], "CGButtons")
+	hidingBar.MSQ_CGButton:SetCallback(function()
+		for btn in pairs(hidingBar.MSQ_CGButton.Buttons) do
+			hidingBar:MSQ_Button_Update(btn)
 			hidingBar:MSQ_CoordUpdate(btn)
 		end
 		for _, bar in ipairs(hidingBar.bars) do
@@ -139,9 +152,9 @@ if MSQ then
 	end
 
 
-	function hidingBar:MSQ_MButton_Update(btn)
+	function hidingBar:MSQ_Button_Update(btn)
 		if not btn.__MSQ_Enabled then return end
-		local data = self.MSQ_MButton_Data[btn]
+		local data = self.MSQ_Button_Data[btn]
 		if data then
 			if data._Border then
 				data._Border:Hide()
@@ -174,7 +187,7 @@ if MSQ then
 	end
 
 
-	function hidingBar:setMButtonRegions(btn, iconCoords, getData)
+	function hidingBar:setMButtonRegions(btn, iconCoords, MSQ_Group)
 		local name, texture, tIsString, layer, border, background, icon, highlight, normal
 
 		for _, region in ipairs({btn:GetRegions()}) do
@@ -190,17 +203,17 @@ if MSQ then
 				if texture == 136467 or tIsString and texture:find("ui-minimap-background", 1, true) or name:find("background", 1, true) then
 					background = region
 				end
-				if name:find("icon", 1, true) or tIsString and texture:find("icon", 1, true) then
+				if name:find("icon", 1, true) or not icon and tIsString and texture:find("icon", 1, true) then
 					icon = region
 				end
-				if name:find("highlight", 1, true) or layer == "HIGHLIGHT" then
+				if layer == "HIGHLIGHT" or not highlight and name:find("highlight", 1, true) then
 					highlight = region
 				end
 			end
 		end
 
 		normal = btn:GetNormalTexture()
-		if normal and (not icon or icon == normal) then
+		if normal and (not icon or icon ~= btn.icon) then
 			icon = btn:CreateTexture(nil, "BACKGROUND")
 			local atlas = normal:GetAtlas()
 			if atlas then
@@ -237,16 +250,16 @@ if MSQ then
 			background = nil
 		end
 
-		local puched = btn:GetPushedTexture()
-		if border or background or puched or normal then
-			self.MSQ_MButton_Data[btn] = {
+		local pushed = btn:GetPushedTexture()
+		if border or background or pushed or normal then
+			self.MSQ_Button_Data[btn] = {
 				_Border = border,
 				_Background = background,
-				_Pushed = puched,
+				_Pushed = pushed,
 			}
 			if normal then
-				self.MSQ_MButton_Data[btn]._Normal = normal
-				self.MSQ_MButton_Data[btn]._Icon = icon
+				self.MSQ_Button_Data[btn]._Normal = normal
+				self.MSQ_Button_Data[btn]._Icon = icon
 			end
 		end
 
@@ -254,9 +267,8 @@ if MSQ then
 			Icon = icon,
 			Highlight = highlight,
 		}
-		if getData then return data end
-		self.MSQ_MButton:AddButton(btn, data, "Legacy", true)
-		self:MSQ_MButton_Update(btn)
+		(MSQ_Group or self.MSQ_MButton):AddButton(btn, data, "Legacy", true)
+		self:MSQ_Button_Update(btn)
 		self:MSQ_CoordUpdate(btn)
 	end
 end
@@ -275,14 +287,10 @@ function hidingBar:ADDON_LOADED(addonName)
 		self.charDB = HidingBarDBChar
 		HidingBarDB = HidingBarDB or {}
 		self.db = HidingBarDB
-		self.db.profiles = self.db.profiles or {}
+		self.db.profiles = self.db.profiles or {
+			{name = L["Profile"].." 1", isDefault = true},
+		}
 		self.profiles = self.db.profiles
-		if #self.profiles == 0 then
-			self.profiles[1] = {
-				name = L["Profile"].." 1",
-				isDefault = true,
-			}
-		end
 
 		for i = 1, #self.profiles do
 			self:checkProfile(self.profiles[i])
@@ -329,16 +337,13 @@ function hidingBar:checkProfile(profile)
 	end
 	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
 	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
+	profile.config.customGrabList = profile.config.customGrabList or {}
 	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, btnSettingsMeta)
 	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, btnSettingsMeta)
 
-	profile.bars = profile.bars or {}
-	if #profile.bars == 0 then
-		profile.bars[1] = {
-			name = L["Bar"].." 1",
-			isDefault = true,
-		}
-	end
+	profile.bars = profile.bars or {
+		{name = L["Bar"].." 1", isDefault = true},
+	}
 
 	for i = 1, #profile.bars do
 		local bar = profile.bars[i]
@@ -386,8 +391,6 @@ end
 
 
 function hidingBar:init()
-	self.init = nil
-
 	if self.pConfig.addFromDataBroker then
 		for name, data in ldb:DataObjectIterator() do
 			self:ldb_add(nil, name, data)
@@ -437,6 +440,10 @@ function hidingBar:init()
 				end
 			end)
 		end
+	end
+
+	for i = 1, #self.pConfig.customGrabList do
+		self:addCustomGrabButton(self.pConfig.customGrabList[i])
 	end
 
 	if self.pConfig.grabDefMinimap then
@@ -593,7 +600,6 @@ function hidingBar:init()
 	end
 
 	self:RegisterEvent("UI_SCALE_CHANGED")
-	self.cb:Fire("INIT")
 end
 
 
@@ -644,6 +650,11 @@ function hidingBar:setProfile(profileName)
 
 	self:sort()
 	self:updateBars()
+
+	if self.init then
+		self.cb:Fire("INIT")
+		self.init = nil
+	end
 end
 
 
@@ -665,8 +676,8 @@ function hidingBar:updateBars()
 		end
 	end
 
-	for i = 1, #hidingBar.mixedButtons do
-		self:setBtnParent(hidingBar.mixedButtons[i])
+	for i = 1, #self.mixedButtons do
+		self:setBtnParent(self.mixedButtons[i])
 	end
 
 	for i = 1, #self.bars do
@@ -819,14 +830,27 @@ do
 end
 
 
+function hidingBar:addCustomGrabButton(name)
+	local button = _G[name]
+	if button then
+		for j = 1, #self.minimapButtons do
+			if button == self.minimapButtons[j] then
+				return
+			end
+		end
+		return self:addMButton(button, true, self.MSQ_CGButton)
+	end
+end
+
+
 function hidingBar:ldbi_add(_, button, name)
-	if name:match(matchName) then return end
-	self:addMButton(button)
-	self:setMBtnSettings(button)
-	self:setBtnParent(button)
-	self:sort()
-	button:GetParent():setButtonSize()
-	self.cb:Fire("MBUTTON_ADDED", button:GetName(), button.icon, true)
+	if not name:match(matchName) and self:addMButton(button) then
+		self:setMBtnSettings(button)
+		self:setBtnParent(button)
+		self:sort()
+		button:GetParent():setButtonSize()
+		self.cb:Fire("MBUTTON_ADDED", button:GetName(), button.icon, true)
+	end
 end
 
 
@@ -840,12 +864,13 @@ function hidingBar:grabMinimapAddonsButtons(parentFrame)
 end
 
 
-function hidingBar:addMButton(button)
+function hidingBar:addMButton(button, force, MSQ_Group)
 	local name = button:GetName()
 	if not ignoreFrameList[name] and self:ignoreCheck(name) then
 		if button:HasScript("OnClick") and button:GetScript("OnClick")
 		or button:HasScript("OnMouseUp") and button:GetScript("OnMouseUp")
-		or button:HasScript("OnMouseDown") and button:GetScript("OnMouseDown") then
+		or button:HasScript("OnMouseDown") and button:GetScript("OnMouseDown")
+		or force then
 			local btn = self.minimapButtons[button[0]]
 			self.minimapButtons[button[0]] = nil
 			if btn ~= button then
@@ -853,7 +878,7 @@ function hidingBar:addMButton(button)
 			end
 
 			if self.MSQ_MButton and button:GetObjectType() == "Button" then
-				self:setMButtonRegions(button)
+				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
 			local function OnEnter() enter(button) end
@@ -876,6 +901,7 @@ function hidingBar:addMButton(button)
 			self.SetAlpha(button, 1)
 			tinsert(self.minimapButtons, button)
 			tinsert(self.mixedButtons, button)
+			return true
 		else
 			local mouseEnabled, clickable = {}
 			local function getMouseEnabled(frame)
@@ -910,6 +936,7 @@ function hidingBar:addMButton(button)
 				self.SetAlpha(button, 1)
 				tinsert(self.minimapButtons, button)
 				tinsert(self.mixedButtons, button)
+				return true
 			end
 		end
 	end
@@ -1390,13 +1417,11 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 				if not hidingBar.MSQ_OMB then
 					hidingBar.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
 					hidingBar.MSQ_OMB:SetCallback(function()
-						hidingBar:MSQ_MButton_Update(self.omb)
+						hidingBar:MSQ_Button_Update(self.omb)
 						hidingBar:MSQ_CoordUpdate(self.omb)
 					end)
 				end
-				hidingBar.MSQ_OMB:AddButton(self.omb, hidingBar:setMButtonRegions(self.omb, nil, true), "Legacy", true)
-				hidingBar:MSQ_MButton_Update(self.omb)
-				hidingBar:MSQ_CoordUpdate(self.omb)
+				hidingBar:setMButtonRegions(self.omb, nil, hidingBar.MSQ_OMB)
 			end
 		end
 

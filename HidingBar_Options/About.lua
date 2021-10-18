@@ -65,6 +65,7 @@ aboutConfig:SetScript("OnShow", function(self)
 		{"deDE", "SlayerEGT"},
 		{"esES", "neolynx_zero"},
 		{"koKR", "drixwow"},
+		{"ptBR", "6605270"},
 		{"zhCN", "lambdapak"},
 		{"zhTW", "BNS333, terry1314"},
 	}
