@@ -1,4 +1,3 @@
 # HidingBar
 
-* Little fixes.
-* Added option "Add button manually".
+* Upadted to 9.1.5.
