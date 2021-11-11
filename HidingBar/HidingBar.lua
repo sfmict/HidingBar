@@ -447,6 +447,43 @@ function hidingBar:init()
 	end
 
 	if self.pConfig.grabDefMinimap then
+		-- MINIMAP LFG FRAME
+		if self:ignoreCheck("MiniMapLFGFrame") then
+			local LFGFrame = MiniMapLFGFrame
+			self:setHooks(LFGFrame)
+			LFGFrame.icon = MiniMapLFGFrameIconTexture
+			LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
+
+			LFGFrame.Show = function(LFGFrame)
+				if not LFGFrame.show then
+					LFGFrame.show = true
+					LFGFrame:GetParent():applyLayout()
+				end
+			end
+			LFGFrame.Hide = function(LFGFrame)
+				if LFGFrame.show then
+					LFGFrame.show = false
+					LFGFrame:GetParent():applyLayout()
+				end
+			end
+			LFGFrame.IsShown = function(LFGFrame)
+				local show = LFGFrame.show and not btnSettings[LFGFrame][1]
+				self.SetShown(LFGFrame, show)
+				return show
+			end
+
+			if self.MSQ_MButton then
+				self:setMButtonRegions(LFGFrame)
+			end
+
+			self.SetAlpha(LFGFrame, 1)
+			self.SetHitRectInsets(LFGFrame, 0, 0, 0, 0)
+			self.HookScript(LFGFrame, "OnEnter", enter)
+			self.HookScript(LFGFrame, "OnLeave", leave)
+			tinsert(self.minimapButtons, LFGFrame)
+			tinsert(self.mixedButtons, LFGFrame)
+		end
+
 		-- BATTLEFIELD FRAME
 		if self:ignoreCheck("MiniMapBattlefieldFrame") then
 			local battlefield = MiniMapBattlefieldFrame
