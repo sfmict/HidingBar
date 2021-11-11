@@ -292,33 +292,38 @@ function hidingBar:ADDON_LOADED(addonName)
 		}
 		self.profiles = self.db.profiles
 
+		local config = self.profiles[1].config
+
 		for i = 1, #self.profiles do
 			self:checkProfile(self.profiles[i])
 		end
 
 		if self.db.config then
-			local keys = {
-				ignoreMBtn = true,
-				btnSettings = true,
-				mbtnSettings = true,
-				grabDefMinimap = true,
-				grabMinimap = true,
-				grabMinimapAfter = true,
-				grabMinimapAfterN = true,
-				grabMinimapWithoutName = true,
-			}
+			if not config then
+				local keys = {
+					ignoreMBtn = true,
+					btnSettings = true,
+					mbtnSettings = true,
+					grabDefMinimap = true,
+					grabMinimap = true,
+					grabMinimapAfter = true,
+					grabMinimapAfterN = true,
+					grabMinimapWithoutName = true,
+				}
 
-			local profile1config = self.profiles[1].config
-			for k in pairs(keys) do
-				profile1config[k] = self.db.config[k]
-			end
+				local profile1config = self.profiles[1].config
+				for k in pairs(keys) do
+					profile1config[k] = self.db.config[k]
+				end
 
-			local bar1config = self.profiles[1].bars[1].config
-			for k, v in pairs(self.db.config) do
-				if not keys[k] then
-					bar1config[k] = v
+				local bar1config = self.profiles[1].bars[1].config
+				for k, v in pairs(self.db.config) do
+					if not keys[k] then
+						bar1config[k] = v
+					end
 				end
 			end
+
 			self.db.config = nil
 		end
 
