@@ -1,4 +1,4 @@
-## Interface: 11400
+## Interface: 11401
 ## Title: HidingBar Options
 ## Author: sfmict
 ## Version: @project-version@
