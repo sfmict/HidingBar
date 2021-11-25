@@ -1,3 +1,4 @@
 # HidingBar
 
-* Upadted to 9.1.5.
+* Added option "Distance to bar border".
+* Added option "Distance between buttons".
