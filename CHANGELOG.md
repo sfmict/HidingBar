@@ -1,3 +1,4 @@
 # HidingBar - Classic
 
-* Updated to 1.14.1
+* Added option "Distance to bar border".
+* Added option "Distance between buttons".

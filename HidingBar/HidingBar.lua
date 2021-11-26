@@ -12,7 +12,6 @@ end}
 hidingBar.createdButtons, hidingBar.minimapButtons, hidingBar.mixedButtons = {}, {}, {}
 hidingBar.bars, hidingBar.barByName = {}, {}
 local createdButtonsByName, btnSettings = {}, {}
-local offsetX, offsetY = 2, 2
 local matchName = addon.."%d+$"
 hidingBar.cb = LibStub("CallbackHandler-1.0"):New(hidingBar, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
@@ -362,7 +361,9 @@ function hidingBar:checkProfile(profile)
 		bar.config.showDelay = bar.config.showDelay or 0
 		bar.config.hideDelay = bar.config.hideDelay or .75
 		bar.config.size = bar.config.size or 10
+		bar.config.barOffset = bar.config.barOffset or 2
 		bar.config.buttonSize = bar.config.buttonSize or 31
+		bar.config.rangeBetweenBtns = bar.config.rangeBetweenBtns or 0
 		bar.config.anchor = bar.config.anchor or "top"
 		bar.config.barTypePosition = bar.config.barTypePosition or 0
 		bar.config.mbtnPosition = bar.config.mbtnPosition or 2
@@ -1173,6 +1174,12 @@ function hidingBarMixin:setLineWidth(width)
 end
 
 
+function hidingBarMixin:setBarOffset(offset)
+	self.config.barOffset = offset
+	self:applyLayout()
+end
+
+
 function hidingBarMixin:setMaxButtons(size)
 	self.config.size = size
 	self:applyLayout()
@@ -1199,6 +1206,12 @@ function hidingBarMixin:setButtonSize(size)
 end
 
 
+function hidingBarMixin:setRangeBetweenBtns(range)
+	self.config.rangeBetweenBtns = range
+	self:applyLayout()
+end
+
+
 function hidingBarMixin:setMBtnPosition(position)
 	self.config.mbtnPosition = position
 	self:applyLayout()
@@ -1207,9 +1220,10 @@ end
 
 function hidingBarMixin:setPointBtn(btn, order, orientation)
 	order = order - 1
-	local halfSize = self.config.buttonSize / 2
-	local x = order % self.config.size * self.config.buttonSize + halfSize + offsetX
-	local y = -math.floor(order / self.config.size) * self.config.buttonSize - halfSize - offsetY
+	local offset = self.config.buttonSize / 2 + self.config.barOffset
+	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
+	local x = order % self.config.size * buttonSize + offset
+	local y = -math.floor(order / self.config.size) * buttonSize - offset
 	if orientation then x, y = -y, -x end
 	self.ClearAllPoints(btn)
 	local scale = btn:GetScale()
@@ -1260,8 +1274,10 @@ function hidingBarMixin:applyLayout()
 	self:refreshShown()
 
 	if maxButtons > self.config.size then maxButtons = self.config.size end
-	local width = maxButtons * self.config.buttonSize + offsetX * 2
-	local height = line * self.config.buttonSize + offsetY * 2
+	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
+	local offset = self.config.barOffset * 2
+	local width = maxButtons * buttonSize - self.config.rangeBetweenBtns + offset
+	local height = line * buttonSize - self.config.rangeBetweenBtns + offset
 	if orientation then width, height = height, width end
 	self:SetSize(width, height)
 	return width, height
@@ -1470,17 +1486,17 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		local btnSize, position, secondPosition = self.config.omb.size
 		if self.config.omb.anchor == "left" or self.config.omb.anchor == "right" then
 			if self.config.expand == 0 then
-				position = btnSize + offsetY
+				position = btnSize + self.config.barOffset
 			elseif self.config.expand == 1 then
-				position = -offsetY
+				position = -self.config.barOffset
 			else
 				position = btnSize / 2
 			end
 		else
 			if self.config.expand == 0 then
-				position = -offsetX
+				position = -self.config.barOffset
 			elseif self.config.expand == 1 then
-				position = btnSize + offsetX
+				position = btnSize + self.config.barOffset
 			else
 				position = btnSize / 2
 			end
