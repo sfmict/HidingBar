@@ -4,7 +4,6 @@ main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
 main.noIcon:Hide()
 main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
-local offsetX, offsetY = 4, 4
 local lsfdd = LibStub("LibSFDropDown-1.1")
 
 
@@ -926,7 +925,6 @@ main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value * slider.step + .5) / slider.step
 	main.barFrame:setFadeOpacity(value)
-	slider.label:SetText(value)
 	slider:SetValue(value)
 end)
 
@@ -939,7 +937,6 @@ main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
 	main.barFrame:setLineWidth(value)
-	slider.label:SetText(value)
 	slider:SetValue(value)
 end)
 
@@ -1026,7 +1023,6 @@ buttonNumber:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.size ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setMaxButtons(value)
 		main:applyLayout(.3)
 		main:hidingBarUpdate()
@@ -1045,17 +1041,52 @@ buttonSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.buttonSize ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setButtonSize(value)
 		main:setButtonSize()
-		main:applyLayout(.3)
+		main:applyLayout()
+		main:hidingBarUpdate()
+	end
+end)
+
+-- SLIDER DISTANCE TO BAR BORDER
+local barOffset =  CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
+barOffset:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -18)
+barOffset:SetPoint("RIGHT", -30, 0)
+barOffset:SetPoint("RIGHT", -30, 0)
+barOffset:SetMinMaxValues(0, 20)
+barOffset.text:SetText(L["Distance to bar border"])
+barOffset:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	slider:SetValue(value)
+	if main.bConfig.barOffset ~= value then
+		main.barFrame:setBarOffset(value)
+		main:applyLayout()
+		main:hidingBarUpdate()
+	end
+end)
+
+-- SLIDER DISTANCE BETWEEN BUTTONS
+local rangeBetweenBtns = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
+rangeBetweenBtns:SetPoint("TOPLEFT", barOffset, "BOTTOMLEFT", 0, -18)
+rangeBetweenBtns:SetPoint("RIGHT", -30, 0)
+rangeBetweenBtns:SetPoint("RIGHT", -30, 0)
+rangeBetweenBtns:SetMinMaxValues(-5, 30)
+rangeBetweenBtns.text:SetText(L["Distance between buttons"])
+rangeBetweenBtns:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	slider:SetValue(value)
+	if main.bConfig.rangeBetweenBtns ~= value then
+		main.barFrame:setRangeBetweenBtns(value)
+		main:applyLayout()
 		main:hidingBarUpdate()
 	end
 end)
 
 -- POSTION OF MINIMAP BUTTON TEXT
 local mbtnPostionText = main.buttonSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-mbtnPostionText:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -20)
+mbtnPostionText:SetPoint("TOPLEFT", rangeBetweenBtns, "BOTTOMLEFT", 0, -20)
 mbtnPostionText:SetText(L["Position of minimap buttons"])
 
 -- POSITION OF MINIMAP BUTTON
@@ -1273,7 +1304,6 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.omb.size ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setOMBSize(value)
 		main.barFrame:setBarTypePosition()
 	end
@@ -1582,20 +1612,18 @@ function main:setBar(bar)
 		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.fade:SetChecked(self.bConfig.fade)
 		self.fadeOpacity:SetValue(self.bConfig.fadeOpacity)
-		self.fadeOpacity.label:SetText(self.bConfig.fadeOpacity)
 		self.fadeOpacity:SetEnabled(self.bConfig.fade)
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
-		self.lineWidth.label:SetText(self.bConfig.lineWidth)
 		showHandlerCombobox:ddSetSelectedValue(self.bConfig.showHandler)
 		showHandlerCombobox:ddSetSelectedText(showHandlerCombobox.texts[self.bConfig.showHandler])
 		delayToShowEditBox:SetNumber(self.bConfig.showDelay)
 		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
 
 		buttonNumber:SetValue(self.bConfig.size)
-		buttonNumber.label:SetText(self.bConfig.size)
 		buttonSize:SetValue(self.bConfig.buttonSize)
-		buttonSize.label:SetText(self.bConfig.buttonSize)
+		barOffset:SetValue(self.bConfig.barOffset)
+		rangeBetweenBtns:SetValue(self.bConfig.rangeBetweenBtns)
 		mbtnPostionCombobox:ddSetSelectedValue(self.bConfig.mbtnPosition)
 		mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
 
@@ -1604,7 +1632,6 @@ function main:setBar(bar)
 		main.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
 		main.ombShowToCombobox:ddSetSelectedText(main.ombShowToCombobox.texts[self.bConfig.omb.anchor])
 		main.ombSize:SetValue(self.bConfig.omb.size)
-		main.ombSize.label:SetText(self.bConfig.omb.size)
 
 		updateBarTypePosition()
 		self:updateCoords()
@@ -1713,10 +1740,10 @@ end
 
 function main:dragBtn(btn)
 	local scale = btn:GetScale()
-	local x = btn:GetLeft() - (self.buttonPanel:GetLeft() + offsetX) / scale
-	local y = (self.buttonPanel:GetTop() - offsetY) / scale - btn:GetTop()
+	local x = btn:GetLeft() - (self.buttonPanel:GetLeft() + self.bConfig.barOffset) / scale
+	local y = (self.buttonPanel:GetTop() - self.bConfig.barOffset) / scale - btn:GetTop()
 	if self.orientation then x, y = y, x end
-	local buttonSize = self.bConfig.buttonSize / scale
+	local buttonSize = (self.bConfig.buttonSize + self.bConfig.rangeBetweenBtns) / scale
 	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
 	if row < btn.minRow then row = btn.minRow
 	elseif row > btn.maxRow then row = btn.maxRow end
@@ -1848,6 +1875,8 @@ do
 
 		if update and self.barFrame then
 			btn.settings = self.pConfig.btnSettings[name]
+			local bar = self.currentBar
+			btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
 			btn:SetChecked(btn.settings[1])
 			self:sort(self.buttons)
 			self:sort(self.mixedButtons)
@@ -1915,8 +1944,11 @@ do
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
+
 		if update then
 			btn.settings = self.pConfig.mbtnSettings[name]
+			local bar = self.currentBar
+			btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
 			btn:SetChecked(btn.settings[1])
 			self:sort(self.mbuttons)
 			self:sort(self.mixedButtons)
@@ -1940,15 +1972,15 @@ function main:initMButtons(update)
 		local name = button:GetName()
 		if name then
 			local icon = button.icon
-						 or button.Icon
-						 or _G[name.."icon"]
-						 or _G[name.."Icon"]
-						 or button.__MSQ_Icon
-						 or button.GetNormalTexture and button:GetNormalTexture()
-						 or button.texture
-						 or button.Texture
-						 or button.background
-						 or button.Background
+			          or button.Icon
+			          or _G[name.."icon"]
+			          or _G[name.."Icon"]
+			          or button.__MSQ_Icon
+			          or button.GetNormalTexture and button:GetNormalTexture()
+			          or button.texture
+			          or button.Texture
+			          or button.background
+			          or button.Background
 			if not icon or not icon.GetTexture then
 				icon = self.noIcon
 			end
@@ -1988,9 +2020,10 @@ end
 function main:setPointBtn(btn, order, delay)
 	if btn.isDrag then return end
 	local scale = btn:GetScale()
+	local buttonSize = self.bConfig.buttonSize + self.bConfig.rangeBetweenBtns
 	order = order - 1
-	btn.x = (order % self.bConfig.size * self.bConfig.buttonSize + offsetX) / scale
-	btn.y = (-math.floor(order / self.bConfig.size) * self.bConfig.buttonSize - offsetY) / scale
+	btn.x = (order % self.bConfig.size * buttonSize + self.bConfig.barOffset) / scale
+	btn.y = (-math.floor(order / self.bConfig.size) * buttonSize - self.bConfig.barOffset) / scale
 	if self.orientation then btn.x, btn.y = -btn.y, -btn.x end
 
 	if delay and btn:IsVisible() then
@@ -2045,8 +2078,10 @@ function main:applyLayout(delay)
 	end
 
 	if rows < 1 then rows = 1 end
-	local width = columns * self.bConfig.buttonSize + offsetX * 2
-	local height = rows * self.bConfig.buttonSize + offsetY * 2
+	local buttonSize = self.bConfig.buttonSize + self.bConfig.rangeBetweenBtns
+	local offset = self.bConfig.barOffset * 2
+	local width = columns * buttonSize - self.bConfig.rangeBetweenBtns + offset
+	local height = rows * buttonSize - self.bConfig.rangeBetweenBtns + offset
 	if self.orientation then width, height = height, width end
 	self.buttonPanel:SetSize(width, height)
 end

@@ -1,4 +1,4 @@
 # HidingBar - Burning Crusade
 
-* Little fixes.
-* Added option "Add button manually".
+* Added option "Distance to bar border".
+* Added option "Distance between buttons".

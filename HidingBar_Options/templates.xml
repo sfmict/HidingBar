@@ -194,6 +194,11 @@
 			</Layer>
 		</Layers>
 		<Scripts>
+			<OnLoad inherit="prepend">
+				hooksecurefunc(self, "SetValue", function(self, value)
+					self.label:SetText(value)
+				end)
+			</OnLoad>
 			<OnDisable>
 				self.label:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
 				self.text:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
