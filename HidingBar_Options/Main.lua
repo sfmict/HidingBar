@@ -925,7 +925,6 @@ main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value * slider.step + .5) / slider.step
 	main.barFrame:setFadeOpacity(value)
-	slider.label:SetText(value)
 	slider:SetValue(value)
 end)
 
@@ -938,7 +937,6 @@ main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
 	main.barFrame:setLineWidth(value)
-	slider.label:SetText(value)
 	slider:SetValue(value)
 end)
 
@@ -1025,7 +1023,6 @@ buttonNumber:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.size ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setMaxButtons(value)
 		main:applyLayout(.3)
 		main:hidingBarUpdate()
@@ -1044,7 +1041,6 @@ buttonSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.buttonSize ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setButtonSize(value)
 		main:setButtonSize()
 		main:applyLayout()
@@ -1052,7 +1048,7 @@ buttonSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	end
 end)
 
--- DISTANCE TO BAR BORDER
+-- SLIDER DISTANCE TO BAR BORDER
 local barOffset =  CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
 barOffset:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -18)
 barOffset:SetPoint("RIGHT", -30, 0)
@@ -1064,7 +1060,6 @@ barOffset:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.barOffset ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setBarOffset(value)
 		main:applyLayout()
 		main:hidingBarUpdate()
@@ -1083,7 +1078,6 @@ rangeBetweenBtns:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.rangeBetweenBtns ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setRangeBetweenBtns(value)
 		main:applyLayout()
 		main:hidingBarUpdate()
@@ -1310,7 +1304,6 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.omb.size ~= value then
-		slider.label:SetText(value)
 		main.barFrame:setOMBSize(value)
 		main.barFrame:setBarTypePosition()
 	end
@@ -1619,24 +1612,18 @@ function main:setBar(bar)
 		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.fade:SetChecked(self.bConfig.fade)
 		self.fadeOpacity:SetValue(self.bConfig.fadeOpacity)
-		self.fadeOpacity.label:SetText(self.bConfig.fadeOpacity)
 		self.fadeOpacity:SetEnabled(self.bConfig.fade)
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
-		self.lineWidth.label:SetText(self.bConfig.lineWidth)
 		showHandlerCombobox:ddSetSelectedValue(self.bConfig.showHandler)
 		showHandlerCombobox:ddSetSelectedText(showHandlerCombobox.texts[self.bConfig.showHandler])
 		delayToShowEditBox:SetNumber(self.bConfig.showDelay)
 		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
 
 		buttonNumber:SetValue(self.bConfig.size)
-		buttonNumber.label:SetText(self.bConfig.size)
 		buttonSize:SetValue(self.bConfig.buttonSize)
-		buttonSize.label:SetText(self.bConfig.buttonSize)
 		barOffset:SetValue(self.bConfig.barOffset)
-		barOffset.label:SetText(self.bConfig.barOffset)
 		rangeBetweenBtns:SetValue(self.bConfig.rangeBetweenBtns)
-		rangeBetweenBtns.label:SetText(self.bConfig.rangeBetweenBtns)
 		mbtnPostionCombobox:ddSetSelectedValue(self.bConfig.mbtnPosition)
 		mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
 
@@ -1645,7 +1632,6 @@ function main:setBar(bar)
 		main.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
 		main.ombShowToCombobox:ddSetSelectedText(main.ombShowToCombobox.texts[self.bConfig.omb.anchor])
 		main.ombSize:SetValue(self.bConfig.omb.size)
-		main.ombSize.label:SetText(self.bConfig.omb.size)
 
 		updateBarTypePosition()
 		self:updateCoords()
@@ -1889,6 +1875,8 @@ do
 
 		if update and self.barFrame then
 			btn.settings = self.pConfig.btnSettings[name]
+			local bar = self.currentBar
+			btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
 			btn:SetChecked(btn.settings[1])
 			self:sort(self.buttons)
 			self:sort(self.mixedButtons)
@@ -1956,8 +1944,11 @@ do
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
+
 		if update then
 			btn.settings = self.pConfig.mbtnSettings[name]
+			local bar = self.currentBar
+			btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
 			btn:SetChecked(btn.settings[1])
 			self:sort(self.mbuttons)
 			self:sort(self.mixedButtons)
