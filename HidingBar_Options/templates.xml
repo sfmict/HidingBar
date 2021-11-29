@@ -438,7 +438,7 @@
 			<OnEnter>
 				self.highlight:Show()
 				self.removeButton:SetAlpha(1)
-				if self.text:GetStringWidth() > self.text:GetWidth() then
+				if self.text:IsTruncated() then
 					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", -self:GetWidth(), 0)
 					GameTooltip:SetText(self:GetText())
 					GameTooltip:Show()

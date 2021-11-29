@@ -2079,9 +2079,9 @@ function main:applyLayout(delay)
 
 	if rows < 1 then rows = 1 end
 	local buttonSize = self.bConfig.buttonSize + self.bConfig.rangeBetweenBtns
-	local offset = self.bConfig.barOffset * 2
-	local width = columns * buttonSize - self.bConfig.rangeBetweenBtns + offset
-	local height = rows * buttonSize - self.bConfig.rangeBetweenBtns + offset
+	local offset = self.bConfig.barOffset * 2 - self.bConfig.rangeBetweenBtns
+	local width = columns * buttonSize + offset
+	local height = rows * buttonSize + offset
 	if self.orientation then width, height = height, width end
 	self.buttonPanel:SetSize(width, height)
 end
