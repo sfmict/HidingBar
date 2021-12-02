@@ -1301,9 +1301,9 @@ function hidingBarMixin:applyLayout()
 
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
-	local offset = self.config.barOffset * 2
-	local width = maxButtons * buttonSize - self.config.rangeBetweenBtns + offset
-	local height = line * buttonSize - self.config.rangeBetweenBtns + offset
+	local offset = self.config.barOffset * 2 - self.config.rangeBetweenBtns
+	local width = maxButtons * buttonSize + offset
+	local height = line * buttonSize + offset
 	if orientation then width, height = height, width end
 	self:SetSize(width, height)
 	return width, height
