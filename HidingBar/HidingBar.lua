@@ -479,6 +479,7 @@ function hidingBar:init()
 
 			self.SetAlpha(GameTimeFrame, 1)
 			self.SetHitRectInsets(GameTimeFrame, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(GameTimeFrame, false)
 			self.SetScript(GameTimeFrame, "OnUpdate", nil)
 			self.HookScript(GameTimeFrame, "OnEnter", enter)
 			self.HookScript(GameTimeFrame, "OnLeave", leave)
@@ -514,6 +515,7 @@ function hidingBar:init()
 
 			self.SetAlpha(MiniMapTracking, 1)
 			self.SetHitRectInsets(MiniMapTracking, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(MiniMapTracking, false)
 			self.SetScript(MiniMapTracking, "OnUpdate", nil)
 			MiniMapTrackingButton:HookScript("OnMouseDown", function()
 				icon:SetScale(.9)
@@ -565,6 +567,7 @@ function hidingBar:init()
 
 			self.SetAlpha(garrison, 1)
 			self.SetHitRectInsets(garrison, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(garrison, false)
 			self.SetScript(garrison, "OnUpdate", nil)
 			self.HookScript(garrison, "OnEnter", enter)
 			self.HookScript(garrison, "OnLeave", leave)
@@ -633,6 +636,7 @@ function hidingBar:init()
 			queue.icon:SetTexCoord(0, .125, 0, .25)
 			self.SetAlpha(queue, 1)
 			self.SetHitRectInsets(queue, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(queue, false)
 			self.SetScript(queue, "OnUpdate", nil)
 			self.HookScript(queue, "OnEnter", enter)
 			self.HookScript(queue, "OnLeave", leave)
@@ -716,6 +720,7 @@ function hidingBar:init()
 
 				self.SetAlpha(zoom, 1)
 				self.SetHitRectInsets(zoom, 0, 0, 0, 0)
+				self.SetIgnoreParentScale(zoom, false)
 				self.HookScript(zoom, "OnEnter", enter)
 				self.HookScript(zoom, "OnLeave", leave)
 				tinsert(self.minimapButtons, zoom)
@@ -748,6 +753,7 @@ function hidingBar:init()
 
 			self.SetAlpha(mapButton, 1)
 			self.SetHitRectInsets(mapButton, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(mapButton, false)
 			self.HookScript(mapButton, "OnEnter", enter)
 			self.HookScript(mapButton, "OnLeave", leave)
 			tinsert(self.minimapButtons, mapButton)
@@ -1052,6 +1058,7 @@ function hidingBar:addMButton(button, force, MSQ_Group)
 			end
 			setMouseEvents(button)
 
+			self.SetIgnoreParentScale(button, false)
 			self.SetFixedFrameStrata(button, false)
 			self.SetFixedFrameLevel(button, false)
 			self.SetAlpha(button, 1)
@@ -1087,6 +1094,7 @@ function hidingBar:addMButton(button, force, MSQ_Group)
 					self.HookScript(frame, "OnLeave", OnLeave)
 				end
 
+				self.SetIgnoreParentScale(button, false)
 				self.SetFixedFrameStrata(button, false)
 				self.SetFixedFrameLevel(button, false)
 				self.SetAlpha(button, 1)
@@ -1150,6 +1158,7 @@ do
 		btn.SetShown = void
 		btn.SetPoint = void
 		btn.SetAlpha = void
+		btn.SetIgnoreParentScale = void
 		btn.SetScale = void
 		btn.SetSize = void
 		btn.SetWidth = void
