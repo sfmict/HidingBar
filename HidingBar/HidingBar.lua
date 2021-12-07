@@ -511,6 +511,7 @@ function hidingBar:init()
 
 			self.SetAlpha(LFGFrame, 1)
 			self.SetHitRectInsets(LFGFrame, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(LFGFrame, false)
 			self.HookScript(LFGFrame, "OnEnter", enter)
 			self.HookScript(LFGFrame, "OnLeave", leave)
 			tinsert(self.minimapButtons, LFGFrame)
@@ -547,6 +548,7 @@ function hidingBar:init()
 
 			self.SetAlpha(battlefield, 1)
 			self.SetHitRectInsets(battlefield, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(battlefield, false)
 			self.HookScript(battlefield, "OnEnter", enter)
 			self.HookScript(battlefield, "OnLeave", leave)
 			tinsert(self.minimapButtons, battlefield)
@@ -629,6 +631,7 @@ function hidingBar:init()
 
 				self.SetAlpha(zoom, 1)
 				self.SetHitRectInsets(zoom, 0, 0, 0, 0)
+				self.SetIgnoreParentScale(zoom, false)
 				self.HookScript(zoom, "OnEnter", enter)
 				self.HookScript(zoom, "OnLeave", leave)
 				tinsert(self.minimapButtons, zoom)
@@ -661,6 +664,7 @@ function hidingBar:init()
 
 			self.SetAlpha(mapButton, 1)
 			self.SetHitRectInsets(mapButton, 0, 0, 0, 0)
+			self.SetIgnoreParentScale(mapButton, false)
 			self.HookScript(mapButton, "OnEnter", enter)
 			self.HookScript(mapButton, "OnLeave", leave)
 			tinsert(self.minimapButtons, mapButton)
@@ -965,6 +969,7 @@ function hidingBar:addMButton(button, force, MSQ_Group)
 			end
 			setMouseEvents(button)
 
+			self.SetIgnoreParentScale(button, false)
 			self.SetFixedFrameStrata(button, false)
 			self.SetFixedFrameLevel(button, false)
 			self.SetAlpha(button, 1)
@@ -1000,6 +1005,7 @@ function hidingBar:addMButton(button, force, MSQ_Group)
 					self.HookScript(frame, "OnLeave", OnLeave)
 				end
 
+				self.SetIgnoreParentScale(button, false)
 				self.SetFixedFrameStrata(button, false)
 				self.SetFixedFrameLevel(button, false)
 				self.SetAlpha(button, 1)
@@ -1063,6 +1069,7 @@ do
 		btn.SetShown = void
 		btn.SetPoint = void
 		btn.SetAlpha = void
+		btn.SetIgnoreParentScale = void
 		btn.SetScale = void
 		btn.SetSize = void
 		btn.SetWidth = void
