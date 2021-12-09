@@ -1,3 +1,3 @@
 # HidingBar
 
-* Fixed button scaling.
+* Hiding when clicking on a free space.
