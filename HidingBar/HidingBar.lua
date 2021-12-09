@@ -465,7 +465,7 @@ function hidingBar:init()
 			pushedTexture:SetTexCoord(.5, .875, 0, .75)
 			local highlightTexture = GameTimeFrame:GetHighlightTexture()
 			highlightTexture:SetTexCoord(0, 1, 0, .9375)
-			local text = select(5, GameTimeFrame:GetRegions())
+			local text = GameTimeFrame:GetFontString()
 			text:SetPoint("CENTER", 0, -1)
 			GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
 			GameTimeCalendarInvitesTexture:SetPoint("CENTER")
@@ -1951,6 +1951,33 @@ local function bar_OnLeave(self)
 end
 
 
+local function bar_OnEvent(self, event, button)
+	if (button == "LeftButton" or button == "RightButton")
+	and not (self:IsMouseOver()
+		or self.drag:IsShown() and self.drag:IsMouseOver()
+		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver())
+	then
+		self:Hide()
+		self:updateDragBarPosition()
+		self:SetScript("OnUpdate", nil)
+		if self.config.fade and self.drag:IsShown() then
+			UIFrameFadeOut(self.drag, 1.5, self.drag:GetAlpha(), self.config.fadeOpacity)
+		end
+	end
+end
+
+
+local function bar_OnShow(self)
+	if self.config.showHandler == 3 then return end
+	self:RegisterEvent("GLOBAL_MOUSE_DOWN")
+end
+
+
+local function bar_OnHide(self)
+	self:UnregisterEvent("GLOBAL_MOUSE_DOWN")
+end
+
+
 local function drag_OnMouseDown(self, button)
 	local bar = self.bar
 	if button == "LeftButton" and not bar.config.lock and bar:IsShown() then
@@ -2000,6 +2027,9 @@ setmetatable(hidingBar.bars, {__index = function(self, key)
 	bar:SetClampedToScreen(true)
 	bar:SetScript("OnEnter", bar_OnEnter)
 	bar:SetScript("OnLeave", bar_OnLeave)
+	bar:SetScript("OnEvent", bar_OnEvent)
+	bar:SetScript("OnShow", bar_OnShow)
+	bar:SetScript("OnHide", bar_OnHide)
 	for k, v in pairs(hidingBarMixin) do
 		bar[k] = v
 	end
