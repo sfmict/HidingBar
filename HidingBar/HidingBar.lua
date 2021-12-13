@@ -365,6 +365,7 @@ function hidingBar:checkProfile(profile)
 		bar.config.hideDelay = bar.config.hideDelay or .75
 		bar.config.size = bar.config.size or 10
 		bar.config.barOffset = bar.config.barOffset or 2
+		bar.config.buttonDirection = bar.config.buttonDirection or {V = 0, H = 0}
 		bar.config.buttonSize = bar.config.buttonSize or 31
 		bar.config.rangeBetweenBtns = bar.config.rangeBetweenBtns or 0
 		bar.config.anchor = bar.config.anchor or "top"
@@ -706,11 +707,13 @@ function hidingBar:init()
 				zoom.Disable = function(zoom)
 					zoom:SetScript("OnClick", nil)
 					zoom.icon:SetDesaturated(true)
+					zoom:GetNormalTexture():SetDesaturated(true)
 					zoom:GetPushedTexture():SetDesaturated(true)
 				end
 				zoom.Enable = function(zoom)
 					zoom:SetScript("OnClick", zoom.click)
 					zoom.icon:SetDesaturated(false)
+					zoom:GetNormalTexture():SetDesaturated(false)
 					zoom:GetPushedTexture():SetDesaturated(false)
 				end
 				if not zoom:IsEnabled() then
@@ -853,6 +856,7 @@ function hidingBar:updateBars()
 			bar.drag:setShowHandler()
 			bar:setBarTypePosition()
 			bar:updateDragBarPosition()
+			bar:setButtonDirection()
 			bar:setButtonSize()
 		else
 			bar:Hide()
@@ -1308,6 +1312,33 @@ function hidingBarMixin:setMaxButtons(size)
 end
 
 
+function hidingBarMixin:setButtonDirection(mode, direction)
+	if mode and direction then
+		self.config.buttonDirection[mode] = direction
+	end
+
+	self.direction = self.direction or {}
+
+	if self.config.buttonDirection.V == 0 then
+		self.direction.V = self.anchorObj.anchor == "bottom" and "BOTTOM" or "TOP"
+	elseif self.config.buttonDirection.V == 1 then
+		self.direction.V = "TOP"
+	else
+		self.direction.V = "BOTTOM"
+	end
+
+	if self.config.buttonDirection.H == 0 then
+		self.direction.H = self.anchorObj.anchor == "right" and "RIGHT" or "LEFT"
+	elseif self.config.buttonDirection.H == 1 then
+		self.direction.H = "LEFT"
+	else
+		self.direction.H = "RIGHT"
+	end
+
+	self.direction.rPoint = self.direction.V..self.direction.H
+end
+
+
 function hidingBarMixin:setButtonSize(size)
 	if size then self.config.buttonSize = size end
 
@@ -1340,16 +1371,18 @@ function hidingBarMixin:setMBtnPosition(position)
 end
 
 
-function hidingBarMixin:setPointBtn(btn, order, orientation)
+function hidingBarMixin:setPointBtn(btn, order, orientation, v, h)
 	order = order - 1
 	local offset = self.config.buttonSize / 2 + self.config.barOffset
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
 	local x = order % self.config.size * buttonSize + offset
 	local y = -math.floor(order / self.config.size) * buttonSize - offset
 	if orientation then x, y = -y, -x end
+	if self.direction.V == "BOTTOM" then y = -y end
+	if self.direction.H == "RIGHT" then x = -x end
 	self.ClearAllPoints(btn)
 	local scale = btn:GetScale()
-	self.SetPoint(btn, "CENTER", self, "TOPLEFT", x / scale, y / scale)
+	self.SetPoint(btn, "CENTER", self, self.direction.rPoint, x / scale, y / scale)
 end
 
 
@@ -1477,6 +1510,7 @@ end
 function hidingBarMixin:setOMBAnchor(anchor)
 	if self.config.barTypePosition ~= 2 or self.config.omb.anchor == anchor then return end
 	self.config.omb.anchor = anchor
+	self:setButtonDirection()
 	self:applyLayout()
 	self:setBarTypePosition()
 end
@@ -1499,6 +1533,7 @@ function hidingBarMixin:setBarAnchor(anchor)
 	if self.config.barTypePosition ~= 1 or self.config.anchor == anchor then return end
 	local x, y, position, secondPosition = self:GetCenter()
 	self.config.anchor = anchor
+	self:setButtonDirection()
 	local width, height = self:applyLayout()
 	width, height = width / 2, height / 2
 
@@ -1651,7 +1686,10 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		self.secondPosition = nil
 	end
 
-	if typePosition then self:applyLayout() end
+	if typePosition then
+		self:setButtonDirection()
+		self:applyLayout()
+	end
 	self:updateBarPosition()
 end
 
@@ -1762,6 +1800,7 @@ function hidingBarMixin:dragBar()
 
 		if anchor ~= self.config.anchor then
 			self.config.anchor = anchor
+			self:setButtonDirection()
 			width, height = self:applyLayout()
 			self:updateDragBarPosition()
 
