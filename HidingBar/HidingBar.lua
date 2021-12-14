@@ -827,16 +827,16 @@ function hidingBar:updateBars()
 	wipe(self.barByName)
 	for i = 1, #self.currentProfile.bars do
 		local bar = self.bars[i]
-		local barSettings = self.currentProfile.bars[i]
-		bar.name = barSettings.name
-		bar.config = barSettings.config
+		bar.barSettings = self.currentProfile.bars[i]
+		bar.name = bar.barSettings.name
+		bar.config = bar.barSettings.config
 		self.barByName[bar.name] = bar
 
 		if bar.createOwnMinimapButton then
 			bar:createOwnMinimapButton()
 		end
 
-		if barSettings.isDefault then
+		if bar.barSettings.isDefault then
 			self.defaultBar = bar
 		end
 	end
@@ -1235,6 +1235,7 @@ function hidingBarMixin:createOwnMinimapButton()
 				end
 				if IsShiftKeyDown() then
 					config:openConfig()
+					config:setBar(self.barSettings)
 				end
 			end
 		end,
@@ -1371,7 +1372,7 @@ function hidingBarMixin:setMBtnPosition(position)
 end
 
 
-function hidingBarMixin:setPointBtn(btn, order, orientation, v, h)
+function hidingBarMixin:setPointBtn(btn, order, orientation)
 	order = order - 1
 	local offset = self.config.buttonSize / 2 + self.config.barOffset
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
@@ -1762,7 +1763,7 @@ function hidingBarMixin:dragBar()
 	local anchor = self.config.anchor
 	local secondPosition, position = 0
 	local scale = UIParent:GetScale()
-	x, y = x / scale, y / scale
+	x, y = x / scale + self.dx, y / scale + self.dy
 
 	if self.config.barTypePosition == 0 then
 		local offset = 70 / scale
@@ -1805,6 +1806,20 @@ function hidingBarMixin:dragBar()
 			self:updateDragBarPosition()
 
 			hidingBar.cb:Fire("ANCHOR_UPDATED", self.config.anchor, self)
+		end
+	else
+		if anchor == "left" then
+			local dx = UIwidth - x - self.drag:GetWidth() / 2
+			if dx < 0 then x = x + dx end
+		elseif anchor == "right" then
+			local dx = x - self.drag:GetWidth() / 2
+			if dx < 0 then x = x - dx end
+		elseif anchor == "top" then
+			local dy = y - self.drag:GetHeight() / 2
+			if dy < 0 then y = y - dy end
+		elseif anchor == "bottom" then
+			local dy = UIheight - y - self.drag:GetHeight() / 2
+			if dy < 0 then y = y + dy end
 		end
 	end
 
@@ -2025,6 +2040,11 @@ local function drag_OnMouseDown(self, button)
 		cover:SetFrameLevel(bar:GetFrameLevel() + 10)
 		cover:SetAllPoints(bar)
 		cover:Show()
+		local x, y = GetCursorPosition()
+		local cx, cy = self:GetCenter()
+		local scale = bar:GetEffectiveScale()
+		bar.dx = cx - x / scale
+		bar.dy = cy - y / scale
 		bar:SetScript("OnUpdate", bar.dragBar)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
@@ -2033,6 +2053,7 @@ local function drag_OnMouseDown(self, button)
 		end
 		if IsShiftKeyDown() then
 			config:openConfig()
+			config:setBar(bar.barSettings)
 		end
 	end
 end
@@ -2043,6 +2064,8 @@ local function drag_OnMouseUp(self, button)
 	if button == "LeftButton" and bar.isDrag then
 		bar.isDrag = false
 		cover:Hide()
+		bar.dx = nil
+		bar.dy = nil
 		bar:SetScript("OnUpdate", nil)
 		if not bar.isMouse then
 			bar:leave()

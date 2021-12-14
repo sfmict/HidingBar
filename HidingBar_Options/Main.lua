@@ -1798,12 +1798,18 @@ end
 
 
 function main:dragBtn(btn)
-	local scale = btn:GetScale()
-	local x = btn:xFunc() - (btn.xFunc(self.buttonPanel) + self.bConfig.barOffset) / scale
-	local y = (btn.yFunc(self.buttonPanel) - self.bConfig.barOffset) / scale - btn:yFunc()
+	local scale, x, y = btn:GetScale()
+	if self.direction.V == "BOTTOM" then
+		y = btn:GetBottom() - (self.buttonPanel:GetBottom() + self.bConfig.barOffset) / scale
+	else
+		y = (self.buttonPanel:GetTop() - self.bConfig.barOffset) / scale - btn:GetTop()
+	end
+	if self.direction.H == "RIGHT" then
+		x = (self.buttonPanel:GetRight() - self.bConfig.barOffset) / scale - btn:GetRight()
+	else
+		x = btn:GetLeft() - (self.buttonPanel:GetLeft() + self.bConfig.barOffset) / scale
+	end
 	if self.orientation then x, y = y, x end
-	if self.direction.V == "BOTTOM" then y = -y end
-	if self.direction.H == "RIGHT" then x = -x end
 	local buttonSize = (self.bConfig.buttonSize + self.bConfig.rangeBetweenBtns) / scale
 	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
 	if row < btn.minRow then row = btn.minRow
@@ -1846,8 +1852,6 @@ function main:dragStart(btn, orderDelta)
 	btn.minRow = math.floor(btn.orderDelta / self.bConfig.size)
 	btn.maxRow = math.ceil(btn.maxColumn / self.bConfig.size) - 1
 	if btn.maxColumn > self.bConfig.size then btn.maxColumn = self.bConfig.size end
-	btn.yFunc = self.direction.V == "BOTTOM" and btn.GetBottom or btn.GetTop
-	btn.xFunc = self.direction.H == "RIGHT" and btn.GetRight or btn.GetLeft
 	btn:SetScript("OnUpdate", function(btn) self:dragBtn(btn) end)
 	btn:StartMoving()
 end
