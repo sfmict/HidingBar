@@ -362,6 +362,7 @@ function hidingBar:checkProfile(profile)
 		bar.config.hideDelay = bar.config.hideDelay or .75
 		bar.config.size = bar.config.size or 10
 		bar.config.barOffset = bar.config.barOffset or 2
+		bar.config.buttonDirection = bar.config.buttonDirection or {V = 0, H = 0}
 		bar.config.buttonSize = bar.config.buttonSize or 31
 		bar.config.rangeBetweenBtns = bar.config.rangeBetweenBtns or 0
 		bar.config.anchor = bar.config.anchor or "top"
@@ -591,11 +592,13 @@ function hidingBar:init()
 				zoom.Disable = function(zoom)
 					zoom:SetScript("OnClick", nil)
 					zoom.icon:SetDesaturated(true)
+					zoom:GetNormalTexture():SetDesaturated(true)
 					zoom:GetPushedTexture():SetDesaturated(true)
 				end
 				zoom.Enable = function(zoom)
 					zoom:SetScript("OnClick", zoom.click)
 					zoom.icon:SetDesaturated(false)
+					zoom:GetNormalTexture():SetDesaturated(false)
 					zoom:GetPushedTexture():SetDesaturated(false)
 				end
 				if not zoom:IsEnabled() then
@@ -709,16 +712,16 @@ function hidingBar:updateBars()
 	wipe(self.barByName)
 	for i = 1, #self.currentProfile.bars do
 		local bar = self.bars[i]
-		local barSettings = self.currentProfile.bars[i]
-		bar.name = barSettings.name
-		bar.config = barSettings.config
+		bar.barSettings = self.currentProfile.bars[i]
+		bar.name = bar.barSettings.name
+		bar.config = bar.barSettings.config
 		self.barByName[bar.name] = bar
 
 		if bar.createOwnMinimapButton then
 			bar:createOwnMinimapButton()
 		end
 
-		if barSettings.isDefault then
+		if bar.barSettings.isDefault then
 			self.defaultBar = bar
 		end
 	end
@@ -738,6 +741,7 @@ function hidingBar:updateBars()
 			bar.drag:setShowHandler()
 			bar:setBarTypePosition()
 			bar:updateDragBarPosition()
+			bar:setButtonDirection()
 			bar:setButtonSize()
 		else
 			bar:Hide()
@@ -1116,6 +1120,7 @@ function hidingBarMixin:createOwnMinimapButton()
 				end
 				if IsShiftKeyDown() then
 					config:openConfig()
+					config:setBar(self.barSettings)
 				end
 			end
 		end,
@@ -1193,6 +1198,33 @@ function hidingBarMixin:setMaxButtons(size)
 end
 
 
+function hidingBarMixin:setButtonDirection(mode, direction)
+	if mode and direction then
+		self.config.buttonDirection[mode] = direction
+	end
+
+	self.direction = self.direction or {}
+
+	if self.config.buttonDirection.V == 0 then
+		self.direction.V = self.anchorObj.anchor == "bottom" and "BOTTOM" or "TOP"
+	elseif self.config.buttonDirection.V == 1 then
+		self.direction.V = "TOP"
+	else
+		self.direction.V = "BOTTOM"
+	end
+
+	if self.config.buttonDirection.H == 0 then
+		self.direction.H = self.anchorObj.anchor == "right" and "RIGHT" or "LEFT"
+	elseif self.config.buttonDirection.H == 1 then
+		self.direction.H = "LEFT"
+	else
+		self.direction.H = "RIGHT"
+	end
+
+	self.direction.rPoint = self.direction.V..self.direction.H
+end
+
+
 function hidingBarMixin:setButtonSize(size)
 	if size then self.config.buttonSize = size end
 
@@ -1232,9 +1264,11 @@ function hidingBarMixin:setPointBtn(btn, order, orientation)
 	local x = order % self.config.size * buttonSize + offset
 	local y = -math.floor(order / self.config.size) * buttonSize - offset
 	if orientation then x, y = -y, -x end
+	if self.direction.V == "BOTTOM" then y = -y end
+	if self.direction.H == "RIGHT" then x = -x end
 	self.ClearAllPoints(btn)
 	local scale = btn:GetScale()
-	self.SetPoint(btn, "CENTER", self, "TOPLEFT", x / scale, y / scale)
+	self.SetPoint(btn, "CENTER", self, self.direction.rPoint, x / scale, y / scale)
 end
 
 
@@ -1362,6 +1396,7 @@ end
 function hidingBarMixin:setOMBAnchor(anchor)
 	if self.config.barTypePosition ~= 2 or self.config.omb.anchor == anchor then return end
 	self.config.omb.anchor = anchor
+	self:setButtonDirection()
 	self:applyLayout()
 	self:setBarTypePosition()
 end
@@ -1384,6 +1419,7 @@ function hidingBarMixin:setBarAnchor(anchor)
 	if self.config.barTypePosition ~= 1 or self.config.anchor == anchor then return end
 	local x, y, position, secondPosition = self:GetCenter()
 	self.config.anchor = anchor
+	self:setButtonDirection()
 	local width, height = self:applyLayout()
 	width, height = width / 2, height / 2
 
@@ -1536,7 +1572,10 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		self.secondPosition = nil
 	end
 
-	if typePosition then self:applyLayout() end
+	if typePosition then
+		self:setButtonDirection()
+		self:applyLayout()
+	end
 	self:updateBarPosition()
 end
 
@@ -1609,7 +1648,7 @@ function hidingBarMixin:dragBar()
 	local anchor = self.config.anchor
 	local secondPosition, position = 0
 	local scale = UIParent:GetScale()
-	x, y = x / scale, y / scale
+	x, y = x / scale + self.dx, y / scale + self.dy
 
 	if self.config.barTypePosition == 0 then
 		local offset = 70 / scale
@@ -1647,10 +1686,25 @@ function hidingBarMixin:dragBar()
 
 		if anchor ~= self.config.anchor then
 			self.config.anchor = anchor
+			self:setButtonDirection()
 			width, height = self:applyLayout()
 			self:updateDragBarPosition()
 
 			hidingBar.cb:Fire("ANCHOR_UPDATED", self.config.anchor, self)
+		end
+	else
+		if anchor == "left" then
+			local dx = UIwidth - x - self.drag:GetWidth() / 2
+			if dx < 0 then x = x + dx end
+		elseif anchor == "right" then
+			local dx = x - self.drag:GetWidth() / 2
+			if dx < 0 then x = x - dx end
+		elseif anchor == "top" then
+			local dy = y - self.drag:GetHeight() / 2
+			if dy < 0 then y = y - dy end
+		elseif anchor == "bottom" then
+			local dy = UIheight - y - self.drag:GetHeight() / 2
+			if dy < 0 then y = y + dy end
 		end
 	end
 
@@ -1844,6 +1898,11 @@ local function drag_OnMouseDown(self, button)
 		cover:SetFrameLevel(bar:GetFrameLevel() + 10)
 		cover:SetAllPoints(bar)
 		cover:Show()
+		local x, y = GetCursorPosition()
+		local cx, cy = self:GetCenter()
+		local scale = bar:GetEffectiveScale()
+		bar.dx = cx - x / scale
+		bar.dy = cy - y / scale
 		bar:SetScript("OnUpdate", bar.dragBar)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
@@ -1852,6 +1911,7 @@ local function drag_OnMouseDown(self, button)
 		end
 		if IsShiftKeyDown() then
 			config:openConfig()
+			config:setBar(bar.barSettings)
 		end
 	end
 end
@@ -1862,6 +1922,8 @@ local function drag_OnMouseUp(self, button)
 	if button == "LeftButton" and bar.isDrag then
 		bar.isDrag = false
 		cover:Hide()
+		bar.dx = nil
+		bar.dy = nil
 		bar:SetScript("OnUpdate", nil)
 		if not bar.isMouse then
 			bar:leave()
