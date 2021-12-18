@@ -1111,6 +1111,64 @@ mbtnPostionCombobox:ddSetInitFunc(function(self)
 	end
 end)
 
+-- DIRECTION OF BUTTONS
+local buttonDirection = lsfdd:CreateStretchButton(main.buttonSettingsPanel, 150, 22)
+buttonDirection:SetPoint("LEFT", mbtnPostionCombobox, "RIGHT", 10, 0)
+buttonDirection:SetText(L["Direction of buttons"])
+
+buttonDirection:ddSetInitFunc(function(self, level)
+	local info = {}
+
+	local function setDirection(btn, ...)
+		main.barFrame:setButtonDirection(...)
+		main.barFrame:applyLayout()
+		main:applyLayout(.3)
+		main:hidingBarUpdate()
+		self:ddRefresh()
+	end
+
+	info.keepShownOnClick = true
+	info.isTitle = true
+	info.notCheckable = true
+	info.text = L["Horizontal"]
+	self:ddAddButton(info)
+
+	info.isTitle = nil
+	info.notCheckable = nil
+
+	for i, text in ipairs({L["Auto"], L["Right to left"], L["Left to right"]}) do
+		i = i - 1
+		info.text = text
+		info.arg1 = "H"
+		info.arg2 = i
+		info.checked = function() return main.bConfig.buttonDirection.H == i end
+		info.func = setDirection
+		self:ddAddButton(info)
+	end
+
+	self:ddAddSpace()
+
+	info.checked = nil
+	info.func = nil
+	info.isTitle = true
+	info.notCheckable = true
+	info.text = L["Vertical"]
+	self:ddAddButton(info)
+
+	info.isTitle = nil
+	info.notCheckable = nil
+
+	for i, text in ipairs({L["Auto"], L["Top to bottom"], L["Bottom to top"]}) do
+		i = i - 1
+		info.text = text
+		info.arg1 = "V"
+		info.arg2 = i
+		info.checked = function() return main.bConfig.buttonDirection.V == i end
+		info.func = setDirection
+		self:ddAddButton(info)
+	end
+end)
+
 -------------------------------------------
 -- POSITION BAR PANEL
 -------------------------------------------
@@ -1328,6 +1386,16 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.notCheckable = nil
 		info.isNotRadio = true
 		info.hasArrow = nil
+		info.text = DISABLE
+		info.checked = btn.settings[1]
+		info.func = function()
+			btn.settings[1] = not btn.settings[1]
+			btn:SetChecked(btn.settings[1])
+			main.barFrame:applyLayout()
+			main:hidingBarUpdate()
+		end
+		self:ddAddButton(info, level)
+
 		info.text = L["Clip button"]
 		info.checked = btn.settings[4]
 		info.func = function(_,_,_, checked)
@@ -1342,6 +1410,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.notCheckable = true
 		info.keepShownOnClick = nil
 		info.OnTooltipShow = nil
+		info.checked = nil
 
 		if btn.toIgnore then
 			info.text = L["Add to ignore list"]
@@ -1477,17 +1546,13 @@ function main:setProfile()
 			end
 		end
 
-		local function compare(o1, o2)
-			return (o1 and 1 or 0) ~= (o2 and 1 or 0)
-		end
-
 		if compareCustomGrabList
 		or self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
-		or compare(self.pConfig.grabDefMinimap, currentProfile.config.grabDefMinimap)
+		or not self.pConfig.grabDefMinimap ~= not currentProfile.config.grabDefMinimap
 		or self.pConfig.grabMinimap ~= currentProfile.config.grabMinimap
 		or self.pConfig.grabMinimap and
-			(compare(self.pConfig.grabMinimapWithoutName, currentProfile.config.grabMinimapWithoutName)
-			or compare(self.pConfig.grabMinimapAfter, currentProfile.config.grabMinimapAfter)
+			(not self.pConfig.grabMinimapWithoutName ~= not currentProfile.config.grabMinimapWithoutName
+			or not self.pConfig.grabMinimapAfter ~= not currentProfile.config.grabMinimapAfter
 			or self.pConfig.grabMinimapAfter and self.pConfig.grabMinimapAfterN ~= currentProfile.config.grabMinimapAfterN)
 		then
 			StaticPopup_Show(main.addonName.."GET_RELOAD")
@@ -1595,6 +1660,7 @@ function main:setBar(bar)
 		self.currentBar = bar
 		self.bConfig = self.currentBar.config
 		self.barFrame = hidingBar.barByName[self.currentBar.name]
+		self.direction = self.barFrame.direction
 		barCombobox:ddSetSelectedText(self.currentBar.name)
 
 		self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
@@ -1739,9 +1805,17 @@ end
 
 
 function main:dragBtn(btn)
-	local scale = btn:GetScale()
-	local x = btn:GetLeft() - (self.buttonPanel:GetLeft() + self.bConfig.barOffset) / scale
-	local y = (self.buttonPanel:GetTop() - self.bConfig.barOffset) / scale - btn:GetTop()
+	local scale, x, y = btn:GetScale()
+	if self.direction.V == "BOTTOM" then
+		y = btn:GetBottom() - (self.buttonPanel:GetBottom() + self.bConfig.barOffset) / scale
+	else
+		y = (self.buttonPanel:GetTop() - self.bConfig.barOffset) / scale - btn:GetTop()
+	end
+	if self.direction.H == "RIGHT" then
+		x = (self.buttonPanel:GetRight() - self.bConfig.barOffset) / scale - btn:GetRight()
+	else
+		x = btn:GetLeft() - (self.buttonPanel:GetLeft() + self.bConfig.barOffset) / scale
+	end
 	if self.orientation then x, y = y, x end
 	local buttonSize = (self.bConfig.buttonSize + self.bConfig.rangeBetweenBtns) / scale
 	local row, column = math.floor(y / buttonSize + .5), math.floor(x / buttonSize + .5) + 1
@@ -1797,6 +1871,10 @@ function main:dragStop(btn)
 	btn:SetScript("OnUpdate", nil)
 	btn:StopMovingOrSizing()
 	self:setPointBtn(btn, btn.settings[2] + btn.orderDelta, .3)
+	btn.orderDelta = nil
+	btn.maxColumn = nil
+	btn.minRow = nil
+	btn.maxRow = nil
 	self:sort(btn.defBtnList)
 	self:sort(self.mixedButtons)
 	self:applyLayout()
@@ -2008,11 +2086,18 @@ end
 local function setPosAnimated(btn, elapsed)
 	btn.timer = btn.timer - elapsed
 	if btn.timer <= 0 then
-		btn:SetPoint("TOPLEFT", btn.x, btn.y)
+		btn:SetPoint(main.direction.rPoint, btn.x, btn.y)
 		btn:SetScript("OnUpdate", nil)
 	else
+		local scale = btn:GetScale()
+		local deltaY = main.direction.V == "BOTTOM"
+			and btn.deltaY + btn:GetHeight() - main.buttonPanel:GetHeight() / scale
+			or btn.deltaY
+		local deltaX = main.direction.H == "RIGHT"
+			and btn.deltaX + main.buttonPanel:GetWidth() / scale - btn:GetWidth()
+			or btn.deltaX
 		local k = btn.timer / btn.delay
-		btn:SetPoint("TOPLEFT", btn.x - btn.deltaX * k, btn.y - btn.deltaY * k)
+		btn:SetPoint(main.direction.rPoint, btn.x - deltaX * k, btn.y - deltaY * k)
 	end
 end
 
@@ -2025,6 +2110,8 @@ function main:setPointBtn(btn, order, delay)
 	btn.x = (order % self.bConfig.size * buttonSize + self.bConfig.barOffset) / scale
 	btn.y = (-math.floor(order / self.bConfig.size) * buttonSize - self.bConfig.barOffset) / scale
 	if self.orientation then btn.x, btn.y = -btn.y, -btn.x end
+	if self.direction.V == "BOTTOM" then btn.y = -btn.y end
+	if self.direction.H == "RIGHT" then btn.x = -btn.x end
 
 	if delay and btn:IsVisible() then
 		btn.timer = delay
@@ -2035,7 +2122,7 @@ function main:setPointBtn(btn, order, delay)
 		btn:SetScript("OnUpdate", setPosAnimated)
 	else
 		btn:ClearAllPoints()
-		btn:SetPoint("TOPLEFT", btn.x, btn.y)
+		btn:SetPoint(self.direction.rPoint, btn.x, btn.y)
 	end
 end
 

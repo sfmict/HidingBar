@@ -1,3 +1,4 @@
 # HidingBar - Burning Crusade
 
-* Fixed button scaling.
+* Hiding when clicking on a free space.
+* Added "Direction of buttons" option.
