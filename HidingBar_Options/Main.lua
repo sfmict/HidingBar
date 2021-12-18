@@ -1386,6 +1386,16 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.notCheckable = nil
 		info.isNotRadio = true
 		info.hasArrow = nil
+		info.text = DISABLE
+		info.checked = btn.settings[1]
+		info.func = function()
+			btn.settings[1] = not btn.settings[1]
+			btn:SetChecked(btn.settings[1])
+			main.barFrame:applyLayout()
+			main:hidingBarUpdate()
+		end
+		self:ddAddButton(info, level)
+
 		info.text = L["Clip button"]
 		info.checked = btn.settings[4]
 		info.func = function(_,_,_, checked)
@@ -1400,6 +1410,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.notCheckable = true
 		info.keepShownOnClick = nil
 		info.OnTooltipShow = nil
+		info.checked = nil
 
 		if btn.toIgnore then
 			info.text = L["Add to ignore list"]
@@ -1535,17 +1546,13 @@ function main:setProfile()
 			end
 		end
 
-		local function compare(o1, o2)
-			return (o1 and 1 or 0) ~= (o2 and 1 or 0)
-		end
-
 		if compareCustomGrabList
 		or self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
-		or compare(self.pConfig.grabDefMinimap, currentProfile.config.grabDefMinimap)
+		or not self.pConfig.grabDefMinimap ~= not currentProfile.config.grabDefMinimap
 		or self.pConfig.grabMinimap ~= currentProfile.config.grabMinimap
 		or self.pConfig.grabMinimap and
-			(compare(self.pConfig.grabMinimapWithoutName, currentProfile.config.grabMinimapWithoutName)
-			or compare(self.pConfig.grabMinimapAfter, currentProfile.config.grabMinimapAfter)
+			(not self.pConfig.grabMinimapWithoutName ~= not currentProfile.config.grabMinimapWithoutName
+			or not self.pConfig.grabMinimapAfter ~= not currentProfile.config.grabMinimapAfter
 			or self.pConfig.grabMinimapAfter and self.pConfig.grabMinimapAfterN ~= currentProfile.config.grabMinimapAfterN)
 		then
 			StaticPopup_Show(main.addonName.."GET_RELOAD")
@@ -1864,6 +1871,10 @@ function main:dragStop(btn)
 	btn:SetScript("OnUpdate", nil)
 	btn:StopMovingOrSizing()
 	self:setPointBtn(btn, btn.settings[2] + btn.orderDelta, .3)
+	btn.orderDelta = nil
+	btn.maxColumn = nil
+	btn.minRow = nil
+	btn.maxRow = nil
 	self:sort(btn.defBtnList)
 	self:sort(self.mixedButtons)
 	self:applyLayout()
