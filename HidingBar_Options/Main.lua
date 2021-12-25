@@ -4,7 +4,7 @@ main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
 main.noIcon:Hide()
 main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
-local lsfdd = LibStub("LibSFDropDown-1.1")
+local lsfdd = LibStub("LibSFDropDown-1.2")
 
 
 main.optionsPanelBackdrop = {

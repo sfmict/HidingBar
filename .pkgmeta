@@ -20,6 +20,9 @@ ignore:
 	- HidingBar/libs/LibStub/tests
 	- HidingBar/libs/LibDataBroker-1.1/README.textile
 	- HidingBar/libs/LibDBIcon-1.0/lib.xml
+	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown.toc
+	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown_TBC.toc
+	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown_Vanilla.toc
 
 move-folders:
 	HidingBar/HidingBar: HidingBar
