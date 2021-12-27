@@ -23,6 +23,7 @@ ignore:
 	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown.toc
 	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown_TBC.toc
 	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown_Vanilla.toc
+	- HidingBar_Options/libs/LibSFDropDown/CHANGELOG.md
 
 move-folders:
 	HidingBar/HidingBar: HidingBar
