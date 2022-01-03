@@ -4,7 +4,7 @@ main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
 main.noIcon:Hide()
 main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
-local lsfdd = LibStub("LibSFDropDown-1.2")
+local lsfdd = LibStub("LibSFDropDown-1.3")
 
 
 main.optionsPanelBackdrop = {
@@ -917,10 +917,11 @@ end)
 -- FADE OPACITY
 main.fadeOpacity = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
 main.fadeOpacity:SetPoint("LEFT", main.fade.Text, "RIGHT", 20, 0)
-main.fadeOpacity:SetPoint("RIGHT", -30, 0)
+main.fadeOpacity:SetPoint("RIGHT", -49, 0)
 main.fadeOpacity:SetMinMaxValues(0, .95)
 main.fadeOpacity.step = 1 / .05
 main.fadeOpacity.text:SetText(L["Opacity"])
+main.fadeOpacity.edit:SetMaxLetters(4)
 main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value * slider.step + .5) / slider.step
@@ -931,8 +932,9 @@ end)
 -- LINE WIDTH
 main.lineWidth = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
 main.lineWidth:SetPoint("TOPLEFT", main.fade, "BOTTOMLEFT", 0, -15)
-main.lineWidth:SetPoint("RIGHT", -30, 0)
+main.lineWidth:SetPoint("RIGHT", -35, 0)
 main.lineWidth:SetMinMaxValues(4, 20)
+main.lineWidth.edit:SetMaxLetters(2)
 main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
@@ -1015,9 +1017,10 @@ main.buttonSettingsPanel =  createTabPanel(barSettingsTabs, L["Button settings"]
 -- SLIDER NUMBER BUTTONS IN ROW
 local buttonNumber = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
 buttonNumber:SetPoint("TOPLEFT", 8, -20)
-buttonNumber:SetPoint("RIGHT", -30, 0)
+buttonNumber:SetPoint("RIGHT", -35, 0)
 buttonNumber:SetMinMaxValues(1, 30)
 buttonNumber.text:SetText(L["Number of buttons"])
+buttonNumber.edit:SetMaxLetters(2)
 buttonNumber:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
@@ -1032,10 +1035,10 @@ end)
 -- SLIDER BUTTONS SIZE
 local buttonSize = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
 buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -18)
-buttonSize:SetPoint("RIGHT", -30, 0)
-buttonSize:SetPoint("RIGHT", -30, 0)
+buttonSize:SetPoint("RIGHT", -35, 0)
 buttonSize:SetMinMaxValues(16, 64)
 buttonSize.text:SetText(L["Buttons Size"])
+buttonSize.edit:SetMaxLetters(2)
 buttonSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
@@ -1051,10 +1054,10 @@ end)
 -- SLIDER DISTANCE TO BAR BORDER
 local barOffset =  CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
 barOffset:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -18)
-barOffset:SetPoint("RIGHT", -30, 0)
-barOffset:SetPoint("RIGHT", -30, 0)
+barOffset:SetPoint("RIGHT", -35, 0)
 barOffset:SetMinMaxValues(0, 20)
 barOffset.text:SetText(L["Distance to bar border"])
+barOffset.edit:SetMaxLetters(2)
 barOffset:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
@@ -1069,10 +1072,10 @@ end)
 -- SLIDER DISTANCE BETWEEN BUTTONS
 local rangeBetweenBtns = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
 rangeBetweenBtns:SetPoint("TOPLEFT", barOffset, "BOTTOMLEFT", 0, -18)
-rangeBetweenBtns:SetPoint("RIGHT", -30, 0)
-rangeBetweenBtns:SetPoint("RIGHT", -30, 0)
+rangeBetweenBtns:SetPoint("RIGHT", -35, 0)
 rangeBetweenBtns:SetMinMaxValues(-5, 30)
 rangeBetweenBtns.text:SetText(L["Distance between buttons"])
+rangeBetweenBtns.edit:SetMaxLetters(2)
 rangeBetweenBtns:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
@@ -1354,9 +1357,10 @@ end)
 -- SLIDER MINIMAP BUTTON SIZE
 main.ombSize = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
 main.ombSize:SetPoint("LEFT", main.ombShowToCombobox, "RIGHT", 10, 0)
-main.ombSize:SetPoint("RIGHT", -30, 0)
+main.ombSize:SetPoint("RIGHT", -35, 0)
 main.ombSize:SetMinMaxValues(16, 64)
 main.ombSize.text:SetText(L["Button Size"])
+main.ombSize.edit:SetMaxLetters(2)
 main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
