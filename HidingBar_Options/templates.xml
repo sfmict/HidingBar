@@ -186,25 +186,56 @@
 						<Anchor point="BOTTOM" relativePoint="TOP"/>
 					</Anchors>
 				</FontString>
-				<FontString parentKey="label" inherits="GameFontHighlightSmall">
-					<Anchors>
-						<Anchor point="LEFT" relativePoint="RIGHT" x="2" y="1"/>
-					</Anchors>
-				</FontString>
 			</Layer>
 		</Layers>
+		<Frames>
+			<EditBox parentKey="edit" inherits="HidingBarAddonEditBoxTemplate">
+				<Size x="26" y="17"/>
+				<Anchors>
+					<Anchor point="LEFT" relativePoint="RIGHT" x="3" y="1"/>
+				</Anchors>
+				<Scripts>
+					<OnLoad inherit="prepend">
+						hooksecurefunc(self, "SetMaxLetters", function(self, value)
+							self:SetWidth(value * 7 + 7)
+						end)
+					</OnLoad>
+					<OnTextChanged>
+						if userInput then
+							local int, dec = self:GetText():gsub(",", "."):match("(%-?%d*)(%.?%d*)")
+							if int == "" and dec ~= "" then int = "0" end
+							self:SetText(int..dec)
+						end
+					</OnTextChanged>
+					<OnEnterPressed>
+						local slider = self:GetParent()
+						local value = tonumber(self:GetText()) or 0
+						local min, max = slider:GetMinMaxValues()
+						if min > value then value = min
+						elseif value > max then value = max end
+						slider:GetScript("OnValueChanged")(slider, value, true)
+						self:ClearFocus()
+					</OnEnterPressed>
+					<OnEditFocusLost>
+						local slider = self:GetParent()
+						local step = slider.step or 1
+						self:SetNumber(math.floor(slider:GetValue() * step + .5) / step)
+					</OnEditFocusLost>
+				</Scripts>
+			</EditBox>
+		</Frames>
 		<Scripts>
 			<OnLoad inherit="prepend">
 				hooksecurefunc(self, "SetValue", function(self, value)
-					self.label:SetText(value)
+					self.edit:SetText(value)
 				end)
 			</OnLoad>
 			<OnDisable>
-				self.label:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
+				self.edit:Disable()
 				self.text:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
 			</OnDisable>
 			<OnEnable>
-				self.label:SetVertexColor(HIGHLIGHT_FONT_COLOR:GetRGB())
+				self.edit:Enable()
 				self.text:SetVertexColor(NORMAL_FONT_COLOR:GetRGB())
 			</OnEnable>
 		</Scripts>
