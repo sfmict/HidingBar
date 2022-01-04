@@ -492,6 +492,8 @@ function hidingBar:init()
 		if self:ignoreCheck("MiniMapTracking") then
 			local MiniMapTracking = MiniMapTracking
 			local icon = MiniMapTrackingIcon
+			icon:ClearAllPoints()
+			icon:SetPoint("CENTER")
 			hooksecurefunc(icon, "SetPoint", function(icon)
 				icon:ClearAllPoints()
 				self.SetPoint(icon, "CENTER")
