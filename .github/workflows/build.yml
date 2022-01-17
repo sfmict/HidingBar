@@ -16,11 +16,20 @@ jobs:
     - name: download tools
       uses: actions/checkout@v2
       with:
-        repository: sfmict/my-tools
+        repository: sfmict/js_packager
         token: ${{ secrets.OAUTH }}
         path: my-tools
 
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+
+    - name: install packages
+      run: cd "my-tools" && npm install
+
     - name: files
-      run: bash my-tools/release.sh
+      run: node my-tools/packager.js
       env:
         GITHUB_OAUTH: ${{ secrets.OAUTH }}
+        CF_API_KEY: ${{ secrets.CF_API_KEY }}
+        CF_ID: 369265
