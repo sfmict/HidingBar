@@ -28,6 +28,7 @@ local ignoreFrameList = {
 	["MiniMapMailFrame"] = true,
 	["MiniMapTrackingFrame"] = true,
 	["MiniMapBattlefieldFrame"] = true,
+	["MiniMapLFGFrame"] = true,
 }
 
 
