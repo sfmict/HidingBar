@@ -454,6 +454,59 @@ function hidingBar:init()
 	end
 
 	if self.pConfig.grabDefMinimap then
+		-- TRACKING BUTTON
+		if self:ignoreCheck("HidingBarAddonTracking") then
+			local proxyTracking = CreateFrame("BUTTON", "HidingBarAddonTracking")
+			local tracking = MiniMapTrackingFrame
+			proxyTracking.show = tracking:IsShown()
+			self:setHooks(tracking)
+			tracking:Hide()
+			proxyTracking:SetSize(tracking:GetSize())
+			proxyTracking.icon = MiniMapTrackingIcon
+			proxyTracking.icon:SetParent(proxyTracking)
+			for i = 1, proxyTracking.icon:GetNumPoints() do
+				local point, _, rPoint, x, y = proxyTracking.icon:GetPoint(i)
+				proxyTracking.icon:SetPoint(point, proxyTracking, rPoint, x, y)
+			end
+			proxyTracking.icon:SetTexture(132328)
+			proxyTracking.border = MiniMapTrackingBorder
+			proxyTracking.border:SetParent(proxyTracking)
+			for i = 1, proxyTracking.border:GetNumPoints() do
+				local point, _, rPoint, x, y = proxyTracking.border:GetPoint(i)
+				proxyTracking.border:SetPoint(point, proxyTracking, rPoint, x, y)
+			end
+			proxyTracking:SetScript("OnMouseUp", tracking:GetScript("OnMouseUp"))
+			proxyTracking:SetScript("OnEnter", tracking:GetScript("OnEnter"))
+			proxyTracking:SetScript("OnLeave", tracking:GetScript("OnLeave"))
+
+			tracking.Show = function()
+				if not proxyTracking.show then
+					proxyTracking.show = true
+					proxyTracking:GetParent():applyLayout()
+				end
+			end
+			tracking.Hide = function()
+				if proxyTracking.show then
+					proxyTracking.show = false
+					proxyTracking:GetParent():applyLayout()
+				end
+			end
+			proxyTracking.IsShown = function(proxyTracking)
+				local show = proxyTracking.show and not btnSettings[proxyTracking][1]
+				self.SetShown(proxyTracking, show)
+				return show
+			end
+
+			if self.MSQ_MButton then
+				self:setMButtonRegions(proxyTracking)
+			end
+
+			proxyTracking:HookScript("OnEnter", enter)
+			proxyTracking:HookScript("OnLeave", leave)
+			tinsert(self.minimapButtons, proxyTracking)
+			tinsert(self.mixedButtons, proxyTracking)
+		end
+
 		-- MINIMAP LFG FRAME
 		if self:ignoreCheck("MiniMapLFGFrame") then
 			local LFGFrame = MiniMapLFGFrame
