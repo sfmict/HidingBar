@@ -1034,7 +1034,7 @@ end
 
 function hidingBar:addMButton(button, force, MSQ_Group)
 	local name = button:GetName()
-	if not ignoreFrameList[name] and self:ignoreCheck(name) then
+	if not ignoreFrameList[name] and self:ignoreCheck(name) or force then
 		if button:HasScript("OnClick") and button:GetScript("OnClick")
 		or button:HasScript("OnMouseUp") and button:GetScript("OnMouseUp")
 		or button:HasScript("OnMouseDown") and button:GetScript("OnMouseDown")
