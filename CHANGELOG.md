@@ -1,4 +1,3 @@
 # HidingBar
 
-* Updated options with slider.
-* Updated deDE translation.
+* Fixed error that occurred when selecting a newly created bar
