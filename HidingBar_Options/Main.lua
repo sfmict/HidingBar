@@ -1608,6 +1608,7 @@ function main:createBar()
 			local bar = {name = text}
 			tinsert(self.currentProfile.bars, bar)
 			hidingBar:checkProfile(self.currentProfile)
+			hidingBar:updateBars()
 			sort(self.currentProfile.bars, function(a, b) return a.name < b.name end)
 		end
 	end)
