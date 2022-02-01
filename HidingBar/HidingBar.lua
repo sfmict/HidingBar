@@ -4,7 +4,6 @@ local hidingBar = CreateFrame("FRAME", addon.."Addon")
 local cover = CreateFrame("FRAME")
 cover:Hide()
 cover:EnableMouse(true)
-local fTimer = CreateFrame("FRAME")
 local btnSettingsMeta = {__index = function(self, key)
 	self[key] = {tstmp = 0}
 	return self[key]
@@ -453,6 +452,11 @@ function hidingBar:init()
 	for i = 1, #self.pConfig.customGrabList do
 		self:addCustomGrabButton(self.pConfig.customGrabList[i])
 	end
+	C_Timer.After(1, function()
+		for i = 1, #self.pConfig.customGrabList do
+			self:addCustomGrabButton(self.pConfig.customGrabList[i])
+		end
+	end)
 
 	if self.pConfig.grabDefMinimap then
 		-- TRACKING BUTTON
@@ -1883,26 +1887,27 @@ function hidingBarDragMixin:showOnClick()
 end
 
 
-function hidingBarDragMixin:showBarDelay(elapsed)
-	self.timer = self.timer - elapsed
-	if self.timer <= 0 then
-		self:SetScript("OnUpdate", nil)
-		self.bar:enter()
-	end
-end
-
-
-function hidingBarDragMixin:showOnHoverWithDelay()
-	local bar = self.bar
-	if bar:IsShown() or bar.config.showDelay == 0 then
-		bar:enter()
-	else
-		if self:IsShown() and bar.config.fade then
-			UIFrameFadeOut(self, bar.config.showDelay, self:GetAlpha(), 1)
+do
+	local function showBarDelay(hidingBar, elapsed)
+		hidingBar.timer = hidingBar.timer - elapsed
+		if hidingBar.timer <= 0 then
+			hidingBar:SetScript("OnUpdate", nil)
+			hidingBar.tBar:enter()
 		end
-		fTimer.bar = bar
-		fTimer.timer = bar.config.showDelay
-		fTimer:SetScript("OnUpdate", self.showBarDelay)
+	end
+
+	function hidingBarDragMixin:showOnHoverWithDelay()
+		local bar = self.bar
+		if bar:IsShown() or bar.config.showDelay == 0 then
+			bar:enter()
+		else
+			if self:IsShown() and bar.config.fade then
+				UIFrameFadeOut(self, bar.config.showDelay, self:GetAlpha(), 1)
+			end
+			hidingBar.tBar = bar
+			hidingBar.timer = bar.config.showDelay
+			hidingBar:SetScript("OnUpdate", showBarDelay)
+		end
 	end
 end
 
@@ -1987,7 +1992,7 @@ end
 
 
 local function drag_OnLeave(self)
-	fTimer:SetScript("OnUpdate", nil)
+	hidingBar:SetScript("OnUpdate", nil)
 	local bar = self.bar
 	if bar.config.fade and not bar:IsShown() and self:IsShown() then
 		UIFrameFadeOut(self, bar.config.showDelay, self:GetAlpha(), bar.config.fadeOpacity)
