@@ -941,7 +941,7 @@ end
 
 function hidingBar:addCustomGrabButton(name)
 	local button = _G[name]
-	if button then
+	if button and type(button[0]) == "userdata" then
 		for j = 1, #self.minimapButtons do
 			if button == self.minimapButtons[j] then
 				return
