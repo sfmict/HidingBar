@@ -1,4 +1,4 @@
-local main, hidingBar = HidingBarConfigAddon, HidingBarAddon
+local main, hb = HidingBarConfigAddon, HidingBarAddon
 local addon, L = main.name, main.L
 main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
@@ -228,20 +228,21 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 		end
 
 		local function selectProfile(btn)
-			hidingBar:setProfile(btn.value)
+			hb:hideGrabbedOwnButtons()
+			hb:setProfile(btn.value)
 			main:setProfile()
 		end
 
-		local profileName = hidingBar.charDB.currentProfileName
+		local profileName = hb.charDB.currentProfileName
 		info.list = {}
-		for i, profile in ipairs(hidingBar.profiles) do
+		for i, profile in ipairs(hb.profiles) do
 			local subInfo = {
 				text = profile.isDefault and profile.name.." "..DARKGRAY_COLOR:WrapTextInColorCode(DEFAULT) or profile.name,
 				value = profile.name,
 				checked = profile.name == main.currentProfile.name,
 				func = selectProfile,
 			}
-			if #hidingBar.profiles > 1 then
+			if #hb.profiles > 1 then
 				subInfo.remove = removeProfile
 			end
 			tinsert(info.list, subInfo)
@@ -262,7 +263,7 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 			info.hasArrow = nil
 			info.text = L["Set as default"]
 			info.func = function()
-				for _, profile in ipairs(hidingBar.profiles) do
+				for _, profile in ipairs(hb.profiles) do
 					profile.isDefault = nil
 				end
 				main.currentProfile.isDefault = true
@@ -416,7 +417,7 @@ barCombobox:ddSetInitFunc(function(self)
 				bar.isDefault = nil
 			end
 			main.currentBar.isDefault = true
-			hidingBar:updateBars()
+			hb:updateBars()
 			main:setBar(main.currentBar)
 		end
 		self:ddAddButton(info)
@@ -663,8 +664,8 @@ main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
 				if name:match(ignoredNames[i]) then return end
 			end
 
-			for i = 1, #hidingBar.bars do
-				local bar = hidingBar.bars[i]
+			for i = 1, #hb.bars do
+				local bar = hb.bars[i]
 				if bar:IsShown() and bar:IsMouseOver() then return end
 			end
 
@@ -898,7 +899,7 @@ lock:SetScript("OnClick", function(btn)
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 	main.barFrame:setLocked(checked)
 end)
-hidingBar:on("LOCK_UPDATED", function(_, isLocked, bar)
+hb:on("LOCK_UPDATED", function(_, isLocked, bar)
 	if main.barFrame == bar then
 		lock:SetChecked(isLocked)
 	end
@@ -1238,7 +1239,7 @@ main.hideToCombobox:ddSetInitFunc(function(self)
 		self:ddAddButton(info)
 	end
 end)
-hidingBar:on("ANCHOR_UPDATED", function(_, value, bar)
+hb:on("ANCHOR_UPDATED", function(_, value, bar)
 	if main.barFrame == bar then
 		main.hideToCombobox:ddSetSelectedValue(value)
 		main.hideToCombobox:ddSetSelectedText(main.hideToCombobox.texts[value])
@@ -1404,7 +1405,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.checked = btn.settings[4]
 		info.func = function(_,_,_, checked)
 			btn.settings[4] = checked and true or nil
-			hidingBar:setClipButtons()
+			hb:setClipButtons()
 		end
 		info.OnTooltipShow = function(_, tooltip)
 			tooltip:AddLine(L["Prevents button elements from going over the edges."], nil, nil, nil, true)
@@ -1430,38 +1431,43 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.func = function() self:ddCloseMenus() end
 		self:ddAddButton(info, level)
 	else
-		if #main.currentProfile.bars > 1 then
-			info.list = {}
+		info.list = {}
 
-			local function moveTo(menu)
-				local bar = menu.value
-				if bar.isDefault then
-					btn.settings[3] = nil
-				else
-					btn.settings[3] = bar.name
-				end
-				hidingBar:updateBars()
-				main:hidingBarUpdate()
-				main:setBar(main.currentBar)
+		local function moveTo(menu)
+			local bar = menu.value
+			if bar.isDefault then
+				btn.settings[3] = nil
+			else
+				btn.settings[3] = bar.name
 			end
-
-			for _, bar in ipairs(main.currentProfile.bars) do
-				if bar ~= main.currentBar then
-					tinsert(info.list, {
-						notCheckable = true,
-						text = bar.name,
-						value = bar,
-						func = moveTo
-					})
-				end
-			end
-			self:ddAddButton(info, level)
-		else
-			info.notCheckable = true
-			info.disabled = true
-			info.text = EMPTY
-			self:ddAddButton(info, level)
+			hb:updateBars()
+			main:hidingBarUpdate()
+			main:setBar(main.currentBar)
 		end
+
+		for i, bar in ipairs(main.currentProfile.bars) do
+			if bar ~= main.currentBar
+			and not (btn.name:match(hb.matchName)
+				and hb:isBarParent(btn.button, hb.barByName[bar.name]))
+			then
+				tinsert(info.list, {
+					notCheckable = true,
+					text = bar.name,
+					value = bar,
+					func = moveTo
+				})
+			end
+		end
+
+		if #info.list == 0 then
+			info.list[1] = {
+				notCheckable = true,
+				disabled = true,
+				text = EMPTY,
+			}
+		end
+
+		self:ddAddButton(info, level)
 	end
 end)
 
@@ -1480,7 +1486,7 @@ function main:createProfile(copy)
 	local dialog = StaticPopup_Show(self.addonName.."NEW_PROFILE", nil, nil, function(popup)
 		local text = popup.editBox:GetText()
 		if text and text ~= "" then
-			for _, profile in ipairs(hidingBar.profiles) do
+			for _, profile in ipairs(hb.profiles) do
 				if profile.name == text then
 					main.lastProfileName = text
 					StaticPopup_Show(self.addonName.."PROFILE_EXISTS", nil, nil, copy)
@@ -1490,10 +1496,10 @@ function main:createProfile(copy)
 			local profile = copy and copyTable(main.currentProfile) or {}
 			profile.name = text
 			profile.isDefault = nil
-			hidingBar:checkProfile(profile)
-			tinsert(hidingBar.profiles, profile)
-			sort(hidingBar.profiles, function(a, b) return a.name < b.name end)
-			hidingBar:setProfile(text)
+			hb:checkProfile(profile)
+			tinsert(hb.profiles, profile)
+			sort(hb.profiles, function(a, b) return a.name < b.name end)
+			hb:setProfile(text)
 			main:setProfile()
 		end
 	end)
@@ -1507,17 +1513,17 @@ end
 
 function main:removeProfile(profileName)
 	StaticPopup_Show(main.addonName.."DELETE_PROFILE", NORMAL_FONT_COLOR:WrapTextInColorCode(profileName), nil, function()
-		for i, profile in ipairs(hidingBar.profiles) do
+		for i, profile in ipairs(hb.profiles) do
 			if profile.name == profileName then
-				tremove(hidingBar.profiles, i)
+				tremove(hb.profiles, i)
 				if profile.isDefault then
-					hidingBar.profiles[1].isDefault = true
+					hb.profiles[1].isDefault = true
 				end
 				break
 			end
 		end
 		if self.currentProfile.name == profileName then
-			hidingBar:setProfile()
+			hb:setProfile()
 			self:setProfile()
 		end
 	end)
@@ -1525,9 +1531,9 @@ end
 
 
 function main:setProfile()
-	local currentProfileName, currentProfile, default = hidingBar.charDB.currentProfileName
+	local currentProfileName, currentProfile, default = hb.charDB.currentProfileName
 
-	for _, profile in ipairs(hidingBar.profiles) do
+	for _, profile in ipairs(hb.profiles) do
 		if profile.name == currentProfileName then
 			currentProfile = profile
 			break
@@ -1544,7 +1550,7 @@ function main:setProfile()
 			compareCustomGrabList = true
 		else
 			for i, name in ipairs(self.pConfig.customGrabList) do
-				if name ~= currentProfile.config.customGrabList[i] then
+				if name:match(hb.matchName) or name ~= currentProfile.config.customGrabList[i] then
 					compareCustomGrabList = true
 				end
 			end
@@ -1607,8 +1613,8 @@ function main:createBar()
 			end
 			local bar = {name = text}
 			tinsert(self.currentProfile.bars, bar)
-			hidingBar:checkProfile(self.currentProfile)
-			hidingBar:updateBars()
+			hb:checkProfile(self.currentProfile)
+			hb:updateBars()
 			sort(self.currentProfile.bars, function(a, b) return a.name < b.name end)
 		end
 	end)
@@ -1641,7 +1647,12 @@ function main:removeBar(barName)
 				settings[3] = nil
 			end
 		end
-		hidingBar:updateBars()
+		local oldNumButtons = #hb.minimapButtons
+		hb:hideGrabbedOwnButtons()
+		if oldNumButtons ~= #hb.minimapButtons then
+			StaticPopup_Show(main.addonName.."GET_RELOAD")
+		end
+		hb:updateBars()
 		if self.currentBar.name == barName then
 			self:setBar()
 		else
@@ -1664,7 +1675,7 @@ function main:setBar(bar)
 	if self.currentBar ~= bar then
 		self.currentBar = bar
 		self.bConfig = self.currentBar.config
-		self.barFrame = hidingBar.barByName[self.currentBar.name]
+		self.barFrame = hb.barByName[self.currentBar.name]
 		self.direction = self.barFrame.direction
 		barCombobox:ddSetSelectedText(self.currentBar.name)
 
@@ -1732,7 +1743,7 @@ function main:updateCoords()
 	self.coordX:SetNumber(math.floor(x + .5))
 	self.coordY:SetNumber(math.floor(y + .5))
 end
-hidingBar:on("COORDS_UPDATED", function(_, bar)
+hb:on("COORDS_UPDATED", function(_, bar)
 	if main.barFrame == bar then
 		main:updateCoords()
 	end
@@ -1774,11 +1785,28 @@ function main:addCustomGrabName(name)
 		tinsert(self.pConfig.customGrabList, name)
 		sort(self.pConfig.customGrabList)
 		self.customGrabScroll:update()
-		if hidingBar:addCustomGrabButton(name) then
-			local btn = _G[name]
-			hidingBar:setMBtnSettings(btn)
-			hidingBar:setBtnParent(btn)
-			hidingBar:sort()
+
+		local btn = _G[name]
+		if not btn then return end
+
+		if name:match(hb.matchName) then
+			local btnData = self.pConfig.mbtnSettings[name]
+			local bar = hb.barByName[btnData[3]] or hb.defaultBar
+			if hb:isBarParent(btn, bar) then
+				for i = 1, #self.currentProfile.bars do
+					local barName = self.currentProfile.bars[i].name
+					if not hb:isBarParent(btn, hb.barByName[barName]) then
+						btnData[3] = barName
+						break
+					end
+				end
+			end
+		end
+
+		if hb:addCustomGrabButton(name) then
+			hb:setMBtnSettings(btn)
+			hb:setBtnParent(btn)
+			hb:sort()
 			btn:GetParent():setButtonSize()
 			self:initMButtons(true)
 		end
@@ -1802,7 +1830,7 @@ end
 
 
 function main:hidingBarUpdate()
-	for _, bar in ipairs(hidingBar.bars) do
+	for _, bar in ipairs(hb.bars) do
 		bar:enter()
 		bar:leave(math.max(1.5, bar.config.hideDelay))
 	end
@@ -1883,7 +1911,7 @@ function main:dragStop(btn)
 	self:sort(btn.defBtnList)
 	self:sort(self.mixedButtons)
 	self:applyLayout()
-	hidingBar:sort()
+	hb:sort()
 	self.barFrame:applyLayout()
 	self:hidingBarUpdate()
 end
@@ -1967,7 +1995,7 @@ do
 			self:applyLayout()
 		end
 	end
-	hidingBar:on("BUTTON_ADDED", function(_, ...) main:createButton(...) end)
+	hb:on("BUTTON_ADDED", function(_, ...) main:createButton(...) end)
 end
 
 
@@ -2004,9 +2032,10 @@ do
 		GameTooltip:Show()
 	end
 
-	function main:createMButton(name, icon, update)
+	function main:createMButton(button, name, icon, update)
 		if not self.buttonPanel or type(name) ~= "string" or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
+		btn.button = button
 		btn.name = name
 		btn.title = name:gsub("LibDBIcon10_", "")
 		local atlas = icon:GetAtlas()
@@ -2039,19 +2068,19 @@ do
 			self:applyLayout()
 		end
 	end
-	hidingBar:on("MBUTTON_ADDED", function(_, ...) main:createMButton(...) end)
+	hb:on("MBUTTON_ADDED", function(_, ...) main:createMButton(...) end)
 end
 
 
 function main:initButtons()
-	for _, button in ipairs(hidingBar.createdButtons) do
+	for _, button in ipairs(hb.createdButtons) do
 		self:createButton(button.name, button)
 	end
 end
 
 
 function main:initMButtons(update)
-	for _, button in ipairs(hidingBar.minimapButtons) do
+	for _, button in ipairs(hb.minimapButtons) do
 		local name = button:GetName()
 		if name then
 			local icon = button.icon
@@ -2067,11 +2096,11 @@ function main:initMButtons(update)
 			if not icon or not icon.GetTexture then
 				icon = self.noIcon
 			end
-			self:createMButton(name, icon, update)
+			self:createMButton(button, name, icon, update)
 		end
 	end
 end
-hidingBar:on("MBUTTONS_UPDATED", function() main:initButtons(true) end)
+hb:on("MBUTTONS_UPDATED", function() main:initMButtons(true) end)
 
 
 function main:setButtonSize()
@@ -2185,11 +2214,11 @@ do
 		main:initButtons()
 		main:initMButtons()
 		main:setProfile()
-		hidingBar.off(main, "INIT")
+		hb.off(main, "INIT")
 	end
 
-	if hidingBar.init then
-		hidingBar.on(main, "INIT", init)
+	if hb.init then
+		hb.on(main, "INIT", init)
 	else
 		init()
 	end
