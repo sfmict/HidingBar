@@ -11,6 +11,7 @@ end}
 local createdButtonsByName, btnSettings = {}, {}
 hb.matchName = "LibDBIcon10_"..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
+hb.manuallyButtons = {}
 hb.bars, hb.barByName = {}, {}
 hb.cb = LibStub("CallbackHandler-1.0"):New(hb, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
@@ -456,7 +457,9 @@ function hb:init()
 	local notGrabbed = {}
 	for i = 1, #self.pConfig.customGrabList do
 		local name = self.pConfig.customGrabList[i]
-		if not self:addCustomGrabButton(name) then
+		if self:addCustomGrabButton(name) then
+			hb.manuallyButtons[_G[name]] = true
+		else
 			tinsert(notGrabbed, name)
 		end
 	end
@@ -464,7 +467,10 @@ function hb:init()
 		C_Timer.After(0, function()
 			local oldNumButtons = #self.minimapButtons
 			for i = 1, #notGrabbed do
-				self:addCustomGrabButton(notGrabbed[i])
+				local name = notGrabbed[i]
+				if self:addCustomGrabButton(name) then
+					hb.manuallyButtons[_G[name]] = true
+				end
 			end
 			if oldNumButtons ~= #self.minimapButtons then
 				updateMinimapButtons()
@@ -1039,15 +1045,15 @@ end
 function hb:addCustomGrabButton(name)
 	local button = _G[name]
 	if button and type(button[0]) == "userdata" then
-		for i = 1, #hb.minimapButtons do
-			if button == hb.minimapButtons[i] then
+		for i = 1, #self.minimapButtons do
+			if button == self.minimapButtons[i] then
 				return
 			end
 		end
 		local match = name:match(self.matchName)
 		if match then
-			local btnData = self.pConfig.mbtnSettings[name]
-			local bar = self.barByName[btnData[3]] or self.defaultBar
+			local btnData = rawget(self.pConfig.mbtnSettings, name)
+			local bar = self.barByName[btnData and btnData[3]] or self.defaultBar
 			if self:isBarParent(button, bar) then return end
 		end
 		if self:addMButton(button, true, self.MSQ_CGButton) then
@@ -1070,6 +1076,7 @@ function hb:addCustomGrabButton(name)
 					self.SetShown(button, show)
 					return show
 				end
+				button.isGrabbed = true
 			end
 			return true
 		end
@@ -1291,13 +1298,12 @@ function hb:hideGrabbedOwnButtons(bar)
 			btn:Hide()
 			self.Hide(btn)
 			btn.Show = void
-			local bar = self.bars[tonumber(name:match("%d+$"))]
-			bar:Hide()
-			bar.Show = void
-			bar.SetShown = void
-			bar.drag:Hide()
-			bar.drag.Show = void
-			bar.drag.SetShown = void
+			btn.bar:Hide()
+			btn.bar.Show = void
+			btn.bar.SetShown = void
+			btn.bar.drag:Hide()
+			btn.bar.drag.Show = void
+			btn.bar.drag.SetShown = void
 		else
 			i = i + 1
 		end
@@ -1402,6 +1408,9 @@ end
 
 function hidingBarMixin:setBarOffset(offset)
 	self.config.barOffset = offset
+	if self.config.barTypePosition == 2 then
+		self:setBarTypePosition()
+	end
 	self:applyLayout()
 end
 
@@ -1452,6 +1461,11 @@ function hidingBarMixin:setButtonSize(size)
 			local width, height = btn:GetSize()
 			local maxSize = width > height and width or height
 			self.SetScale(btn, self.config.buttonSize / maxSize)
+
+			local name = btn:GetName()
+			if name and name:match(hb.matchName) then
+				btn.bar:setBarTypePosition()
+			end
 		end
 	end
 
@@ -1712,6 +1726,7 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 
 		if not self.omb then
 			self.omb = ldbi:GetMinimapButton(self.ombName)
+			self.omb.bar = self
 			self.omb.dSetPoint = self.omb.SetPoint
 			self.omb.SetPoint = function(self, point, rFrame, rPoint, x, y)
 				local scale = self:GetScale()
@@ -1740,7 +1755,13 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 			end
 		end
 
-		local btnSize, position, secondPosition = self.config.omb.size
+		local btnSize, position, secondPosition
+		if self.omb.isGrabbed then
+			btnSize = self.omb:GetParent().config.buttonSize
+		else
+			btnSize = self.config.omb.size
+		end
+
 		if self.config.omb.anchor == "left" or self.config.omb.anchor == "right" then
 			if self.config.expand == 0 then
 				position = btnSize + self.config.barOffset

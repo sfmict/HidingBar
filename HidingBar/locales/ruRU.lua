@@ -23,6 +23,7 @@ L["A bar with the same name exists."] = "Панель с таким именем
 L["Are you sure you want to delete bar %s?"] = "Вы уверены, что хотите удалить панель %s?"
 L["Bar"] = "Панель"
 L["Source:"] = "Источник:"
+L["Manually added"] = "Добавленно вручную"
 L["Move to"] = "Переместить на"
 L["Clip button"] = "Ограничить кнопку"
 L["Prevents button elements from going over the edges."] = "Предотвращает выход элементов кнопки за края."
