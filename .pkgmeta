@@ -15,7 +15,6 @@ enable-nolib-creation: no
 
 ignore:
 	- README.md
-	- CHANGELOG.md
 	- HidingBar/libs/LibStub/LibStub.toc
 	- HidingBar/libs/LibStub/tests
 	- HidingBar/libs/LibDataBroker-1.1/README.textile

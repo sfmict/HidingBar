@@ -41,6 +41,28 @@ local function enter(btn)
 		bar.isMouse = true
 		bar:enter()
 	end
+
+	while bar.omb and bar.omb.isGrabbed do
+		bar = bar.omb:GetParent()
+	end
+
+	if not bar.config.interceptTooltip then return end
+	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
+	if not tooltip or tooltip:GetUnit() then return end
+
+	local y = bar:GetTop()
+	local width, height, point, rPoint = tooltip:GetSize()
+
+	if y + height + 10 < UIParent:GetHeight() then
+		point = "BOTTOMLEFT"
+		rPoint = "TOPLEFT"
+	else
+		point = "TOPLEFT"
+		rPoint = "BOTTOMLEFT"
+	end
+
+	tooltip:ClearAllPoints()
+	tooltip:SetPoint(point, bar, rPoint)
 end
 local function leave(btn)
 	local bar = btn:GetParent()
@@ -366,6 +388,9 @@ function hb:checkProfile(profile)
 		bar.config.size = bar.config.size or 10
 		bar.config.barOffset = bar.config.barOffset or 2
 		bar.config.buttonDirection = bar.config.buttonDirection or {V = 0, H = 0}
+		if bar.config.interceptTooltip == nil then
+			bar.config.interceptTooltip = true
+		end
 		bar.config.buttonSize = bar.config.buttonSize or 31
 		bar.config.rangeBetweenBtns = bar.config.rangeBetweenBtns or 0
 		bar.config.anchor = bar.config.anchor or "top"
@@ -415,10 +440,6 @@ function hb:init()
 	end
 
 	local function updateMinimapButtons()
-		for _, btn in ipairs(self.minimapButtons) do
-			self:setMBtnSettings(btn)
-			self:setBtnParent(btn)
-		end
 		self:sort()
 		for _, bar in ipairs(self.bars) do
 			bar:setButtonSize()
@@ -448,6 +469,10 @@ function hb:init()
 				self:grabMinimapAddonsButtons(Minimap)
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
 				if oldNumButtons ~= #self.minimapButtons then
+					for _, btn in ipairs(self.minimapButtons) do
+						self:setMBtnSettings(btn)
+						self:setBtnParent(btn)
+					end
 					updateMinimapButtons()
 				end
 			end)
@@ -457,8 +482,9 @@ function hb:init()
 	local notGrabbed = {}
 	for i = 1, #self.pConfig.customGrabList do
 		local name = self.pConfig.customGrabList[i]
-		if self:addCustomGrabButton(name) then
-			hb.manuallyButtons[_G[name]] = true
+		local btn = _G[name]
+		if btn then
+			self:addCustomGrabButton(name, btn)
 		else
 			tinsert(notGrabbed, name)
 		end
@@ -468,8 +494,10 @@ function hb:init()
 			local oldNumButtons = #self.minimapButtons
 			for i = 1, #notGrabbed do
 				local name = notGrabbed[i]
-				if self:addCustomGrabButton(name) then
-					hb.manuallyButtons[_G[name]] = true
+				local btn = _G[name]
+				if btn and self:addCustomGrabButton(name, btn) then
+					self:setMBtnSettings(btn)
+					self:setBtnParent(btn)
 				end
 			end
 			if oldNumButtons ~= #self.minimapButtons then
@@ -1021,65 +1049,56 @@ do
 end
 
 
-do
-	local function isBar(self, frame)
-		for i = 1, #self.currentProfile.bars do
-			if frame == self.bars[i] then return true end
-		end
-	end
-
-	function hb:isBarParent(button, bar)
-		while bar.omb do
-			if bar.omb == button then return true end
-			local parent = bar.omb:GetParent()
-			if isBar(self, parent) then
-				bar = parent
-			else
-				break
-			end
+function hb:isBarParent(button, bar)
+	while bar.omb do
+		if bar.omb == button then return true end
+		if bar.omb.isGrabbed then
+			bar = bar.omb:GetParent()
+		else
+			break
 		end
 	end
 end
 
 
-function hb:addCustomGrabButton(name)
-	local button = _G[name]
-	if button and type(button[0]) == "userdata" then
-		for i = 1, #self.minimapButtons do
-			if button == self.minimapButtons[i] then
-				return
-			end
+function hb:addCustomGrabButton(name, button)
+	if type(button[0]) ~= "userdata" then return end
+	for i = 1, #self.minimapButtons do
+		if button == self.minimapButtons[i] then
+			return
 		end
-		local match = name:match(self.matchName)
+	end
+	local match, isShown = name:match(self.matchName)
+	if match then
+		local btnData = rawget(self.pConfig.mbtnSettings, name)
+		local bar = self.barByName[btnData and btnData[3]] or self.defaultBar
+		if self:isBarParent(button, bar) then return end
+		isShown = button:IsShown()
+	end
+	if self:addMButton(button, true, self.MSQ_CGButton) then
+		self.manuallyButtons[button] = true
 		if match then
-			local btnData = rawget(self.pConfig.mbtnSettings, name)
-			local bar = self.barByName[btnData and btnData[3]] or self.defaultBar
-			if self:isBarParent(button, bar) then return end
-		end
-		if self:addMButton(button, true, self.MSQ_CGButton) then
-			if match then
-				button.show = button:IsShown()
-				button.Show = function(button)
-					if not button.show then
-						button.show = true
-						button:GetParent():applyLayout()
-					end
+			button.show = isShown
+			button.Show = function(button)
+				if not button.show then
+					button.show = true
+					button:GetParent():applyLayout()
 				end
-				button.Hide = function(button)
-					if button.show then
-						button.show = false
-						button:GetParent():applyLayout()
-					end
-				end
-				button.IsShown = function(button)
-					local show = button.show and not btnSettings[button][1]
-					self.SetShown(button, show)
-					return show
-				end
-				button.isGrabbed = true
 			end
-			return true
+			button.Hide = function(button)
+				if button.show then
+					button.show = false
+					button:GetParent():applyLayout()
+				end
+			end
+			button.IsShown = function(button)
+				local show = button.show and not btnSettings[button][1]
+				self.SetShown(button, show)
+				return show
+			end
+			button.isGrabbed = true
 		end
+		return true
 	end
 end
 
@@ -1989,8 +2008,12 @@ function hidingBarMixin:enter(force)
 		self:Raise()
 		self:updateDragBarPosition()
 
-		if self.config.barTypePosition ~= 2 then return end
-		local parent = self.omb and self.omb:GetParent()
+		if self.config.barTypePosition ~= 2 or not self.omb then return end
+		local parent = self.omb:GetParent()
+
+		if self.omb.isGrabbed then
+			self:SetFrameLevel(parent:GetFrameLevel() + 11)
+		end
 
 		for i = 1, #hb.currentProfile.bars do
 			local bar = hb.bars[i]

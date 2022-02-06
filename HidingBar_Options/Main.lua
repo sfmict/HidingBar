@@ -892,7 +892,7 @@ end)
 
 -- LOCK
 local lock = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -7)
+lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -10)
 lock.Text:SetText(L["Lock the bar's location"])
 lock:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
@@ -1117,7 +1117,7 @@ end)
 
 -- DIRECTION OF BUTTONS
 local buttonDirection = lsfdd:CreateStretchButton(main.buttonSettingsPanel, 150, 22)
-buttonDirection:SetPoint("LEFT", mbtnPostionCombobox, "RIGHT", 10, 0)
+buttonDirection:SetPoint("LEFT", mbtnPostionCombobox, "RIGHT", 10, 1)
 buttonDirection:SetText(L["Direction of buttons"])
 
 buttonDirection:ddSetInitFunc(function(self, level)
@@ -1140,7 +1140,7 @@ buttonDirection:ddSetInitFunc(function(self, level)
 	info.isTitle = nil
 	info.notCheckable = nil
 
-	for i, text in ipairs({L["Auto"], L["Right to left"], L["Left to right"]}) do
+	for i, text in ipairs({L["Auto"], L["Left to right"], L["Right to left"]}) do
 		i = i - 1
 		info.text = text
 		info.arg1 = "H"
@@ -1171,6 +1171,16 @@ buttonDirection:ddSetInitFunc(function(self, level)
 		info.func = setDirection
 		self:ddAddButton(info)
 	end
+end)
+
+-- INTERCEPT THE POSITION OF TOOLTIPS
+local interceptTooltip = CreateFrame("CheckButton", nil, main.buttonSettingsPanel, "HidingBarAddonCheckButtonTemplate")
+interceptTooltip:SetPoint("TOPLEFT", mbtnPostionText, "BOTTOMLEFT", 0, -10)
+interceptTooltip.Text:SetText(L["Intercept the position of tooltips"])
+interceptTooltip:SetScript("OnClick", function(btn)
+	local checked = btn:GetChecked()
+	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+	main.bConfig.interceptTooltip = checked
 end)
 
 -------------------------------------------
@@ -1552,6 +1562,7 @@ function main:setProfile()
 			for i, name in ipairs(self.pConfig.customGrabList) do
 				if name:match(hb.matchName) or name ~= currentProfile.config.customGrabList[i] then
 					compareCustomGrabList = true
+					break
 				end
 			end
 		end
@@ -1708,6 +1719,7 @@ function main:setBar(bar)
 		rangeBetweenBtns:SetValue(self.bConfig.rangeBetweenBtns)
 		mbtnPostionCombobox:ddSetSelectedValue(self.bConfig.mbtnPosition)
 		mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
+		interceptTooltip:SetChecked(self.bConfig.interceptTooltip)
 
 		main.hideToCombobox:ddSetSelectedValue(self.bConfig.anchor)
 		main.hideToCombobox:ddSetSelectedText(main.hideToCombobox.texts[self.bConfig.anchor])
@@ -1803,7 +1815,7 @@ function main:addCustomGrabName(name)
 			end
 		end
 
-		if hb:addCustomGrabButton(name) then
+		if hb:addCustomGrabButton(name, btn) then
 			hb:setMBtnSettings(btn)
 			hb:setBtnParent(btn)
 			hb:sort()
