@@ -35,3 +35,5 @@ jobs:
         GITHUB_OAUTH: ${{ secrets.OAUTH }}
         CF_API_KEY: ${{ secrets.CF_API_KEY }}
         CF_ID: 369265
+        WAGO_API_KEY: ${{ secrets.WAGO_API_KEY }}
+        WAGO_ID: LvNAJE6o

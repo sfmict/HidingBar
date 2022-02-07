@@ -5,11 +5,12 @@ externals:
 	HidingBar/libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
 	HidingBar/libs/LibDataBroker-1.1:
 		site: https://www.curseforge.com/wow/addons/libdatabroker-1-1
-		source: https://github.com/tekkub/libdatabroker-1-1
+		url: https://github.com/tekkub/libdatabroker-1-1
 	HidingBar/libs/LibDBIcon-1.0: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
 	HidingBar_Options/libs/LibSFDropDown:
 		site: https://www.curseforge.com/wow/addons/libsfdropdown
-		source: https://github.com/sfmict/LibSFDropDown
+		url: https://github.com/sfmict/LibSFDropDown
+		tag: latest
 
 enable-nolib-creation: no
 
@@ -23,6 +24,7 @@ ignore:
 	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown_TBC.toc
 	- HidingBar_Options/libs/LibSFDropDown/LibSFDropDown_Vanilla.toc
 	- HidingBar_Options/libs/LibSFDropDown/CHANGELOG.md
+	- HidingBar_Options/libs/LibSFDropDown/README.md
 
 move-folders:
 	HidingBar/HidingBar: HidingBar

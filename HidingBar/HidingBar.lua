@@ -37,23 +37,16 @@ local ignoreFrameList = {
 local function void() end
 local function enter(btn)
 	local bar = btn:GetParent()
-	if bar:IsShown() then
-		bar.isMouse = true
-		bar:enter()
-	end
-
-	while bar.omb and bar.omb.isGrabbed do
-		bar = bar.omb:GetParent()
-	end
+	if not bar:IsShown() then return end
+	bar.isMouse = true
+	bar:enter()
 
 	if not bar.config.interceptTooltip then return end
 	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
 	if not tooltip or tooltip:GetUnit() then return end
 
-	local y = bar:GetTop()
-	local width, height, point, rPoint = tooltip:GetSize()
-
-	if y + height + 10 < UIParent:GetHeight() then
+	local point, rPoint
+	if bar:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
 		point = "BOTTOMLEFT"
 		rPoint = "TOPLEFT"
 	else

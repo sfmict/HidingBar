@@ -2039,7 +2039,7 @@ do
 		if btn.isDrag then return end
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:SetText(btn.title)
-		GameTooltip:AddLine(L["Source:"]..GRAY_FONT_COLOR:WrapTextInColorCode(btn.source), .3, .5, .7)
+		GameTooltip:AddLine(L["Source:"]..btn.source, .3, .5, .7)
 		GameTooltip:AddLine(L["BUTTON_TOOLTIP"], 1, 1, 1)
 		GameTooltip:Show()
 	end
@@ -2065,7 +2065,7 @@ do
 		btn:SetScript("OnEnter", btnEnter)
 		contextmenu:ddSetNoGlobalMouseEvent(true, btn)
 		btn.toIgnore = not hb.manuallyButtons[button]
-		btn.source = btn.toIgnore and " Minimap" or " "..L["Manually added"]
+		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(btn.toIgnore and "Minimap" or L["Manually added"])
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
