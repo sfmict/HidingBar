@@ -1,6 +1,12 @@
-# <div align="center">HidingBar</div>
-<div align="center">Adds a custom panel for easy add-on management.</div>
-<div align="center">(The addon is made based on Norganna's Slidebar, with advanced functionality.)</div>
+<div align="center">
+
+# HidingBar
+
+Adds a custom panel for easy add-on management.<br>
+(The addon is made based on Norganna's Slidebar, with advanced functionality.)
+
+[![Build](https://github.com/sfmict/HidingBar/workflows/Retail-Build/badge.svg)](https://github.com/sfmict/HidingBar/releases) [![](http://cf.way2muchnoise.eu/full_369265_downloads.svg)](https://www.curseforge.com/wow/addons/hidingbar)
+</div>
 
 ### Features:
 
