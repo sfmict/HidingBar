@@ -54,6 +54,7 @@ local function enter(btn)
 		rPoint = "BOTTOMLEFT"
 	end
 
+	tooltip:SetAnchorType("ANCHOR_NONE")
 	tooltip:ClearAllPoints()
 	tooltip:SetPoint(point, bar, rPoint)
 end
