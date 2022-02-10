@@ -434,6 +434,10 @@ function hb:init()
 	end
 
 	local function updateMinimapButtons()
+		for _, btn in ipairs(self.minimapButtons) do
+			self:setMBtnSettings(btn)
+			self:setBtnParent(btn)
+		end
 		self:sort()
 		for _, bar in ipairs(self.bars) do
 			bar:setButtonSize()
@@ -463,10 +467,6 @@ function hb:init()
 				self:grabMinimapAddonsButtons(Minimap)
 				self:grabMinimapAddonsButtons(MinimapBackdrop)
 				if oldNumButtons ~= #self.minimapButtons then
-					for _, btn in ipairs(self.minimapButtons) do
-						self:setMBtnSettings(btn)
-						self:setBtnParent(btn)
-					end
 					updateMinimapButtons()
 				end
 			end)
@@ -476,23 +476,15 @@ function hb:init()
 	local notGrabbed = {}
 	for i = 1, #self.pConfig.customGrabList do
 		local name = self.pConfig.customGrabList[i]
-		local btn = _G[name]
-		if btn then
-			self:addCustomGrabButton(name, btn)
-		else
+		if not self:addCustomGrabButton(name) then
 			tinsert(notGrabbed, name)
 		end
 	end
 	if #notGrabbed > 0 then
-		C_Timer.After(0, function()
+		C_Timer.After(1, function()
 			local oldNumButtons = #self.minimapButtons
 			for i = 1, #notGrabbed do
-				local name = notGrabbed[i]
-				local btn = _G[name]
-				if btn and self:addCustomGrabButton(name, btn) then
-					self:setMBtnSettings(btn)
-					self:setBtnParent(btn)
-				end
+				self:addCustomGrabButton(notGrabbed[i])
 			end
 			if oldNumButtons ~= #self.minimapButtons then
 				updateMinimapButtons()
@@ -1055,55 +1047,88 @@ function hb:isBarParent(button, bar)
 end
 
 
-function hb:addCustomGrabButton(name, button)
-	if type(button[0]) ~= "userdata" then return end
-	for i = 1, #self.minimapButtons do
-		if button == self.minimapButtons[i] then
-			return
+function hb:grabOwnButton(button, force)
+	if not (button.db.canGrabbed or force) then return end
+	local btnData = self.pConfig.mbtnSettings[button:GetName()]
+	local bar, stop = self.barByName[btnData[3]], true
+	
+	if bar and not self:isBarParent(button, bar) then
+		stop = false
+	elseif not self:isBarParent(button, self.defaultBar) then
+		btnData[3] = self.defaultBar.name
+		stop = false
+	else
+		for i = 1, #self.currentProfile.bars do
+			local sBar = self.bars[i]
+			if sBar ~= bar and sbar ~= self.defaultBar and not self:isBarParent(button, sBar) then
+				btnData[3] = sBar.name
+				stop = false
+				break
+			end
 		end
 	end
-	local match, isShown = name:match(self.matchName)
-	if match then
-		local btnData = rawget(self.pConfig.mbtnSettings, name)
-		local bar = self.barByName[btnData and btnData[3]] or self.defaultBar
-		if self:isBarParent(button, bar) then return end
-		isShown = button:IsShown()
-	end
-	if self:addMButton(button, true, self.MSQ_CGButton) then
-		self.manuallyButtons[button] = true
-		if match then
-			button.show = isShown
-			button.Show = function(button)
-				if not button.show then
-					button.show = true
-					button:GetParent():applyLayout()
-				end
+	if stop then return end
+
+	local isShown = button:IsShown()
+	if self:addMButton(button, true) then
+		button.show = isShown
+		button.Show = function(button)
+			if not button.show then
+				button.show = true
+				button:GetParent():applyLayout()
 			end
-			button.Hide = function(button)
-				if button.show then
-					button.show = false
-					button:GetParent():applyLayout()
-				end
+		end
+		button.Hide = function(button)
+			if button.show then
+				button.show = false
+				button:GetParent():applyLayout()
 			end
-			button.IsShown = function(button)
-				local show = button.show and not btnSettings[button][1]
-				self.SetShown(button, show)
-				return show
-			end
-			button.isGrabbed = true
+		end
+		button.IsShown = function(button)
+			local show = button.show and not btnSettings[button][1]
+			self.SetShown(button, show)
+			return show
+		end
+		button.isGrabbed = true
+
+		if not force then
+			self:setMBtnSettings(button)
+			self:setBtnParent(button)
+			self:sort()
 		end
 		return true
 	end
 end
 
 
+function hb:addCustomGrabButton(name)
+	local button = _G[name]
+	if not button or type(button[0]) ~= "userdata" then return end
+	for i = 1, #self.minimapButtons do
+		if button == self.minimapButtons[i] then
+			return
+		end
+	end
+	if name:match(self.matchName) then
+		if self:grabOwnButton(button, true) then
+			self.manuallyButtons[button] = true
+			return true
+		end
+	elseif self:addMButton(button, true, self.MSQ_CGButton) then
+		self.manuallyButtons[button] = true
+		return true
+	end
+end
+
+
 function hb:ldbi_add(_, button, name)
-	if not name:match(self.matchName) and self:addMButton(button) then
+	local fullName = button:GetName()
+	if not fullName:match(self.matchName) and self:addMButton(button) then
 		self:setMBtnSettings(button)
 		self:setBtnParent(button)
 		self:sort()
 		button:GetParent():setButtonSize()
-		self.cb:Fire("MBUTTON_ADDED", button, button:GetName(), button.icon, true)
+		self.cb:Fire("MBUTTON_ADDED", button, fullname, button.icon, true)
 	end
 end
 
@@ -1370,6 +1395,71 @@ function hidingBarMixin:createOwnMinimapButton()
 end
 
 
+do
+	local function setPoint(self, point, rFrame, rPoint, x, y)
+		local scale = self:GetScale()
+		if not rFrame or type(rFrame) == "number" then
+			rFrame = (rFrame or 0) / scale
+			rPoint = (rPoint or 0) / scale
+		elseif not rPoint or type(rPoint) == "number" then
+			rPoint = (rPoint or 0) / scale
+			x = (x or 0) / scale
+		else
+			x = (x or 0) / scale
+			y = (y or 0) / scale
+		end
+		self:dSetPoint(point, rFrame, rPoint, x, y)
+	end
+
+	function hidingBarMixin:initOwnMinimapButton()
+		self.initOwnMinimapButton = nil
+		self.omb = ldbi:GetMinimapButton(self.ombName)
+		self.omb.bar = self
+		self.omb.dSetPoint = self.omb.SetPoint
+		self.omb.SetPoint = setPoint
+		self:setOMBSize()
+
+		if MSQ then
+			if not hb.MSQ_OMB then
+				hb.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
+				hb.MSQ_OMB:SetCallback(function()
+					hb:MSQ_Button_Update(self.omb)
+					hb:MSQ_CoordUpdate(self.omb)
+				end)
+			end
+			hb:setMButtonRegions(self.omb, nil, hb.MSQ_OMB)
+		end
+
+		if hb:grabOwnButton(self.omb) then
+			local parent = self.omb:GetParent()
+			if parent.anchorObj then parent:setButtonSize() end
+		end
+	end
+end
+
+
+function hidingBarMixin:setOMBAnchor(anchor)
+	if self.config.barTypePosition ~= 2 or self.config.omb.anchor == anchor then return end
+	self.config.omb.anchor = anchor
+	self:setButtonDirection()
+	self:applyLayout()
+	self:setBarTypePosition()
+end
+
+
+function hidingBarMixin:setOMBSize(size)
+	if size then self.config.omb.size = size end
+	if self.omb then
+		local oldScale = self.omb:GetScale()
+		self.omb:SetScale(self.config.omb.size / self.omb:GetWidth())
+		for i = 1, self.omb:GetNumPoints() do
+			local point, rFrame, rPoint, x, y = self.omb:GetPoint(i)
+			self.omb:SetPoint(point, rFrame, rPoint, x * oldScale, y * oldScale)
+		end
+	end
+end
+
+
 function hidingBarMixin:setLineColor(r, g, b)
 	local color = self.config.lineColor
 	if r then color[1] = r end
@@ -1632,28 +1722,6 @@ function hidingBarMixin:updateDragBarPosition()
 end
 
 
-function hidingBarMixin:setOMBAnchor(anchor)
-	if self.config.barTypePosition ~= 2 or self.config.omb.anchor == anchor then return end
-	self.config.omb.anchor = anchor
-	self:setButtonDirection()
-	self:applyLayout()
-	self:setBarTypePosition()
-end
-
-
-function hidingBarMixin:setOMBSize(size)
-	if size then self.config.omb.size = size end
-	if self.omb then
-		local oldScale = self.omb:GetScale()
-		self.omb:SetScale(self.config.omb.size / self.omb:GetWidth())
-		for i = 1, self.omb:GetNumPoints() do
-			local point, rFrame, rPoint, x, y = self.omb:GetPoint(i)
-			self.omb:SetPoint(point, rFrame, rPoint, x * oldScale, y * oldScale)
-		end
-	end
-end
-
-
 function hidingBarMixin:setBarAnchor(anchor)
 	if self.config.barTypePosition ~= 1 or self.config.anchor == anchor then return end
 	local x, y, position, secondPosition = self:GetCenter()
@@ -1736,34 +1804,7 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		end
 
 		if not self.omb then
-			self.omb = ldbi:GetMinimapButton(self.ombName)
-			self.omb.bar = self
-			self.omb.dSetPoint = self.omb.SetPoint
-			self.omb.SetPoint = function(self, point, rFrame, rPoint, x, y)
-				local scale = self:GetScale()
-				if not rFrame or type(rFrame) == "number" then
-					rFrame = (rFrame or 0) / scale
-					rPoint = (rPoint or 0) / scale
-				elseif not rPoint or type(rPoint) == "number" then
-					rPoint = (rPoint or 0) / scale
-					x = (x or 0) / scale
-				else
-					x = (x or 0) / scale
-					y = (y or 0) / scale
-				end
-				self:dSetPoint(point, rFrame, rPoint, x, y)
-			end
-			self:setOMBSize()
-			if MSQ then
-				if not hb.MSQ_OMB then
-					hb.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
-					hb.MSQ_OMB:SetCallback(function()
-						hb:MSQ_Button_Update(self.omb)
-						hb:MSQ_CoordUpdate(self.omb)
-					end)
-				end
-				hb:setMButtonRegions(self.omb, nil, hb.MSQ_OMB)
-			end
+			self:initOwnMinimapButton()
 		end
 
 		local btnSize, position, secondPosition
