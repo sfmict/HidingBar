@@ -1198,6 +1198,7 @@ local function updateBarTypePosition()
 	main.likeMB.check:SetShown(main.bConfig.barTypePosition == 2)
 	main.ombShowToCombobox:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombSize:SetEnabled(main.bConfig.barTypePosition == 2)
+	main.canGrabbed:SetEnabled(main.bConfig.barTypePosition == 2)
 end
 
 -- BAR ATTACHED TO THE SIDE
@@ -1380,6 +1381,16 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 		main.barFrame:setOMBSize(value)
 		main.barFrame:setBarTypePosition()
 	end
+end)
+
+-- THE BUTTON CAN BE CRABBED
+main.canGrabbed = CreateFrame("CheckButton", nil, main.positionBarPanel, "HidingBarAddonCheckButtonTemplate")
+main.canGrabbed:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", -2, -2)
+main.canGrabbed.Text:SetText(L["The button can be grabbed"])
+main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
+main.canGrabbed:SetScript("OnClick", function(btn)
+	main.bConfig.omb.canGrabbed = btn:GetChecked()
+	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
 -- CONTEXT MENU
@@ -1721,11 +1732,12 @@ function main:setBar(bar)
 		mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
 		interceptTooltip:SetChecked(self.bConfig.interceptTooltip)
 
-		main.hideToCombobox:ddSetSelectedValue(self.bConfig.anchor)
-		main.hideToCombobox:ddSetSelectedText(main.hideToCombobox.texts[self.bConfig.anchor])
-		main.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
-		main.ombShowToCombobox:ddSetSelectedText(main.ombShowToCombobox.texts[self.bConfig.omb.anchor])
-		main.ombSize:SetValue(self.bConfig.omb.size)
+		self.hideToCombobox:ddSetSelectedValue(self.bConfig.anchor)
+		self.hideToCombobox:ddSetSelectedText(self.hideToCombobox.texts[self.bConfig.anchor])
+		self.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
+		self.ombShowToCombobox:ddSetSelectedText(self.ombShowToCombobox.texts[self.bConfig.omb.anchor])
+		self.ombSize:SetValue(self.bConfig.omb.size)
+		self.canGrabbed:SetChecked(self.bConfig.omb.canGrabbed)
 
 		updateBarTypePosition()
 		self:updateCoords()
@@ -1798,24 +1810,8 @@ function main:addCustomGrabName(name)
 		sort(self.pConfig.customGrabList)
 		self.customGrabScroll:update()
 
-		local btn = _G[name]
-		if not btn then return end
-
-		if name:match(hb.matchName) then
-			local btnData = self.pConfig.mbtnSettings[name]
-			local bar = hb.barByName[btnData[3]] or hb.defaultBar
-			if hb:isBarParent(btn, bar) then
-				for i = 1, #self.currentProfile.bars do
-					local barName = self.currentProfile.bars[i].name
-					if not hb:isBarParent(btn, hb.barByName[barName]) then
-						btnData[3] = barName
-						break
-					end
-				end
-			end
-		end
-
-		if hb:addCustomGrabButton(name, btn) then
+		if hb:addCustomGrabButton(name) then
+			local btn = _G[name]
 			hb:setMBtnSettings(btn)
 			hb:setBtnParent(btn)
 			hb:sort()
@@ -2065,6 +2061,7 @@ do
 		btn:SetScript("OnEnter", btnEnter)
 		contextmenu:ddSetNoGlobalMouseEvent(true, btn)
 		btn.toIgnore = not hb.manuallyButtons[button]
+		hb.manuallyButtons[button] = nil
 		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(btn.toIgnore and "Minimap" or L["Manually added"])
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
