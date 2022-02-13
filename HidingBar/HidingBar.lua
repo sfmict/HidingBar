@@ -1155,7 +1155,8 @@ function hb:addMButton(button, force, MSQ_Group)
 			tinsert(self.mixedButtons, button)
 			return true
 		else
-			local getMouseEnabled, clickable = function(frame)
+			local clickable
+			local function getMouseEnabled(frame)
 				if frame:IsMouseEnabled() then
 					if frame:HasScript("OnClick") and frame:GetScript("OnClick")
 					or frame:HasScript("OnMouseUp") and frame:GetScript("OnMouseUp")
