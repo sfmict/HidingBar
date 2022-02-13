@@ -1066,7 +1066,7 @@ function hb:ldbi_add(_, button, name)
 		self:setBtnParent(button)
 		self:sort()
 		button:GetParent():setButtonSize()
-		self.cb:Fire("MBUTTON_ADDED", button, fullname, button.icon, true)
+		self.cb:Fire("MBUTTON_ADDED", button, fullName, button.icon, true)
 	end
 end
 
