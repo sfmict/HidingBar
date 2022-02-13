@@ -228,9 +228,9 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 		end
 
 		local function selectProfile(btn)
-			hb:hideGrabbedOwnButtons()
 			hb:setProfile(btn.value)
 			main:setProfile()
+			main:hidingBarUpdate()
 		end
 
 		local profileName = hb.charDB.currentProfileName
@@ -1209,6 +1209,15 @@ main.attachedToSide:SetScript("OnClick", function()
 	main.barFrame:setBarCoords(nil, 0)
 	main.barFrame:setBarTypePosition(0)
 	main:applyLayout(.3)
+	if main.barFrame.omb and main.barFrame.omb.isGrabbed then
+		for i, btn in ipairs(main.mbuttons) do
+			if btn.rButton == main.barFrame.omb then
+				main:removeMButton(btn, i)
+				break
+			end
+		end
+	end
+	hb:updateBars()
 	updateBarTypePosition()
 	main:hidingBarUpdate()
 end)
@@ -1220,6 +1229,15 @@ main.freeMove.Text:SetText(L["Bar moves freely"])
 main.freeMove:SetScript("OnClick", function()
 	main.barFrame:setBarTypePosition(1)
 	main:applyLayout(.3)
+	if main.barFrame.omb and main.barFrame.omb.isGrabbed then
+		for i, btn in ipairs(main.mbuttons) do
+			if btn.rButton == main.barFrame.omb then
+				main:removeMButton(btn, i)
+				break
+			end
+		end
+	end
+	hb:updateBars()
 	updateBarTypePosition()
 	main:hidingBarUpdate()
 end)
@@ -1335,6 +1353,13 @@ main.likeMB.Text:SetText(L["Bar like a minimap button"])
 main.likeMB:SetScript("OnClick", function()
 	main.barFrame:setBarTypePosition(2)
 	main:applyLayout(.3)
+	if main.bConfig.omb.canGrabbed and not main.barFrame.omb.isGrabbed then
+		if hb:grabOwnButton(main.barFrame.omb) then
+			hb:sort()
+			main.barFrame.omb:GetParent():setButtonSize()
+			main:restoreMbutton(main.barFrame.omb)
+		end
+	end
 	updateBarTypePosition()
 	main:hidingBarUpdate()
 end)
@@ -1389,8 +1414,27 @@ main.canGrabbed:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", -2, -2
 main.canGrabbed.Text:SetText(L["The button can be grabbed"])
 main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
 main.canGrabbed:SetScript("OnClick", function(btn)
+	local checked = btn:GetChecked()
+	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = btn:GetChecked()
-	StaticPopup_Show(main.addonName.."GET_RELOAD")
+	if checked then
+		main.pConfig.ombGrabQueue[#main.pConfig.ombGrabQueue + 1] = main.barFrame.id
+		if hb:grabOwnButton(omb) then
+			hb:sort()
+			omb:GetParent():setButtonSize()
+			main:restoreMbutton(omb)
+		end
+	else
+		main:removeOmbGrabQueue(main.barFrame.id)
+		for i, btn in ipairs(main.mbuttons) do
+			if btn.rButton == omb then
+				main:removeMButton(btn, i)
+				break
+			end
+		end
+		hb:updateBars()
+	end
+	main:hidingBarUpdate()
 end)
 
 -- CONTEXT MENU
@@ -1469,7 +1513,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		for i, bar in ipairs(main.currentProfile.bars) do
 			if bar ~= main.currentBar
 			and not (btn.name:match(hb.matchName)
-				and hb:isBarParent(btn.button, hb.barByName[bar.name]))
+				and hb:isBarParent(btn.rButton, hb.barByName[bar.name]))
 			then
 				tinsert(info.list, {
 					notCheckable = true,
@@ -1509,19 +1553,20 @@ function main:createProfile(copy)
 		if text and text ~= "" then
 			for _, profile in ipairs(hb.profiles) do
 				if profile.name == text then
-					main.lastProfileName = text
+					self.lastProfileName = text
 					StaticPopup_Show(self.addonName.."PROFILE_EXISTS", nil, nil, copy)
 					return
 				end
 			end
-			local profile = copy and copyTable(main.currentProfile) or {}
+			local profile = copy and copyTable(self.currentProfile) or {}
 			profile.name = text
 			profile.isDefault = nil
 			hb:checkProfile(profile)
 			tinsert(hb.profiles, profile)
 			sort(hb.profiles, function(a, b) return a.name < b.name end)
 			hb:setProfile(text)
-			main:setProfile()
+			self:setProfile()
+			self:hidingBarUpdate()
 		end
 	end)
 	if dialog and self.lastProfileName then
@@ -1533,7 +1578,7 @@ end
 
 
 function main:removeProfile(profileName)
-	StaticPopup_Show(main.addonName.."DELETE_PROFILE", NORMAL_FONT_COLOR:WrapTextInColorCode(profileName), nil, function()
+	StaticPopup_Show(self.addonName.."DELETE_PROFILE", NORMAL_FONT_COLOR:WrapTextInColorCode(profileName), nil, function()
 		for i, profile in ipairs(hb.profiles) do
 			if profile.name == profileName then
 				tremove(hb.profiles, i)
@@ -1587,7 +1632,7 @@ function main:setProfile()
 			or not self.pConfig.grabMinimapAfter ~= not currentProfile.config.grabMinimapAfter
 			or self.pConfig.grabMinimapAfter and self.pConfig.grabMinimapAfterN ~= currentProfile.config.grabMinimapAfterN)
 		then
-			StaticPopup_Show(main.addonName.."GET_RELOAD")
+			StaticPopup_Show(self.addonName.."GET_RELOAD")
 		end
 	end
 
@@ -1600,8 +1645,16 @@ function main:setProfile()
 		btn.settings = self.pConfig.btnSettings[btn.title]
 	end
 
-	for _, btn in ipairs(self.mbuttons) do
-		btn.settings = self.pConfig.mbtnSettings[btn.name]
+	local i = 1
+	local btn = self.mbuttons[i]
+	while btn do
+		if btn.name:match(hb.matchName) and not btn.rButton.isGrabbed then
+			self:removeMButton(btn, i)
+		else
+			btn.settings = self.pConfig.mbtnSettings[btn.name]
+			i = i + 1
+		end
+		btn = self.mbuttons[i]
 	end
 
 	self.ignoreScroll:update()
@@ -1628,7 +1681,7 @@ function main:createBar()
 		if text and text ~= "" then
 			for _, bar in ipairs(self.currentProfile.bars) do
 				if bar.name == text then
-					main.lastBarName = text
+					self.lastBarName = text
 					StaticPopup_Show(self.addonName.."BAR_EXISTS")
 					return
 				end
@@ -1649,31 +1702,29 @@ end
 
 
 function main:removeBar(barName)
-	StaticPopup_Show(main.addonName.."DELETE_BAR", NORMAL_FONT_COLOR:WrapTextInColorCode(barName), nil, function()
-		for i, bar in ipairs(main.currentProfile.bars) do
+	StaticPopup_Show(self.addonName.."DELETE_BAR", NORMAL_FONT_COLOR:WrapTextInColorCode(barName), nil, function()
+		local barID
+		for i, bar in ipairs(self.currentProfile.bars) do
 			if bar.name == barName then
-				tremove(main.currentProfile.bars, i)
+				barID = i
+				tremove(self.currentProfile.bars, i)
 				if bar.isDefault then
-					main.currentProfile.bars[1].isDefault = true
+					self.currentProfile.bars[1].isDefault = true
 				end
 				break
 			end
 		end
-		for _, settings in pairs(main.pConfig.btnSettings) do
+		for _, settings in pairs(self.pConfig.btnSettings) do
 			if settings[3] == barName then
 				settings[3] = nil
 			end
 		end
-		for _, settings in pairs(main.pConfig.mbtnSettings) do
+		for _, settings in pairs(self.pConfig.mbtnSettings) do
 			if settings[3] == barName then
 				settings[3] = nil
 			end
 		end
-		local oldNumButtons = #hb.minimapButtons
-		hb:hideGrabbedOwnButtons()
-		if oldNumButtons ~= #hb.minimapButtons then
-			StaticPopup_Show(main.addonName.."GET_RELOAD")
-		end
+		self:removeOmbGrabQueue(barID)
 		hb:updateBars()
 		if self.currentBar.name == barName then
 			self:setBar()
@@ -1756,6 +1807,16 @@ function main:setBar(bar)
 end
 
 
+function main:removeOmbGrabQueue(id)
+	for i = 1, #self.pConfig.ombGrabQueue do
+		if self.pConfig.ombGrabQueue[i] == id then
+			tremove(self.pConfig.ombGrabQueue, i)
+			break
+		end
+	end
+end
+
+
 function main:updateCoords()
 	if not self.barFrame then return end
 
@@ -1774,21 +1835,66 @@ hb:on("COORDS_UPDATED", function(_, bar)
 end)
 
 
+function main:removeMButton(button, mIndex, update)
+	tremove(self.mbuttons, mIndex)
+	for i, btn in ipairs(self.mixedButtons) do
+		if btn == button then
+			tremove(self.mixedButtons, i)
+			break
+		end
+	end
+
+	button:Hide()
+	self.removedButtons = self.removedButtons or {}
+	self.removedButtons[button.rButton] = button
+
+	if update then
+		self:applyLayout()
+	end
+end
+
+
+function main:restoreMbutton(rButton)
+	if not (self.removedButtons and self.removedButtons[rButton]) then
+		self:initMButtons(true)
+		return
+	end
+
+	local btn = self.removedButtons[rButton]
+	tinsert(self.mbuttons, btn)
+	tinsert(self.mixedButtons, btn)
+
+	self.removedButtons[rButton] = nil
+	if not next(self.removedButtons) then self.removedButtons = nil end
+end
+hb:on("OWN_BUTTON_GRABBED", function(_, ...) main:restoreMbutton(...) end)
+
+
 function main:addIgnoreName(name)
 	name = name:gsub("[%(%)%.%%%+%-%*%?%[%^%$]", "%%%1")
 	for _, n in ipairs(self.pConfig.ignoreMBtn) do
 		if name == n then return end
 	end
+	for i, btn in ipairs(self.mbuttons) do
+		if btn.name == name then
+			self:removeMButton(btn, i, true)
+			hb:removeMButton(btn.rButton)
+			self.barFrame:applyLayout()
+			if btn.rButton.__MSQ_Enabled then
+				StaticPopup_Show(self.addonName.."GET_RELOAD")
+			end
+			break
+		end
+	end
 	tinsert(self.pConfig.ignoreMBtn, name)
 	sort(self.pConfig.ignoreMBtn)
 	self.ignoreScroll:update()
-	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end
 
 
 function main:removeIgnoreName(index)
 	local name = self.pConfig.ignoreMBtn[index]
-	StaticPopup_Show(main.addonName.."REMOVE_IGNORE_MBTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1")), nil, function()
+	StaticPopup_Show(self.addonName.."REMOVE_IGNORE_MBTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1")), nil, function()
 		for i = 1, #self.pConfig.ignoreMBtn do
 			if name == self.pConfig.ignoreMBtn[i] then
 				tremove(self.pConfig.ignoreMBtn, i)
@@ -1796,13 +1902,13 @@ function main:removeIgnoreName(index)
 			end
 		end
 		self.ignoreScroll:update()
-		StaticPopup_Show(main.addonName.."GET_RELOAD")
+		StaticPopup_Show(self.addonName.."GET_RELOAD")
 	end)
 end
 
 
 function main:addCustomGrabName(name)
-	StaticPopup_Show(main.addonName.."ADD_CUSTOM_GRAB_BTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name), nil, function()
+	StaticPopup_Show(self.addonName.."ADD_CUSTOM_GRAB_BTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name), nil, function()
 		for _, n in ipairs(self.pConfig.customGrabList) do
 			if name == n then return end
 		end
@@ -1824,7 +1930,7 @@ end
 
 function main:removeCustomGrabName(index)
 	local name = self.pConfig.customGrabList[index]
-	StaticPopup_Show(main.addonName.."REMOVE_CUSTOM_GRAB_BTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name), nil, function()
+	StaticPopup_Show(self.addonName.."REMOVE_CUSTOM_GRAB_BTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name), nil, function()
 		for i = 1, #self.pConfig.customGrabList do
 			if name == self.pConfig.customGrabList[i] then
 				tremove(self.pConfig.customGrabList, i)
@@ -1832,7 +1938,7 @@ function main:removeCustomGrabName(index)
 			end
 		end
 		self.customGrabScroll:update()
-		StaticPopup_Show(main.addonName.."GET_RELOAD")
+		StaticPopup_Show(self.addonName.."GET_RELOAD")
 	end)
 end
 
@@ -2043,7 +2149,7 @@ do
 	function main:createMButton(button, name, icon, update)
 		if not self.buttonPanel or type(name) ~= "string" or buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
-		btn.button = button
+		btn.rButton = button
 		btn.name = name
 		btn.title = name:gsub("LibDBIcon10_", "")
 		local atlas = icon:GetAtlas()
@@ -2060,9 +2166,9 @@ do
 		btn:SetScript("OnDragStop", btnDragStop)
 		btn:SetScript("OnEnter", btnEnter)
 		contextmenu:ddSetNoGlobalMouseEvent(true, btn)
-		btn.toIgnore = not hb.manuallyButtons[button]
+		btn.toIgnore = not (hb.manuallyButtons[button] or name:match(hb.matchName))
+		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(hb.manuallyButtons[button] and L["Manually added"] or "Minimap")
 		hb.manuallyButtons[button] = nil
-		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(btn.toIgnore and "Minimap" or L["Manually added"])
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
@@ -2173,7 +2279,7 @@ end
 
 function main:applyLayout(delay)
 	if not self.buttonPanel then return end
-	if main.bConfig.orientation == 0 then
+	if self.bConfig.orientation == 0 then
 		local anchor = self.bConfig.barTypePosition == 2 and self.bConfig.omb.anchor or self.bConfig.anchor
 		self.orientation = anchor == "top" or anchor == "bottom"
 	else
