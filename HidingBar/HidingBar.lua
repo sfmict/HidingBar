@@ -33,13 +33,8 @@ local ignoreFrameList = {
 
 
 local function void() end
-local function enter(btn)
-	local bar = btn:GetParent()
-	if not bar:IsShown() then return end
-	bar.isMouse = true
-	bar:enter()
 
-	if not bar.config.interceptTooltip then return end
+local function updateTooltipPosition(bar)
 	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
 	if not tooltip or tooltip:GetUnit() then return end
 
@@ -56,12 +51,38 @@ local function enter(btn)
 	tooltip:ClearAllPoints()
 	tooltip:SetPoint(point, bar, rPoint)
 end
+
+local function enter(btn)
+	local bar = btn:GetParent()
+	if not bar:IsShown() then return end
+	bar.isMouse = true
+	bar:enter()
+
+	if not bar.config.interceptTooltip then return end
+	updateTooltipPosition(bar)
+end
+
 local function leave(btn)
 	local bar = btn:GetParent()
 	if bar:IsShown() then
 		bar.isMouse = false
 		bar:leave()
 	end
+end
+
+local function setOMBPoint(self, point, rFrame, rPoint, x, y)
+	local scale = self:GetScale()
+	if not rFrame or type(rFrame) == "number" then
+		rFrame = (rFrame or 0) / scale
+		rPoint = (rPoint or 0) / scale
+	elseif not rPoint or type(rPoint) == "number" then
+		rPoint = (rPoint or 0) / scale
+		x = (x or 0) / scale
+	else
+		x = (x or 0) / scale
+		y = (y or 0) / scale
+	end
+	self:dSetPoint(point, rFrame, rPoint, x, y)
 end
 
 
@@ -359,6 +380,7 @@ function hb:checkProfile(profile)
 	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
 	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
 	profile.config.customGrabList = profile.config.customGrabList or {}
+	profile.config.ombGrabQueue = profile.config.ombGrabQueue or {}
 	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, btnSettingsMeta)
 	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, btnSettingsMeta)
 
@@ -493,26 +515,21 @@ function hb:init()
 	if self.pConfig.grabDefMinimap then
 		-- TRACKING BUTTON
 		if self:ignoreCheck("MiniMapTracking") then
-			if not self:ignoreCheck("MiniMapLFGFrame") then
-				local LFGFrame = MiniMapLFGFrame
-				local parent = LFGFrame:GetParent()
-				local left = LFGFrame:GetLeft() - parent:GetLeft()
-				local top = LFGFrame:GetTop() - parent:GetTop()
-				LFGFrame:ClearAllPoints()
-				LFGFrame:SetPoint("TOPLEFT", left, top)
-			end
+			local LFGFrame = MiniMapLFGFrame
+			local parent = LFGFrame:GetParent()
+			local left = LFGFrame:GetLeft() - parent:GetLeft()
+			local top = LFGFrame:GetTop() - parent:GetTop()
+			LFGFrame:ClearAllPoints()
+			LFGFrame:SetPoint("TOPLEFT", left, top)
 
 			local MiniMapTracking = MiniMapTracking
 			self:setHooks(MiniMapTracking)
+			self:setParams(MiniMapTracking)
 
 			if self.MSQ_MButton then
 				self:setMButtonRegions(MiniMapTracking)
 			end
 
-			self.SetAlpha(MiniMapTracking, 1)
-			self.SetHitRectInsets(MiniMapTracking, 0, 0, 0, 0)
-			self.HookScript(MiniMapTracking, "OnEnter", enter)
-			self.HookScript(MiniMapTracking, "OnLeave", leave)
 			tinsert(self.minimapButtons, MiniMapTracking)
 			tinsert(self.mixedButtons, MiniMapTracking)
 		end
@@ -542,15 +559,12 @@ function hb:init()
 				return show
 			end
 
+			self:setParams(LFGFrame)
+
 			if self.MSQ_MButton then
 				self:setMButtonRegions(LFGFrame)
 			end
 
-			self.SetAlpha(LFGFrame, 1)
-			self.SetHitRectInsets(LFGFrame, 0, 0, 0, 0)
-			self.SetIgnoreParentScale(LFGFrame, false)
-			self.HookScript(LFGFrame, "OnEnter", enter)
-			self.HookScript(LFGFrame, "OnLeave", leave)
 			tinsert(self.minimapButtons, LFGFrame)
 			tinsert(self.mixedButtons, LFGFrame)
 		end
@@ -579,15 +593,12 @@ function hb:init()
 				return show
 			end
 
+			self:setParams(battlefield)
+
 			if self.MSQ_MButton then
 				self:setMButtonRegions(battlefield)
 			end
 
-			self.SetAlpha(battlefield, 1)
-			self.SetHitRectInsets(battlefield, 0, 0, 0, 0)
-			self.SetIgnoreParentScale(battlefield, false)
-			self.HookScript(battlefield, "OnEnter", enter)
-			self.HookScript(battlefield, "OnLeave", leave)
 			tinsert(self.minimapButtons, battlefield)
 			tinsert(self.mixedButtons, battlefield)
 		end
@@ -623,12 +634,18 @@ function hb:init()
 				return show
 			end
 
+			self:setParams(proxyMail, function(p, proxyMail)
+				proxyMail:Hide()
+				proxyMail:UnregisterAllEvents()
+				self:unsetHooks(mail)
+				mail:RegisterEvent("UPDATE_PENDING_MAIL")
+				mail:GetScript("OnEvent")(mail, "UPDATE_PENDING_MAIL")
+			end)
+
 			if self.MSQ_MButton then
 				self:setMButtonRegions(proxyMail)
 			end
 
-			proxyMail:HookScript("OnEnter", enter)
-			proxyMail:HookScript("OnLeave", leave)
 			tinsert(self.minimapButtons, proxyMail)
 			tinsert(self.mixedButtons, proxyMail)
 		end
@@ -668,11 +685,18 @@ function hb:init()
 					zoom:Disable()
 				end
 
-				self.SetAlpha(zoom, 1)
-				self.SetHitRectInsets(zoom, 0, 0, 0, 0)
-				self.SetIgnoreParentScale(zoom, false)
-				self.HookScript(zoom, "OnEnter", enter)
-				self.HookScript(zoom, "OnLeave", leave)
+				self:setParams(zoom, function()
+					zoom.Enable = nil
+					zoom.Disable = nil
+					if not zoom:GetScript("OnClick") then
+						zoom.icon:SetDesaturated(false)
+						zoom:GetNormalTexture():SetDesaturated(false)
+						zoom:GetPushedTexture():SetDesaturated(false)
+						zoom:Disable()
+					end
+					zoom:SetScript("OnClick", zoom.click)
+				end)
+
 				tinsert(self.minimapButtons, zoom)
 				tinsert(self.mixedButtons, zoom)
 			end
@@ -682,13 +706,31 @@ function hb:init()
 		if self:ignoreCheck("MiniMapWorldMapButton") then
 			local mapButton = MiniMapWorldMapButton
 			self:setHooks(mapButton)
+			local p = self:setParams(mapButton, function(p, mapButton)
+				mapButton.icon:SetTexture(p.iconTexture)
+				mapButton.icon:SetTexCoord(unpack(p.iconCoords))
+				mapButton.puched:SetTexture(p.pushedTexture)
+				mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
+				mapButton.highlight:SetTexture(p.highlightTexture)
+				mapButton.highlight:SetTexCoord(unpack(p.highlightCoords))
+				mapButton.highlight:ClearAllPoints()
+				mapButton.highlight:SetPoint(unpack(p.highlightPoint))
+			end)
+
 			mapButton.icon = mapButton:GetNormalTexture()
+			p.iconTexture = mapButton.icon:GetTexture()
+			p.iconCoords = {mapButton.icon:GetTexCoord()}
 			mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
 			mapButton.icon:SetTexCoord(.125, .875, 0, .5)
 			mapButton.puched = mapButton:GetPushedTexture()
+			p.pushedTexture = mapButton.puched:GetTexture()
+			p.pushedCoords = {mapButton.puched:GetTexCoord()}
 			mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
 			mapButton.puched:SetTexCoord(.125, .875, .5, 1)
 			mapButton.highlight = mapButton:GetHighlightTexture()
+			p.highlightTexture = mapButton.highlight:GetTexture()
+			p.highlightCoords = {mapButton.highlight:GetTexCoord()}
+			p.highlightPoint = {mapButton.highlight:GetPoint()}
 			mapButton.highlight:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
 			mapButton.highlight:SetAllPoints()
 
@@ -701,11 +743,6 @@ function hb:init()
 				self:setMButtonRegions(mapButton)
 			end
 
-			self.SetAlpha(mapButton, 1)
-			self.SetHitRectInsets(mapButton, 0, 0, 0, 0)
-			self.SetIgnoreParentScale(mapButton, false)
-			self.HookScript(mapButton, "OnEnter", enter)
-			self.HookScript(mapButton, "OnLeave", leave)
 			tinsert(self.minimapButtons, mapButton)
 			tinsert(self.mixedButtons, mapButton)
 		end
@@ -747,7 +784,6 @@ function hb:setProfile(profileName)
 
 	for _, btn in ipairs(self.minimapButtons) do
 		self:setMBtnSettings(btn)
-		self.ClearAllPoints(btn)
 	end
 
 	local t = time()
@@ -761,7 +797,6 @@ function hb:setProfile(profileName)
 	end
 	self.db.tstmp = t
 
-	self:sort()
 	self:updateBars()
 
 	if self.init then
@@ -795,6 +830,9 @@ function hb:updateBars()
 
 	for i = 1, #self.bars do
 		local bar = self.bars[i]
+		if bar.omb and bar.omb.isGrabbed then
+			self:removeMButton(bar.omb)
+		end
 
 		if self.currentProfile.bars[i] then
 			bar:setFrameStrata()
@@ -805,12 +843,23 @@ function hb:updateBars()
 			bar:setBarTypePosition()
 			bar:updateDragBarPosition()
 			bar:setButtonDirection()
-			bar:setButtonSize()
 		else
 			bar:Hide()
 			bar.drag:Hide()
 			ldbi:Hide(bar.ombName)
 		end
+	end
+
+	self.queueEmpty = nil
+	for i = 1, #self.pConfig.ombGrabQueue do
+		local omb = self.bars[self.pConfig.ombGrabQueue[i]].omb
+		if omb and not omb.isGrabbed then self:grabOwnButton(omb) end
+	end
+
+	self:sort()
+
+	for i = 1, #self.currentProfile.bars do
+		self.bars[i]:setButtonSize()
 	end
 end
 
@@ -957,10 +1006,10 @@ end
 
 
 function hb:grabOwnButton(button, force)
-	if not (button.db.canGrabbed or force) then return end
+	if not (button.bar.config.barTypePosition == 2 and button.bar.config.omb.canGrabbed or force) then return end
 	local btnData = self.pConfig.mbtnSettings[button:GetName()]
 	local bar, stop = self.barByName[btnData[3]], true
-	
+
 	if bar and not self:isBarParent(button, bar) then
 		stop = false
 	elseif not self:isBarParent(button, self.defaultBar) then
@@ -969,7 +1018,7 @@ function hb:grabOwnButton(button, force)
 	else
 		for i = 1, #self.currentProfile.bars do
 			local sBar = self.bars[i]
-			if sBar ~= bar and sbar ~= self.defaultBar and not self:isBarParent(button, sBar) then
+			if sBar ~= bar and sBar ~= self.defaultBar and not self:isBarParent(button, sBar) then
 				btnData[3] = sBar.name
 				stop = false
 				break
@@ -978,33 +1027,13 @@ function hb:grabOwnButton(button, force)
 	end
 	if stop then return end
 
-	local isShown = button:IsShown()
 	if self:addMButton(button, true) then
-		button.show = isShown
-		button.Show = function(button)
-			if not button.show then
-				button.show = true
-				button:GetParent():applyLayout()
-			end
-		end
-		button.Hide = function(button)
-			if button.show then
-				button.show = false
-				button:GetParent():applyLayout()
-			end
-		end
-		button.IsShown = function(button)
-			local show = button.show and not btnSettings[button][1]
-			self.SetShown(button, show)
-			return show
-		end
 		button.isGrabbed = true
-
 		if not force then
 			self:setMBtnSettings(button)
 			self:setBtnParent(button)
-			self:sort()
 		end
+		self.cb:Fire("OWN_BUTTON_GRABBED", button)
 		return true
 	end
 end
@@ -1069,37 +1098,19 @@ function hb:addMButton(button, force, MSQ_Group)
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
-			local function OnEnter() enter(button) end
-			local function OnLeave() leave(button) end
-
-			local function setMouseEvents(frame)
-				if frame:IsMouseEnabled() then
-					self.SetHitRectInsets(frame, 0, 0, 0, 0)
-					self.HookScript(frame, "OnEnter", OnEnter)
-					self.HookScript(frame, "OnLeave", OnLeave)
-				end
-				for _, fchild in ipairs({frame:GetChildren()}) do
-					setMouseEvents(fchild)
-				end
-			end
-			setMouseEvents(button)
-
-			self.SetIgnoreParentScale(button, false)
-			self.SetFixedFrameStrata(button, false)
-			self.SetFixedFrameLevel(button, false)
-			self.SetAlpha(button, 1)
+			self:setParams(button)
 			tinsert(self.minimapButtons, button)
 			tinsert(self.mixedButtons, button)
 			return true
 		else
-			local mouseEnabled, clickable = {}
+			local clickable
 			local function getMouseEnabled(frame)
 				if frame:IsMouseEnabled() then
-					tinsert(mouseEnabled, frame)
 					if frame:HasScript("OnClick") and frame:GetScript("OnClick")
 					or frame:HasScript("OnMouseUp") and frame:GetScript("OnMouseUp")
 					or frame:HasScript("OnMouseDown") and frame:GetScript("OnMouseDown") then
 						clickable = true
+						return
 					end
 				end
 				for _, fchild in ipairs({frame:GetChildren()}) do
@@ -1110,20 +1121,7 @@ function hb:addMButton(button, force, MSQ_Group)
 
 			if clickable then
 				self:setHooks(button)
-
-				local function OnEnter() enter(button) end
-				local function OnLeave() leave(button) end
-
-				for _, frame in ipairs(mouseEnabled) do
-					self.SetHitRectInsets(frame, 0, 0, 0, 0)
-					self.HookScript(frame, "OnEnter", OnEnter)
-					self.HookScript(frame, "OnLeave", OnLeave)
-				end
-
-				self.SetIgnoreParentScale(button, false)
-				self.SetFixedFrameStrata(button, false)
-				self.SetFixedFrameLevel(button, false)
-				self.SetAlpha(button, 1)
+				self:setParams(button)
 				tinsert(self.minimapButtons, button)
 				tinsert(self.mixedButtons, button)
 				return true
@@ -1133,7 +1131,59 @@ function hb:addMButton(button, force, MSQ_Group)
 end
 
 
+function hb:removeMButton(button, MSQ_Group)
+	for i = 1, #self.minimapButtons do
+		if button == self.minimapButtons[i] then
+			tremove(self.minimapButtons, i)
+			break
+		end
+	end
+
+	for i = 1, #self.mixedButtons do
+		if button == self.mixedButtons[i] then
+			tremove(self.mixedButtons, i)
+			break
+		end
+	end
+
+	self:unsetHooks(button)
+	self:restoreParams(button)
+
+	if button:GetName():match(self.matchName) then
+		button.isGrabbed = nil
+		button.SetPoint = setOMBPoint
+		button.bar:setOMBSize()
+		if button.bar.config.omb.hide then
+			ldbi:Hide(button.bar.ombName)
+		end
+	end
+end
+
+
 do
+	local voidFuncsions = {
+		"SetFixedFrameStrata",
+		"SetFixedFrameLevel",
+		"SetHitRectInsets",
+		"ClearAllPoints",
+		"StartMoving",
+		"SetParent",
+		"Show",
+		"Hide",
+		"SetShown",
+		"SetPoint",
+		"SetAlpha",
+		"SetIgnoreParentScale",
+		"SetScale",
+		"SetSize",
+		"SetWidth",
+		"SetHeight",
+		"Disable",
+		"SetEnabled",
+		"HookScript",
+	}
+
+
 	local function IsShown(btn)
 		local btnData = btnSettings[btn]
 		local show = not (btnData and btnData[1])
@@ -1141,11 +1191,13 @@ do
 		return show
 	end
 
+
 	local function CreateAnimationGroup(self, ...)
 		local animationGroup = getmetatable(self).__index.CreateAnimationGroup(self, ...)
 		animationGroup.Play = void
 		return animationGroup
 	end
+
 
 	local function SetScript(self, event, func, ...)
 		event = event:lower()
@@ -1153,6 +1205,7 @@ do
 			getmetatable(self).__index.SetScript(self, event, func, ...)
 		end
 	end
+
 
 	function hb:setHooks(btn)
 		btn.CreateAnimationGroup = CreateAnimationGroup
@@ -1172,27 +1225,107 @@ do
 				animationGroup.Play = void
 			end
 		end
-		btn.SetFixedFrameStrata = void
-		btn.SetFixedFrameLevel = void
-		btn.SetHitRectInsets = void
-		btn.ClearAllPoints = void
-		btn.StartMoving = void
-		btn.SetParent = void
-		btn.Show = void
-		btn.Hide = void
+		for i = 1, #voidFuncsions do
+			btn[voidFuncsions[i]] = void
+		end
 		btn.IsShown = IsShown
-		btn.SetShown = void
-		btn.SetPoint = void
-		btn.SetAlpha = void
-		btn.SetIgnoreParentScale = void
-		btn.SetScale = void
-		btn.SetSize = void
-		btn.SetWidth = void
-		btn.SetHeight = void
-		btn.Disable = void
-		btn.SetEnabled = void
-		btn.HookScript = void
 		btn.SetScript = SetScript
+	end
+
+
+	function hb:unsetHooks(btn)
+		btn.CreateAnimationGroup = nil
+		for _, animationGroup in ipairs({btn:GetAnimationGroups()}) do
+			animationGroup.Play = nil
+		end
+		for i = 1, #voidFuncsions do
+			btn[voidFuncsions[i]] = nil
+		end
+		btn.IsShown = nil
+		btn.SetScript = nil
+	end
+end
+
+
+do
+	local params = {}
+
+
+	function hb:setParams(btn, cb)
+		params[btn] = {
+			points = {},
+			frames = {},
+		}
+		local p = params[btn]
+		p.callback = cb
+		p.parent = self.GetParent(btn)
+		p.alpha = self.GetAlpha(btn)
+		p.ignoreParentScale = self.IsIgnoringParentScale(btn)
+		p.scale = self.GetScale(btn)
+		p.strata = self.GetFrameStrata(btn)
+		p.level = self.GetFrameLevel(btn)
+		p.fixedFrameStrata = self.HasFixedFrameStrata(btn)
+		p.fixedFrameLevel = self.HasFixedFrameLevel(btn)
+
+		for i = 1, self.GetNumPoints(btn) do
+			p.points[i] = {self.GetPoint(btn, i)}
+		end
+
+		local function OnEnter() enter(btn) end
+		local function OnLeave() leave(btn) end
+
+		local function setMouseEvents(frame)
+			if self.IsMouseEnabled(frame) then
+				p.frames[frame] = {
+					insets = {self.GetHitRectInsets(frame)},
+					OnEnter = self.GetScript(frame, "OnEnter"),
+					OnLeave = self.GetScript(frame, "OnLeave"),
+				}
+				self.SetHitRectInsets(frame, 0, 0, 0, 0)
+				self.HookScript(frame, "OnEnter", OnEnter)
+				self.HookScript(frame, "OnLeave", OnLeave)
+			end
+			for _, fchild in ipairs({self.GetChildren(frame)}) do
+				setMouseEvents(fchild)
+			end
+		end
+		setMouseEvents(btn)
+
+		self.SetIgnoreParentScale(btn, false)
+		self.SetFixedFrameStrata(btn, false)
+		self.SetFixedFrameLevel(btn, false)
+		self.SetAlpha(btn, 1)
+
+		return p
+	end
+
+
+	function hb:restoreParams(btn)
+		local p = params[btn]
+		if not p then return end
+		self.SetParent(btn, p.parent)
+		self.SetAlpha(btn, p.alpha)
+		self.SetIgnoreParentScale(btn, p.ignoreParentScale)
+		self.SetScale(btn, p.scale)
+		self.SetFrameStrata(btn, p.strata)
+		self.SetFrameLevel(btn, p.level)
+		self.SetFixedFrameStrata(btn, p.fixedFrameStrata)
+		self.SetFixedFrameLevel(btn, p.fixedFrameLevel)
+
+		self.ClearAllPoints(btn)
+		for i = 1, #p.points do
+			self.SetPoint(btn, unpack(p.points[i]))
+		end
+
+		for frame, param in pairs(p.frames) do
+			self.SetHitRectInsets(frame, unpack(param.insets))
+			self.SetScript(frame, "OnEnter", param.OnEnter)
+			self.SetScript(frame, "OnLeave", param.OnLeave)
+		end
+
+		if p.callback then p:callback(btn) end
+
+		params[btn] = nil
 	end
 end
 
@@ -1225,36 +1358,6 @@ function hb:setClipButtons()
 		if btnData then
 			btn:SetClipsChildren(btnData[4])
 		end
-	end
-end
-
-
-function hb:hideGrabbedOwnButtons(bar)
-	local i = 1
-	local btn = self.minimapButtons[i]
-	while btn do
-		local name = btn:GetName()
-		if name and name:match(self.matchName) then
-			tremove(self.minimapButtons, i)
-			for j = 1, #self.mixedButtons do
-				if btn == self.mixedButtons[j] then
-					tremove(self.mixedButtons, j)
-					break
-				end
-			end
-			btn:Hide()
-			self.Hide(btn)
-			btn.Show = void
-			btn.bar:Hide()
-			btn.bar.Show = void
-			btn.bar.SetShown = void
-			btn.bar.drag:Hide()
-			btn.bar.drag.Show = void
-			btn.bar.drag.SetShown = void
-		else
-			i = i + 1
-		end
-		btn = self.minimapButtons[i]
 	end
 end
 
@@ -1304,45 +1407,28 @@ function hidingBarMixin:createOwnMinimapButton()
 end
 
 
-do
-	local function setPoint(self, point, rFrame, rPoint, x, y)
-		local scale = self:GetScale()
-		if not rFrame or type(rFrame) == "number" then
-			rFrame = (rFrame or 0) / scale
-			rPoint = (rPoint or 0) / scale
-		elseif not rPoint or type(rPoint) == "number" then
-			rPoint = (rPoint or 0) / scale
-			x = (x or 0) / scale
-		else
-			x = (x or 0) / scale
-			y = (y or 0) / scale
+function hidingBarMixin:initOwnMinimapButton()
+	self.initOwnMinimapButton = nil
+	self.omb = ldbi:GetMinimapButton(self.ombName)
+	self.omb.bar = self
+	self.omb.dSetPoint = self.omb.SetPoint
+	self.omb.SetPoint = setOMBPoint
+	self:setOMBSize()
+
+	if MSQ then
+		if not hb.MSQ_OMB then
+			hb.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
+			hb.MSQ_OMB:SetCallback(function()
+				hb:MSQ_Button_Update(self.omb)
+				hb:MSQ_CoordUpdate(self.omb)
+			end)
 		end
-		self:dSetPoint(point, rFrame, rPoint, x, y)
+		hb:setMButtonRegions(self.omb, nil, hb.MSQ_OMB)
 	end
 
-	function hidingBarMixin:initOwnMinimapButton()
-		self.initOwnMinimapButton = nil
-		self.omb = ldbi:GetMinimapButton(self.ombName)
-		self.omb.bar = self
-		self.omb.dSetPoint = self.omb.SetPoint
-		self.omb.SetPoint = setPoint
-		self:setOMBSize()
-
-		if MSQ then
-			if not hb.MSQ_OMB then
-				hb.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
-				hb.MSQ_OMB:SetCallback(function()
-					hb:MSQ_Button_Update(self.omb)
-					hb:MSQ_CoordUpdate(self.omb)
-				end)
-			end
-			hb:setMButtonRegions(self.omb, nil, hb.MSQ_OMB)
-		end
-
-		if hb:grabOwnButton(self.omb) then
-			local parent = self.omb:GetParent()
-			if parent.anchorObj then parent:setButtonSize() end
-		end
+	if self.config.omb.canGrabbed and (hb.queueEmpty or not next(hb.pConfig.ombGrabQueue)) then
+		hb.pConfig.ombGrabQueue[#hb.pConfig.ombGrabQueue + 1] = self.id
+		hb.queueEmpty = true
 	end
 end
 
