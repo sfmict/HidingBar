@@ -1355,6 +1355,7 @@ main.likeMB:SetScript("OnClick", function()
 	main:applyLayout(.3)
 	if main.bConfig.omb.canGrabbed and not main.barFrame.omb.isGrabbed then
 		if hb:grabOwnButton(main.barFrame.omb) then
+			hb:sort()
 			main.barFrame.omb:GetParent():setButtonSize()
 			main:restoreMbutton(main.barFrame.omb)
 		end
@@ -1419,6 +1420,7 @@ main.canGrabbed:SetScript("OnClick", function(btn)
 	if checked then
 		main.pConfig.ombGrabQueue[#main.pConfig.ombGrabQueue + 1] = main.barFrame.id
 		if hb:grabOwnButton(omb) then
+			hb:sort()
 			omb:GetParent():setButtonSize()
 			main:restoreMbutton(omb)
 		end
@@ -1643,8 +1645,16 @@ function main:setProfile()
 		btn.settings = self.pConfig.btnSettings[btn.title]
 	end
 
-	for _, btn in ipairs(self.mbuttons) do
-		btn.settings = self.pConfig.mbtnSettings[btn.name]
+	local i = 1
+	local btn = self.mbuttons[i]
+	while btn do
+		if btn.name:match(hb.matchName) and not btn.rButton.isGrabbed then
+			self:removeMButton(btn, i)
+		else
+			btn.settings = self.pConfig.mbtnSettings[btn.name]
+			i = i + 1
+		end
+		btn = self.mbuttons[i]
 	end
 
 	self.ignoreScroll:update()
@@ -1844,7 +1854,7 @@ function main:removeMButton(button, mIndex, update)
 end
 
 
-function main:restoreMbutton(rButton, update)
+function main:restoreMbutton(rButton)
 	if not (self.removedButtons and self.removedButtons[rButton]) then
 		self:initMButtons(true)
 		return
@@ -1856,10 +1866,6 @@ function main:restoreMbutton(rButton, update)
 
 	self.removedButtons[rButton] = nil
 	if not next(self.removedButtons) then self.removedButtons = nil end
-
-	if update then
-		self:setBar(self.currentBar)
-	end
 end
 hb:on("OWN_BUTTON_GRABBED", function(_, ...) main:restoreMbutton(...) end)
 
@@ -2161,7 +2167,7 @@ do
 		btn:SetScript("OnEnter", btnEnter)
 		contextmenu:ddSetNoGlobalMouseEvent(true, btn)
 		btn.toIgnore = not (hb.manuallyButtons[button] or name:match(hb.matchName))
-		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(hb.manuallyButtons[button] and "Minimap" or L["Manually added"])
+		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(hb.manuallyButtons[button] and L["Manually added"] or "Minimap")
 		hb.manuallyButtons[button] = nil
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)

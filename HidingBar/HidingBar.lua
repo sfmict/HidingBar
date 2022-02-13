@@ -35,13 +35,8 @@ local ignoreFrameList = {
 
 
 local function void() end
-local function enter(btn)
-	local bar = btn:GetParent()
-	if not bar:IsShown() then return end
-	bar.isMouse = true
-	bar:enter()
 
-	if not bar.config.interceptTooltip then return end
+local function updateTooltipPosition(bar)
 	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
 	if not tooltip or tooltip:GetUnit() then return end
 
@@ -58,6 +53,17 @@ local function enter(btn)
 	tooltip:ClearAllPoints()
 	tooltip:SetPoint(point, bar, rPoint)
 end
+
+local function enter(btn)
+	local bar = btn:GetParent()
+	if not bar:IsShown() then return end
+	bar.isMouse = true
+	bar:enter()
+
+	if not bar.config.interceptTooltip then return end
+	updateTooltipPosition(bar)
+end
+
 local function leave(btn)
 	local bar = btn:GetParent()
 	if bar:IsShown() then
@@ -65,6 +71,7 @@ local function leave(btn)
 		bar:leave()
 	end
 end
+
 local function setOMBPoint(self, point, rFrame, rPoint, x, y)
 	local scale = self:GetScale()
 	if not rFrame or type(rFrame) == "number" then
@@ -524,8 +531,16 @@ function hb:init()
 			GameTimeCalendarInvitesGlow.Show = void
 			GameTimeCalendarInvitesGlow:Hide()
 			self:setHooks(GameTimeFrame)
-			self:setParams(GameTimeFrame, function()
+			local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
 				GameTimeCalendarInvitesGlow.Show = nil
+				GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
+			end)
+			p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
+			self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
+				local bar = GameTimeFrame:GetParent()
+				if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
+					updateTooltipPosition(bar)
+				end
 			end)
 
 			if self.MSQ_MButton then
@@ -549,6 +564,7 @@ function hb:init()
 			end)
 			self:setHooks(MiniMapTracking)
 			local p = self:setParams(MiniMapTracking, function(p)
+				if MiniMapTrackingButton.__MSQ_Enabled then return end
 				icon.SetPoint = nil
 				MiniMapTrackingButton:SetScript("OnMouseDown", p.OnMouseDown)
 				MiniMapTrackingButton:SetScript("OnMouseUp", p.OnMouseUp)
@@ -881,7 +897,6 @@ function hb:setProfile(profileName)
 	end
 	self.db.tstmp = t
 
-	self:sort()
 	self:updateBars()
 
 	if self.init then
@@ -902,47 +917,49 @@ function hb:updateBars()
 
 		if bar.createOwnMinimapButton then
 			bar:createOwnMinimapButton()
-		elseif bar.omb and bar.omb.isGrabbed then
-			self:removeMButton(bar.omb)
 		end
 
 		if bar.barSettings.isDefault then
 			self.defaultBar = bar
 		end
-
 	end
 
 	for i = 1, #self.mixedButtons do
 		self:setBtnParent(self.mixedButtons[i])
 	end
 
-	for i = 1, #self.currentProfile.bars do
-		local bar = self.bars[i]
-		bar:setFrameStrata()
-		bar:setLineColor()
-		bar:setBackgroundColor()
-		bar:setLineWidth()
-		bar.drag:setShowHandler()
-		bar:setBarTypePosition()
-		bar:updateDragBarPosition()
-		bar:setButtonDirection()
-	end
-
-	hb.queueEmpty = nil
-	for i = 1, #self.pConfig.ombGrabQueue do
-		local omb = self.bars[self.pConfig.ombGrabQueue[i]].omb
-		if omb and not omb.isGrabbed then self:grabOwnButton(omb) end
-	end
-
 	for i = 1, #self.bars do
 		local bar = self.bars[i]
+		if bar.omb and bar.omb.isGrabbed then
+			self:removeMButton(bar.omb)
+		end
+
 		if self.currentProfile.bars[i] then
-			bar:setButtonSize()
+			bar:setFrameStrata()
+			bar:setLineColor()
+			bar:setBackgroundColor()
+			bar:setLineWidth()
+			bar.drag:setShowHandler()
+			bar:setBarTypePosition()
+			bar:updateDragBarPosition()
+			bar:setButtonDirection()
 		else
 			bar:Hide()
 			bar.drag:Hide()
 			ldbi:Hide(bar.ombName)
 		end
+	end
+
+	self.queueEmpty = nil
+	for i = 1, #self.pConfig.ombGrabQueue do
+		local omb = self.bars[self.pConfig.ombGrabQueue[i]].omb
+		if omb and not omb.isGrabbed then self:grabOwnButton(omb) end
+	end
+
+	self:sort()
+
+	for i = 1, #self.currentProfile.bars do
+		self.bars[i]:setButtonSize()
 	end
 end
 
@@ -1101,7 +1118,7 @@ function hb:grabOwnButton(button, force)
 	else
 		for i = 1, #self.currentProfile.bars do
 			local sBar = self.bars[i]
-			if sBar ~= bar and sbar ~= self.defaultBar and not self:isBarParent(button, sBar) then
+			if sBar ~= bar and sBar ~= self.defaultBar and not self:isBarParent(button, sBar) then
 				btnData[3] = sBar.name
 				stop = false
 				break
@@ -1112,11 +1129,9 @@ function hb:grabOwnButton(button, force)
 
 	if self:addMButton(button, true) then
 		button.isGrabbed = true
-
 		if not force then
 			self:setMBtnSettings(button)
 			self:setBtnParent(button)
-			self:sort()
 		end
 		self.cb:Fire("OWN_BUTTON_GRABBED", button)
 		return true
@@ -1510,7 +1525,7 @@ function hidingBarMixin:initOwnMinimapButton()
 		hb:setMButtonRegions(self.omb, nil, hb.MSQ_OMB)
 	end
 
-	if self.config.omb.canGrabbed and (hb.queueEmptynot or not next(hb.pConfig.ombGrabQueue)) then
+	if self.config.omb.canGrabbed and (hb.queueEmpty or not next(hb.pConfig.ombGrabQueue)) then
 		hb.pConfig.ombGrabQueue[#hb.pConfig.ombGrabQueue + 1] = self.id
 		hb.queueEmpty = true
 	end
