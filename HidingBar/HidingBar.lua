@@ -520,7 +520,6 @@ function hb:init()
 			proxyTracking.show = tracking:IsShown()
 			self:setHooks(tracking)
 			tracking.SetPoint = nil
-			fprint(tracking:GetPoint())
 			self.Hide(tracking)
 			proxyTracking:SetSize(tracking:GetSize())
 			proxyTracking.icon = MiniMapTrackingIcon
