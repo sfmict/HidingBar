@@ -479,7 +479,7 @@ main.ignoreScroll.update = function(scroll)
 		if index <= numButtons then
 			btn:SetText(main.pConfig.ignoreMBtn[index]:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1"))
 			btn.removeButton:SetScript("OnClick", function()
-				main:removeIgnoreName(index)
+				main:removeIgnoreName(main.pConfig.ignoreMBtn[index])
 			end)
 			btn:Enable()
 		else
@@ -702,7 +702,7 @@ main.customGrabScroll.update = function(scroll)
 		if index <= numButtons then
 			btn:SetText(main.pConfig.customGrabList[index])
 			btn.removeButton:SetScript("OnClick", function()
-				main:removeCustomGrabName(index)
+				main:removeCustomGrabName(main.pConfig.customGrabList[index])
 			end)
 			btn:Enable()
 		else
@@ -1357,7 +1357,6 @@ main.likeMB:SetScript("OnClick", function()
 		if hb:grabOwnButton(main.barFrame.omb) then
 			hb:sort()
 			main.barFrame.omb:GetParent():setButtonSize()
-			main:restoreMbutton(main.barFrame.omb)
 		end
 	end
 	updateBarTypePosition()
@@ -1422,7 +1421,6 @@ main.canGrabbed:SetScript("OnClick", function(btn)
 		if hb:grabOwnButton(omb) then
 			hb:sort()
 			omb:GetParent():setButtonSize()
-			main:restoreMbutton(omb)
 		end
 	else
 		main:removeOmbGrabQueue(main.barFrame.id)
@@ -1835,6 +1833,20 @@ hb:on("COORDS_UPDATED", function(_, bar)
 end)
 
 
+function main:removeMButtonByName(name, update)
+	for i, btn in ipairs(self.mbuttons) do
+		if btn.name == name then
+			self:removeMButton(btn, i, update)
+			hb:removeMButton(btn.rButton, update)
+			if btn.rButton.__MSQ_Enabled or btn.rButton.rButton and btn.rButton.rButton.__MSQ_Enabled then
+				StaticPopup_Show(self.addonName.."GET_RELOAD")
+			end
+			break
+		end
+	end
+end
+
+
 function main:removeMButton(button, mIndex, update)
 	tremove(self.mbuttons, mIndex)
 	for i, btn in ipairs(self.mixedButtons) do
@@ -1855,19 +1867,23 @@ end
 
 
 function main:restoreMbutton(rButton)
-	if not (self.removedButtons and self.removedButtons[rButton]) then
-		self:initMButtons(true)
-		return
-	end
+	if not (self.removedButtons and self.removedButtons[rButton]) then return end
 
 	local btn = self.removedButtons[rButton]
-	tinsert(self.mbuttons, btn)
-	tinsert(self.mixedButtons, btn)
-
 	self.removedButtons[rButton] = nil
 	if not next(self.removedButtons) then self.removedButtons = nil end
+
+	tinsert(self.mbuttons, btn)
+	tinsert(self.mixedButtons, btn)
+	btn.settings = self.pConfig.mbtnSettings[rButton:GetName()]
+	local bar = self.currentBar
+	btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
+	btn:SetChecked(btn.settings[1])
+	self:sort(self.mbuttons)
+	self:sort(self.mixedButtons)
+	self:setButtonSize()
+	self:applyLayout()
 end
-hb:on("OWN_BUTTON_GRABBED", function(_, ...) main:restoreMbutton(...) end)
 
 
 function main:addIgnoreName(name)
@@ -1875,25 +1891,14 @@ function main:addIgnoreName(name)
 	for _, n in ipairs(self.pConfig.ignoreMBtn) do
 		if name == n then return end
 	end
-	for i, btn in ipairs(self.mbuttons) do
-		if btn.name == name then
-			self:removeMButton(btn, i, true)
-			hb:removeMButton(btn.rButton)
-			self.barFrame:applyLayout()
-			if btn.rButton.__MSQ_Enabled then
-				StaticPopup_Show(self.addonName.."GET_RELOAD")
-			end
-			break
-		end
-	end
+	self:removeMButtonByName(name, true)
 	tinsert(self.pConfig.ignoreMBtn, name)
 	sort(self.pConfig.ignoreMBtn)
 	self.ignoreScroll:update()
 end
 
 
-function main:removeIgnoreName(index)
-	local name = self.pConfig.ignoreMBtn[index]
+function main:removeIgnoreName(name)
 	StaticPopup_Show(self.addonName.."REMOVE_IGNORE_MBTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1")), nil, function()
 		for i = 1, #self.pConfig.ignoreMBtn do
 			if name == self.pConfig.ignoreMBtn[i] then
@@ -1902,7 +1907,7 @@ function main:removeIgnoreName(index)
 			end
 		end
 		self.ignoreScroll:update()
-		StaticPopup_Show(self.addonName.."GET_RELOAD")
+		hb:grabMButtons()
 	end)
 end
 
@@ -1928,8 +1933,7 @@ function main:addCustomGrabName(name)
 end
 
 
-function main:removeCustomGrabName(index)
-	local name = self.pConfig.customGrabList[index]
+function main:removeCustomGrabName(name)
 	StaticPopup_Show(self.addonName.."REMOVE_CUSTOM_GRAB_BTN", NORMAL_FONT_COLOR:WrapTextInColorCode(name), nil, function()
 		for i = 1, #self.pConfig.customGrabList do
 			if name == self.pConfig.customGrabList[i] then
@@ -1938,7 +1942,11 @@ function main:removeCustomGrabName(index)
 			end
 		end
 		self.customGrabScroll:update()
-		StaticPopup_Show(self.addonName.."GET_RELOAD")
+		if name:match(hb.matchName) then
+			local btn = _G[name]
+			if not btn or btn.bar.config.omb.canGrabbed then return end
+		end
+		self:removeMButtonByName(name, true)
 	end)
 end
 
@@ -2147,7 +2155,12 @@ do
 	end
 
 	function main:createMButton(button, name, icon, update)
-		if not self.buttonPanel or type(name) ~= "string" or buttonsByName[name] then return end
+		if not self.buttonPanel or type(name) ~= "string" then return end
+		if buttonsByName[name] then
+			self:restoreMbutton(button)
+			return
+		end
+
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.rButton = button
 		btn.name = name
@@ -2184,7 +2197,7 @@ do
 			self:applyLayout()
 		end
 	end
-	hb:on("MBUTTON_ADDED", function(_, ...) main:createMButton(...) end)
+	hb:on("MBUTTON_ADDED", function(_, btn) main:createMButton(btn, btn:GetName(), btn.icon, true) end)
 end
 
 
