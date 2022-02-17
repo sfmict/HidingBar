@@ -1723,6 +1723,11 @@ function main:removeBar(barName)
 			end
 		end
 		self:removeOmbGrabQueue(barID)
+		for i, btn in ipairs(self.mbuttons) do
+			if btn.name:match(hb.matchName) then
+				self:removeMButton(btn, i)
+			end
+		end
 		hb:updateBars()
 		if self.currentBar.name == barName then
 			self:setBar()
@@ -1952,7 +1957,8 @@ end
 
 
 function main:hidingBarUpdate()
-	for _, bar in ipairs(hb.bars) do
+	for i = 1, #self.currentProfile.bars do
+		local bar = hb.bars[i]
 		bar:enter()
 		bar:leave(math.max(1.5, bar.config.hideDelay))
 	end
