@@ -1168,8 +1168,8 @@ function hb:grabOwnButton(button, force)
 		if not force then
 			self:setMBtnSettings(button)
 			self:setBtnParent(button)
+			self.cb:Fire("MBUTTON_ADDED", button)
 		end
-		self.cb:Fire("MBUTTON_ADDED", button)
 		return true
 	end
 end
