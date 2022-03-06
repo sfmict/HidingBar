@@ -9,6 +9,7 @@ local btnSettingsMeta = {__index = function(self, key)
 	return self[key]
 end}
 local createdButtonsByName, btnSettings, btnParams = {}, {}, {}
+local noGMEFrames = {}
 hb.matchName = "LibDBIcon10_"..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
 hb.manuallyButtons = {}
@@ -231,7 +232,7 @@ if MSQ then
 
 		for _, region in ipairs({btn:GetRegions()}) do
 			if region:GetObjectType() == "Texture" then
-				name = region:GetDebugName():lower()
+				name = region:GetDebugName():gsub(".*%.", ""):lower()
 				texture = region:GetTexture()
 				tIsString = type(texture) == "string"
 				if tIsString then texture = texture:lower() end
@@ -366,7 +367,11 @@ function hb:ADDON_LOADED(addonName)
 			self.db.config = nil
 		end
 
-		C_Timer.After(0, function() self:setProfile() end)
+		C_Timer.After(0, function()
+			self:setProfile()
+			self.cb:Fire("INIT")
+			self.init = nil
+		end)
 	end
 end
 
@@ -569,11 +574,6 @@ function hb:setProfile(profileName)
 	self.db.tstmp = t
 
 	self:updateBars()
-
-	if self.init then
-		self.cb:Fire("INIT")
-		self.init = nil
-	end
 end
 
 
@@ -1415,6 +1415,7 @@ function hb:setParams(btn, cb)
 			self.SetHitRectInsets(frame, 0, 0, 0, 0)
 			self.HookScript(frame, "OnEnter", OnEnter)
 			self.HookScript(frame, "OnLeave", OnLeave)
+			noGMEFrames[frame] = true
 		end
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
 			setMouseEvents(fchild)
@@ -1453,6 +1454,7 @@ function hb:restoreParams(btn)
 		self.SetHitRectInsets(frame, unpack(param.insets))
 		self.SetScript(frame, "OnEnter", param.OnEnter)
 		self.SetScript(frame, "OnLeave", param.OnLeave)
+		noGMEFrames[frame] = nil
 	end
 
 	if p.callback then p:callback(btn) end
@@ -1525,9 +1527,24 @@ function hidingBarMixin:createOwnMinimapButton()
 				end
 			end
 		end,
-		OnEnter = function()
+		OnEnter = function(btn)
 			local func = self.drag:GetScript("OnEnter")
 			if func then func(self.drag) end
+
+			local parent = btn:GetParent()
+			for i = 1, #hb.currentProfile.bars do
+				local bar = hb.bars[i]
+				if bar ~= self
+				and bar.config.barTypePosition == 2
+				and bar.config.showHandler ~= 3
+				and bar.omb
+				and parent == bar.omb:GetParent()
+				and bar:IsShown()
+				then
+					bar:Hide()
+					bar:updateDragBarPosition()
+				end
+			end
 		end,
 		OnLeave = function()
 			local func = self.drag:GetScript("OnLeave")
@@ -2165,27 +2182,6 @@ function hidingBarMixin:enter(force)
 		self:Show()
 		self:Raise()
 		self:updateDragBarPosition()
-
-		if self.config.barTypePosition ~= 2 or not self.omb then return end
-		local parent = self.omb:GetParent()
-
-		if self.omb.isGrabbed then
-			self:SetFrameLevel(parent:GetFrameLevel() + 11)
-		end
-
-		for i = 1, #hb.currentProfile.bars do
-			local bar = hb.bars[i]
-			if bar ~= self
-			and bar.config.barTypePosition == 2
-			and bar.config.showHandler ~= 3
-			and bar.omb
-			and parent == bar.omb:GetParent()
-			and bar:IsShown()
-			then
-				bar:Hide()
-				bar:updateDragBarPosition()
-			end
-		end
 	end
 end
 
@@ -2354,7 +2350,8 @@ local function bar_OnEvent(self, event, button)
 	if (button == "LeftButton" or button == "RightButton")
 	and not (self:IsMouseOver()
 		or self.drag:IsShown() and self.drag:IsMouseOver()
-		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver())
+		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver()
+		or noGMEFrames[GetMouseFocus()])
 	then
 		self:Hide()
 		self:updateDragBarPosition()
@@ -2367,6 +2364,11 @@ end
 
 
 local function bar_OnShow(self)
+	if self.config.barTypePosition == 2 and self.omb and self.omb.isGrabbed then
+		self:SetFrameLevel(self.omb:GetParent():GetFrameLevel() + 11)
+	else
+		self:SetFrameLevel(100)
+	end
 	if self.config.showHandler == 3 then return end
 	self:RegisterEvent("GLOBAL_MOUSE_DOWN")
 end
