@@ -229,7 +229,7 @@ if MSQ then
 
 		for _, region in ipairs({btn:GetRegions()}) do
 			if region:GetObjectType() == "Texture" then
-				name = region:GetDebugName():lower()
+				name = region:GetDebugName():gsub(".*%.", ""):lower()
 				texture = region:GetTexture()
 				tIsString = type(texture) == "string"
 				if tIsString then texture = texture:lower() end
@@ -364,7 +364,11 @@ function hb:ADDON_LOADED(addonName)
 			self.db.config = nil
 		end
 
-		C_Timer.After(0, function() self:setProfile() end)
+		C_Timer.After(0, function()
+			self:setProfile()
+			self.cb:Fire("INIT")
+			self.init = nil
+		end)
 	end
 end
 
@@ -573,11 +577,6 @@ function hb:setProfile(profileName)
 	self.db.tstmp = t
 
 	self:updateBars()
-
-	if self.init then
-		self.cb:Fire("INIT")
-		self.init = nil
-	end
 end
 
 
@@ -1057,8 +1056,8 @@ function hb:grabOwnButton(button, force)
 		if not force then
 			self:setMBtnSettings(button)
 			self:setBtnParent(button)
+			self.cb:Fire("MBUTTON_ADDED", button)
 		end
-		self.cb:Fire("MBUTTON_ADDED", button)
 		return true
 	end
 end
@@ -1414,9 +1413,24 @@ function hidingBarMixin:createOwnMinimapButton()
 				end
 			end
 		end,
-		OnEnter = function()
+		OnEnter = function(btn)
 			local func = self.drag:GetScript("OnEnter")
 			if func then func(self.drag) end
+
+			local parent = btn:GetParent()
+			for i = 1, #hb.currentProfile.bars do
+				local bar = hb.bars[i]
+				if bar ~= self
+				and bar.config.barTypePosition == 2
+				and bar.config.showHandler ~= 3
+				and bar.omb
+				and parent == bar.omb:GetParent()
+				and bar:IsShown()
+				then
+					bar:Hide()
+					bar:updateDragBarPosition()
+				end
+			end
 		end,
 		OnLeave = function()
 			local func = self.drag:GetScript("OnLeave")
@@ -2054,27 +2068,6 @@ function hidingBarMixin:enter(force)
 		self:Show()
 		self:Raise()
 		self:updateDragBarPosition()
-
-		if self.config.barTypePosition ~= 2 or not self.omb then return end
-		local parent = self.omb:GetParent()
-
-		if self.omb.isGrabbed then
-			self:SetFrameLevel(parent:GetFrameLevel() + 11)
-		end
-
-		for i = 1, #hb.currentProfile.bars do
-			local bar = hb.bars[i]
-			if bar ~= self
-			and bar.config.barTypePosition == 2
-			and bar.config.showHandler ~= 3
-			and bar.omb
-			and parent == bar.omb:GetParent()
-			and bar:IsShown()
-			then
-				bar:Hide()
-				bar:updateDragBarPosition()
-			end
-		end
 	end
 end
 
@@ -2239,6 +2232,15 @@ local function bar_OnLeave(self)
 end
 
 
+local function bar_OnShow(self)
+	if self.config.barTypePosition == 2 and self.omb and self.omb.isGrabbed then
+		self:SetFrameLevel(self.omb:GetParent():GetFrameLevel() + 11)
+	else
+		self:SetFrameLevel(100)
+	end
+end
+
+
 local function drag_OnMouseDown(self, button)
 	local bar = self.bar
 	if button == "LeftButton" and not bar.config.lock and bar:IsShown() then
@@ -2296,6 +2298,7 @@ setmetatable(hb.bars, {__index = function(self, key)
 	bar:SetClampedToScreen(true)
 	bar:SetScript("OnEnter", bar_OnEnter)
 	bar:SetScript("OnLeave", bar_OnLeave)
+	bar:SetScript("OnShow", bar_OnShow)
 	for k, v in pairs(hidingBarMixin) do
 		bar[k] = v
 	end
