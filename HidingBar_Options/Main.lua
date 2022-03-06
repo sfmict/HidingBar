@@ -7,13 +7,14 @@ main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
 local lsfdd = LibStub("LibSFDropDown-1.4")
 
 
+local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
 main.optionsPanelBackdrop = {
 	bgFile = "Interface/Tooltips/UI-Tooltip-Background",
 	edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
 	tile = true,
 	tileEdge = true,
-	tileSize = 14,
-	edgeSize = 14,
+	tileSize = 14 * scale,
+	edgeSize = 14 * scale,
 	insets = {left = 4, right = 4, top = 4, bottom = 4}
 }
 
@@ -21,13 +22,13 @@ main.optionsPanelBackdrop = {
 main.editBoxBackdrop = {
 	bgFile = "Interface/ChatFrame/ChatFrameBackground",
 	edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-	tile = true, edgeSize = 1, tileSize = 5,
+	tile = true, edgeSize = 1 * scale, tileSize = 5 * scale,
 }
 
 
 main.colorButtonBackdrop = {
 	edgeFile = "Interface/ChatFrame/ChatFrameBackground",
-	edgeSize = 1,
+	edgeSize = 1 * scale,
 }
 
 
