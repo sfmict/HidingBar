@@ -1177,7 +1177,9 @@ end
 
 function hb:addCustomGrabButton(name)
 	local button = _G[name]
-	if not button or type(button[0]) ~= "userdata" or btnParams[button] then return end
+	if not button or type(button[0]) ~= "userdata" or btnParams[button] or self.IsProtected(button) then return end
+	local oType = self.GetObjectType(button)
+	if oType ~= "Button" and oType ~= "Frame" and oType ~= "CheckButton" then return end
 	if name:match(self.matchName) then
 		if self:grabOwnButton(button, true) then
 			self.manuallyButtons[button] = true
@@ -1202,9 +1204,9 @@ end
 
 
 function hb:grabMinimapAddonsButtons(parentFrame)
-	for _, child in ipairs({parentFrame:GetChildren()}) do
-		local width, height = child:GetSize()
-		if math.max(width, height) > 16 and math.abs(width - height) < 5 then
+	for _, child in ipairs({self.GetChildren(parentFrame)}) do
+		local width, height = self.GetSize(child)
+		if math.max(width, height) > 16 and math.abs(width - height) < 5 and not self.IsProtected(child) then
 			self:addMButton(child)
 		end
 	end
@@ -1212,11 +1214,11 @@ end
 
 
 function hb:addMButton(button, force, MSQ_Group)
-	local name = button:GetName()
+	local name = self.GetName(button)
 	if not ignoreFrameList[name] and self:ignoreCheck(name) or force then
-		if button:HasScript("OnClick") and button:GetScript("OnClick")
-		or button:HasScript("OnMouseUp") and button:GetScript("OnMouseUp")
-		or button:HasScript("OnMouseDown") and button:GetScript("OnMouseDown")
+		if self.HasScript(button, "OnClick") and self.GetScript(button, "OnClick")
+		or self.HasScript(button, "OnMouseUp") and self.GetScript(button, "OnMouseUp")
+		or self.HasScript(button, "OnMouseDown") and self.GetScript(button, "OnMouseDown")
 		or force then
 			local btn = self.minimapButtons[button[0]]
 			self.minimapButtons[button[0]] = nil
@@ -1224,7 +1226,7 @@ function hb:addMButton(button, force, MSQ_Group)
 				self:setHooks(button)
 			end
 
-			if self.MSQ_MButton and button:GetObjectType() == "Button" and not button.__MSQ_Addon then
+			if self.MSQ_MButton and self.GetObjectType(button) == "Button" and not button.__MSQ_Addon then
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
@@ -1235,15 +1237,15 @@ function hb:addMButton(button, force, MSQ_Group)
 		else
 			local clickable
 			local function getMouseEnabled(frame)
-				if frame:IsMouseEnabled() then
-					if frame:HasScript("OnClick") and frame:GetScript("OnClick")
-					or frame:HasScript("OnMouseUp") and frame:GetScript("OnMouseUp")
-					or frame:HasScript("OnMouseDown") and frame:GetScript("OnMouseDown") then
+				if self.IsMouseEnabled(frame) then
+					if self.HasScript(frame, "OnClick") and self.GetScript(frame, "OnClick")
+					or self.HasScript(frame, "OnMouseUp") and self.GetScript(frame, "OnMouseUp")
+					or self.HasScript(frame, "OnMouseDown") and self.GetScript(frame, "OnMouseDown") then
 						clickable = true
 						return
 					end
 				end
-				for _, fchild in ipairs({frame:GetChildren()}) do
+				for _, fchild in ipairs({self.GetChildren(frame)}) do
 					getMouseEnabled(fchild)
 				end
 			end
