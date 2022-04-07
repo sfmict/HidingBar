@@ -178,14 +178,14 @@ if MSQ then
 			local right = LRy - URy
 			local bottom = LRx - LLx
 			local left = LLy - ULy
-			ULx = ULx + mULx * top
-			ULy = ULy + mULy * left
-			LLx = LLx + mLLx * bottom
-			LLy = ULy + mLLy * left
 			URx = ULx + mURx * top
+			ULx = ULx + mULx * top
+			LRy = URy + mLRy * right
 			URy = URy + mURy * right
 			LRx = LLx + mLRx * bottom
-			LRy = URy + mLRy * right
+			LLx = LLx + mLLx * bottom
+			LLy = ULy + mLLy * left
+			ULy = ULy + mULy * left
 		end
 
 		config.noIcon.SetTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
@@ -941,7 +941,37 @@ function hb:grabDefButtons()
 			self.SetShown(queue, show)
 			return show
 		end
-		self:setParams(queue)
+		local p = self:setParams(queue, function(p, queue)
+			QueueStatusFrame:ClearAllPoints()
+			for i = 1, #p.statusFramePoints do
+				QueueStatusFrame:SetPoint(unpack(p.statusFramePoints[i]))
+			end
+		end)
+
+		p.statusFramePoints = {}
+		for i = 1, QueueStatusFrame:GetNumPoints() do
+			p.statusFramePoints[i] = {QueueStatusFrame:GetPoint(i)}
+		end
+
+		self.HookScript(queue, "OnEnter", function(queue)
+			local bar, point, rPoint, rFrame = self.GetParent(queue)
+			QueueStatusFrame:ClearAllPoints()
+
+			if bar.config.interceptTooltip then
+				if bar:GetTop() + QueueStatusFrame:GetHeight() + 10 < UIParent:GetHeight() then
+					point = "BOTTOMLEFT"
+					rPoint = "TOPLEFT"
+				else
+					point = "TOPLEFT"
+					rPoint = "BOTTOMLEFT"
+				end
+				QueueStatusFrame:SetPoint(point, bar, rPoint)
+			else
+				for i = 1, #p.statusFramePoints do
+					QueueStatusFrame:SetPoint(unpack(p.statusFramePoints[i]))
+				end
+			end
+		end)
 
 		if not queue.HidingBarSound then
 			queue.EyeHighlightAnim:SetScript("OnLoop", nil)
