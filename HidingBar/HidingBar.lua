@@ -14,6 +14,7 @@ hb.matchName = "LibDBIcon10_"..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
 hb.manuallyButtons = {}
 hb.bars, hb.barByName = {}, {}
+local LibStub = LibStub
 hb.cb = LibStub("CallbackHandler-1.0"):New(hb, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
 local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0")
@@ -37,9 +38,25 @@ local ignoreFrameList = {
 
 local function void() end
 
-local function updateTooltipPosition(bar)
+local function updateTooltipPosition(bar, eventFrame)
 	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
-	if not tooltip or tooltip:GetUnit() then return end
+
+	if not tooltip or tooltip:GetUnit() then
+		if not eventFrame then return end
+		local lqtip = LibStub("LibQTip-1.0", true)
+		if not lqtip then return end
+		tooltip = nil
+		for k, t in lqtip:IterateTooltips() do
+			if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
+				t:SetClampedToScreen(true)
+				tooltip = t
+				break
+			end
+		end
+		if not tooltip then return end
+	else
+		tooltip:SetAnchorType("ANCHOR_NONE")
+	end
 
 	local point, rPoint
 	if bar:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
@@ -50,19 +67,19 @@ local function updateTooltipPosition(bar)
 		rPoint = "BOTTOMLEFT"
 	end
 
-	tooltip:SetAnchorType("ANCHOR_NONE")
 	tooltip:ClearAllPoints()
 	tooltip:SetPoint(point, bar, rPoint)
 end
 
-local function enter(btn)
+local function enter(btn, eventFrame)
 	local bar = btn:GetParent()
 	if not bar:IsShown() then return end
 	bar.isMouse = true
 	bar:enter()
 
-	if not bar.config.interceptTooltip then return end
-	updateTooltipPosition(bar)
+	if bar.config.interceptTooltip then
+		updateTooltipPosition(bar, eventFrame)
+	end
 end
 
 local function leave(btn)
@@ -1434,7 +1451,7 @@ function hb:setParams(btn, cb)
 		p.points[i] = {self.GetPoint(btn, i)}
 	end
 
-	local function OnEnter() enter(btn) end
+	local function OnEnter(f) enter(btn, f) end
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
