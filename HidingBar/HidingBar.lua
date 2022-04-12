@@ -58,17 +58,47 @@ local function updateTooltipPosition(bar, eventFrame)
 		tooltip:SetAnchorType("ANCHOR_NONE")
 	end
 
-	local point, rPoint
-	if bar:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
-		point = "BOTTOMLEFT"
-		rPoint = "TOPLEFT"
+	local pos, point, rPoint, rFrame = bar.config.interceptTooltipPosition
+
+	if pos == 0 then
+		local vPoint, vRPoint, hPoint
+
+		if bar:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
+			vPoint = "BOTTOM"
+			vRPoint = "TOP"
+		else
+			vPoint = "TOP"
+			vRPoint = "BOTTOM"
+			pos = 4
+		end
+
+		if bar.anchorObj.anchor == "left" then
+			hPoint = "LEFT"
+		elseif bar.anchorObj.anchor == "right" then
+			hPoint = "RIGHT"
+		else
+			hPoint = ""
+		end
+
+		point = vPoint..hPoint
+		rPoint = vRPoint..hPoint
 	else
-		point = "TOPLEFT"
-		rPoint = "BOTTOMLEFT"
+		point = bar.tooltipPoint
+		rPoint = bar.tooltipRPoint
+	end
+
+	if bar.anchorObj.anchor == "bottom" and pos >= 0 and pos <= 3
+	or bar.anchorObj.anchor == "top" and pos >= 4 and pos <= 6
+	or bar.anchorObj.anchor == "right" and pos >= 7 and pos <= 9
+	or bar.anchorObj.anchor == "left" and pos >= 10 and pos <= 12
+	then
+		rFrame = bar.drag
+	else
+		rFrame = bar
 	end
 
 	tooltip:ClearAllPoints()
-	tooltip:SetPoint(point, bar, rPoint)
+	tooltip:SetPoint(point, rFrame, rPoint)
 end
 
 local function enter(btn, eventFrame)
@@ -429,6 +459,7 @@ function hb:checkProfile(profile)
 		if bar.config.interceptTooltip == nil then
 			bar.config.interceptTooltip = true
 		end
+		bar.config.interceptTooltipPosition = bar.config.interceptTooltipPosition or 0
 		bar.config.buttonSize = bar.config.buttonSize or 31
 		bar.config.rangeBetweenBtns = bar.config.rangeBetweenBtns or 0
 		bar.config.anchor = bar.config.anchor or "top"
@@ -631,6 +662,7 @@ function hb:updateBars()
 			bar:setBarTypePosition()
 			bar:updateDragBarPosition()
 			bar:setButtonDirection()
+			bar:setTooltipPosition()
 		else
 			bar:Hide()
 			bar.drag:Hide()
@@ -1648,6 +1680,52 @@ function hidingBarMixin:setOMBSize(size)
 			local point, rFrame, rPoint, x, y = self.omb:GetPoint(i)
 			self.omb:SetPoint(point, rFrame, rPoint, x * oldScale, y * oldScale)
 		end
+	end
+end
+
+
+function hidingBarMixin:setTooltipPosition(position)
+	if position then self.config.interceptTooltipPosition = position end
+
+	if self.config.interceptTooltipPosition == 1 then
+		self.tooltipPoint = "BOTTOM"
+		self.tooltipRPoint = "TOP"
+	elseif self.config.interceptTooltipPosition == 2 then
+		self.tooltipPoint = "BOTTOMLEFT"
+		self.tooltipRPoint = "TOPLEFT"
+	elseif self.config.interceptTooltipPosition == 3 then
+		self.tooltipPoint = "BOTTOMRIGHT"
+		self.tooltipRPoint = "TOPRIGHT"
+	elseif self.config.interceptTooltipPosition == 4 then
+		self.tooltipPoint = "TOP"
+		self.tooltipRPoint = "BOTTOM"
+	elseif self.config.interceptTooltipPosition == 5 then
+		self.tooltipPoint = "TOPLEFT"
+		self.tooltipRPoint = "BOTTOMLEFT"
+	elseif self.config.interceptTooltipPosition == 6 then
+		self.tooltipPoint = "TOPRIGHT"
+		self.tooltipRPoint = "BOTTOMRIGHT"
+	elseif self.config.interceptTooltipPosition == 7 then
+		self.tooltipPoint = "RIGHT"
+		self.tooltipRPoint = "LEFT"
+	elseif self.config.interceptTooltipPosition == 8 then
+		self.tooltipPoint = "TOPRIGHT"
+		self.tooltipRPoint = "TOPLEFT"
+	elseif self.config.interceptTooltipPosition == 9 then
+		self.tooltipPoint = "BOTTOMRIGHT"
+		self.tooltipRPoint = "BOTTOMLEFT"
+	elseif self.config.interceptTooltipPosition == 10 then
+		self.tooltipPoint = "LEFT"
+		self.tooltipRPoint = "RIGHT"
+	elseif self.config.interceptTooltipPosition == 11 then
+		self.tooltipPoint = "TOPLEFT"
+		self.tooltipRPoint = "TOPRIGHT"
+	elseif self.config.interceptTooltipPosition == 12 then
+		self.tooltipPoint = "BOTTOMLEFT"
+		self.tooltipRPoint = "BOTTOMRIGHT"
+	else
+		self.tooltipPoint = nil
+		self.tooltipRPoint = nil
 	end
 end
 
