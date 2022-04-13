@@ -87,10 +87,10 @@ local function updateTooltipPosition(bar, eventFrame)
 		rPoint = bar.tooltipRPoint
 	end
 
-	if bar.anchorObj.anchor == "bottom" and pos >= 0 and pos <= 3
-	or bar.anchorObj.anchor == "top" and pos >= 4 and pos <= 6
-	or bar.anchorObj.anchor == "right" and pos >= 7 and pos <= 9
-	or bar.anchorObj.anchor == "left" and pos >= 10 and pos <= 12
+	if bar.drag:IsShown() and (bar.anchorObj.anchor == "bottom" and pos <= 3
+	                        or bar.anchorObj.anchor == "top" and pos >= 4 and pos <= 6
+	                        or bar.anchorObj.anchor == "right" and pos >= 7 and pos <= 9
+	                        or bar.anchorObj.anchor == "left" and pos >= 10)
 	then
 		rFrame = bar.drag
 	else
