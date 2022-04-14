@@ -1176,12 +1176,47 @@ end)
 
 -- INTERCEPT THE POSITION OF TOOLTIPS
 local interceptTooltip = CreateFrame("CheckButton", nil, main.buttonSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-interceptTooltip:SetPoint("TOPLEFT", mbtnPostionText, "BOTTOMLEFT", 0, -10)
+interceptTooltip:SetPoint("TOPLEFT", mbtnPostionText, "BOTTOMLEFT", 0, -15)
 interceptTooltip.Text:SetText(L["Intercept the position of tooltips"])
 interceptTooltip:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 	main.bConfig.interceptTooltip = checked
+	main.tooltipPositionCombobox:SetEnabled(checked)
+end)
+
+-- TOOLTIP POSITION
+main.tooltipPositionCombobox = lsfdd:CreateButton(main.buttonSettingsPanel, 120)
+main.tooltipPositionCombobox:SetPoint("LEFT", interceptTooltip.Text, "RIGHT", 3, 0)
+main.tooltipPositionCombobox.texts = {
+	[0] = L["Auto"],
+	L["Top"],
+	L["Top left"],
+	L["Top right"],
+	L["Bottom"],
+	L["Bottom left"],
+	L["Bottom right"],
+	L["Left"],
+	L["Left top"],
+	L["Left bottom"],
+	L["Right"],
+	L["Right top"],
+	L["Right bottom"],
+}
+
+local function updateTooltipPostion(btn)
+	main.tooltipPositionCombobox:ddSetSelectedValue(btn.value)
+	main.barFrame:setTooltipPosition(btn.value)
+end
+
+main.tooltipPositionCombobox:ddSetInitFunc(function(self)
+	local info = {}
+	for i = 0, #self.texts do
+		info.text = self.texts[i]
+		info.value = i
+		info.func = updateTooltipPostion
+		self:ddAddButton(info)
+	end
 end)
 
 -------------------------------------------
@@ -1786,6 +1821,9 @@ function main:setBar(bar)
 		mbtnPostionCombobox:ddSetSelectedValue(self.bConfig.mbtnPosition)
 		mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
 		interceptTooltip:SetChecked(self.bConfig.interceptTooltip)
+		self.tooltipPositionCombobox:ddSetSelectedValue(self.bConfig.interceptTooltipPosition)
+		self.tooltipPositionCombobox:ddSetSelectedText(self.tooltipPositionCombobox.texts[self.bConfig.interceptTooltipPosition])
+		self.tooltipPositionCombobox:SetEnabled(self.bConfig.interceptTooltip)
 
 		self.hideToCombobox:ddSetSelectedValue(self.bConfig.anchor)
 		self.hideToCombobox:ddSetSelectedText(self.hideToCombobox.texts[self.bConfig.anchor])
