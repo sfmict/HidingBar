@@ -510,4 +510,44 @@
 			</Slider>
 		</Frames>
 	</ScrollFrame>
+
+	<Frame name="HidingBarAddonHelpPlate" virtual="true">
+		<Size x="64" y="64"/>
+		<HitRectInsets>
+			<AbsInset left="20" right="20" top="20" bottom="20"/>
+		</HitRectInsets>
+		<Layers>
+			<Layer level="OVERLAY" textureSubLevel="0">
+				<Texture parentKey="highlight" file="Interface/TutorialFrame/minimap-glow" alphaMode="ADD" hidden="true">
+					<Size x="30" y="30"/>
+					<Anchors>
+						<Anchor point="CENTER" x="0" y="0"/>
+					</Anchors>
+					<TexCoords left="0" right=".7421875" top="0" bottom=".7421875"/>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="1">
+				<Texture parentKey="I" file="Interface/common/help-i">
+					<Size x="46" y="46"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnEnter>
+				self.highlight:Show()
+				if self.tooltip then
+					GameTooltip:SetOwner(self, "ANCHOR_TOP", 0, -15)
+					GameTooltip:SetText(self.tooltip, 1, 1, 1, 1, false)
+					GameTooltip:Show()
+				end
+			</OnEnter>
+			<OnLeave>
+				self.highlight:Hide()
+				GameTooltip:Hide()
+			</OnLeave>
+		</Scripts>
+	</Frame>
 </Ui>
