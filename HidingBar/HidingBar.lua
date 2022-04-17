@@ -450,6 +450,7 @@ function hb:checkProfile(profile)
 		bar.config.lineWidth = bar.config.lineWidth or 4
 		bar.config.showHandler = bar.config.showHandler or 2
 		bar.config.showDelay = bar.config.showDelay or 0
+		bar.config.hideHandler = bar.config.hideHandler or 0
 		bar.config.hideDelay = bar.config.hideDelay or .75
 		bar.config.size = bar.config.size or 10
 		bar.config.barOffset = bar.config.barOffset or 2
@@ -2186,7 +2187,7 @@ end
 
 
 function hidingBarMixin:leave(timer)
-	if not self.isDrag and self:IsShown() and self.config.showHandler ~= 3 then
+	if not self.isDrag and self:IsShown() and self.config.showHandler ~= 3 and self.config.hideHandler ~= 1 then
 		self.timer = timer or self.config.hideDelay
 		self:SetScript("OnUpdate", self.hideBar)
 	end
@@ -2355,7 +2356,7 @@ local function bar_OnShow(self)
 	else
 		self:SetFrameLevel(100)
 	end
-	if self.config.showHandler == 3 then return end
+	if self.config.showHandler == 3 or self.config.hideHandler == 0 then return end
 	self:RegisterEvent("GLOBAL_MOUSE_DOWN")
 end
 
