@@ -450,7 +450,7 @@ function hb:checkProfile(profile)
 		bar.config.lineWidth = bar.config.lineWidth or 4
 		bar.config.showHandler = bar.config.showHandler or 2
 		bar.config.showDelay = bar.config.showDelay or 0
-		bar.config.hideHandler = bar.config.hideHandler or 0
+		bar.config.hideHandler = bar.config.hideHandler or 2
 		bar.config.hideDelay = bar.config.hideDelay or .75
 		bar.config.size = bar.config.size or 10
 		bar.config.barOffset = bar.config.barOffset or 2
@@ -2333,12 +2333,21 @@ local function bar_OnLeave(self)
 end
 
 
+local function isNoGMEParent()
+	local frame = GetMouseFocus()
+	while frame do
+		if noGMEFrames[frame] then return true end
+		frame = frame:GetParent()
+	end
+end
+
+
 local function bar_OnEvent(self, event, button)
 	if (button == "LeftButton" or button == "RightButton")
 	and not (self:IsMouseOver()
 		or self.drag:IsShown() and self.drag:IsMouseOver()
 		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver()
-		or noGMEFrames[GetMouseFocus()])
+		or isNoGMEParent())
 	then
 		self:Hide()
 		self:updateDragBarPosition()
