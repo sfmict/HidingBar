@@ -2159,7 +2159,7 @@ do
 	end
 
 	function main:createButton(name, button, update)
-		if not self.buttonPanel or buttonsByName[name] then return end
+		if buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
 		btn.name = button:GetName()
 		btn.title = name
@@ -2231,7 +2231,7 @@ do
 	end
 
 	function main:createMButton(button, name, icon, update)
-		if not self.buttonPanel or type(name) ~= "string" then return end
+		if type(name) ~= "string" then return end
 		if buttonsByName[name] then
 			self:restoreMbutton(button)
 			return
@@ -2262,7 +2262,7 @@ do
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
 
-		if update then
+		if update and self.barFrame then
 			btn.settings = self.pConfig.mbtnSettings[name]
 			local bar = self.currentBar
 			btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
@@ -2367,7 +2367,6 @@ end
 
 
 function main:applyLayout(delay)
-	if not self.buttonPanel then return end
 	if self.bConfig.orientation == 0 then
 		local anchor = self.bConfig.barTypePosition == 2 and self.bConfig.omb.anchor or self.bConfig.anchor
 		self.orientation = anchor == "top" or anchor == "bottom"

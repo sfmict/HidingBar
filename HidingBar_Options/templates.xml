@@ -521,7 +521,7 @@
 				<Texture parentKey="highlight" file="Interface/TutorialFrame/minimap-glow" alphaMode="ADD" hidden="true">
 					<Size x="30" y="30"/>
 					<Anchors>
-						<Anchor point="CENTER" x="0" y="0"/>
+						<Anchor point="CENTER"/>
 					</Anchors>
 					<TexCoords left="0" right=".7421875" top="0" bottom=".7421875"/>
 				</Texture>
