@@ -425,6 +425,10 @@ barCombobox:ddSetInitFunc(function(self)
 	end
 end)
 
+-- BAR HELP
+main.helpPlate = CreateFrame("FRAME", nil, barPanelScroll.child, "HidingBarAddonHelpPlate")
+main.helpPlate:SetPoint("LEFT", barCombobox, "RIGHT", -15, 1)
+
 -- BUTTON PANEL
 main.buttonPanel = CreateFrame("Frame", nil, barPanelScroll.child, "HidingBarAddonPanel")
 main.buttonPanel:SetPoint("TOPLEFT", barCombobox, "BOTTOMLEFT", 2, -5)
@@ -770,7 +774,7 @@ lineColorText:SetText(L["Line"])
 lineColor.swatchFunc = function()
 	main.barFrame:setLineColor(ColorPickerFrame:GetColorRGB())
 	local hexColor = toHex(main.bConfig.lineColor)
-	main.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+	main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
@@ -779,7 +783,7 @@ end
 lineColor.cancelFunc = function(color)
 	main.barFrame:setLineColor(color.r, color.g, color.b)
 	local hexColor = toHex(main.bConfig.lineColor)
-	main.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+	main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
@@ -830,18 +834,9 @@ bgColor:SetScript("OnClick", function(btn)
 	OpenColorPicker(btn)
 end)
 
--- DESCRIPTION
-main.description = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-main.description:SetPoint("TOPLEFT", 8, -10)
-main.description:SetJustifyH("LEFT")
-local locale = GetLocale()
-if locale == "zhTW" or locale == "zhCN" then
-	main.description:SetFont(main.description:GetFont(), 12)
-end
-
 -- ORIENTATION TEXT
 local orientationText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-orientationText:SetPoint("TOPLEFT", main.description, "BOTTOMLEFT", 0, -23)
+orientationText:SetPoint("TOPLEFT", 8, -23)
 orientationText:SetText(L["Orientation"])
 
 -- ORIENTATION COMBOBOX
@@ -906,47 +901,9 @@ hb:on("LOCK_UPDATED", function(_, isLocked, bar)
 	end
 end)
 
--- FADE
-main.fade = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-main.fade:SetPoint("TOPLEFT", lock, "BOTTOMLEFT", 0, 0)
-main.fade:SetScript("OnClick", function(btn)
-	local checked = btn:GetChecked()
-	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-	main.fadeOpacity:SetEnabled(checked)
-	main.barFrame:setFade(checked)
-end)
-
--- FADE OPACITY
-main.fadeOpacity = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
-main.fadeOpacity:SetPoint("LEFT", main.fade.Text, "RIGHT", 20, 0)
-main.fadeOpacity:SetPoint("RIGHT", -49, 0)
-main.fadeOpacity:SetMinMaxValues(0, .95)
-main.fadeOpacity.step = 1 / .05
-main.fadeOpacity.text:SetText(L["Opacity"])
-main.fadeOpacity.edit:SetMaxLetters(4)
-main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value * slider.step + .5) / slider.step
-	main.barFrame:setFadeOpacity(value)
-	slider:SetValue(value)
-end)
-
--- LINE WIDTH
-main.lineWidth = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
-main.lineWidth:SetPoint("TOPLEFT", main.fade, "BOTTOMLEFT", 0, -15)
-main.lineWidth:SetPoint("RIGHT", -35, 0)
-main.lineWidth:SetMinMaxValues(4, 20)
-main.lineWidth.edit:SetMaxLetters(2)
-main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	main.barFrame:setLineWidth(value)
-	slider:SetValue(value)
-end)
-
 -- SHOW HANDLER TEXT
 local showHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-showHandlerText:SetPoint("TOPLEFT", main.lineWidth, "BOTTOMLEFT", 0, -20)
+showHandlerText:SetPoint("TOPLEFT", lock, "BOTTOMLEFT", 0, -10)
 showHandlerText:SetText(L["Show on"])
 
 -- SHOW HANDLER
@@ -990,9 +947,34 @@ delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
 	editBox:HighlightText(0, 0)
 end)
 
+-- HIDE HANDLER TEXT
+local hideHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+hideHandlerText:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -20)
+hideHandlerText:SetText(L["Hide by"])
+
+-- HIDE HANDLER
+local hideHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+hideHandlerCombobox:SetPoint("LEFT", hideHandlerText, "RIGHT", 3, 0)
+hideHandlerCombobox.texts = {[0] = L["Timer"], L["Clicking on a free place"], L["Timer or clicking on a free place"]}
+
+local function updatehideHandler(btn)
+	hideHandlerCombobox:ddSetSelectedValue(btn.value)
+	main.bConfig.hideHandler = btn.value
+end
+
+hideHandlerCombobox:ddSetInitFunc(function(self)
+	local info = {}
+	for i = 0, #self.texts do
+		info.text = self.texts[i]
+		info.value = i
+		info.func = updatehideHandler
+		self:ddAddButton(info)
+	end
+end)
+
 -- DELAY TO HIDE
 local delayToHideText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-delayToHideText:SetPoint("LEFT", delayToShowEditBox, "RIGHT", 10, 0)
+delayToHideText:SetPoint("LEFT", hideHandlerCombobox, "RIGHT", 10, 0)
 delayToHideText:SetText(L["Delay to hide"])
 
 local delayToHideEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
@@ -1009,6 +991,44 @@ end)
 delayToHideEditBox:SetScript("OnEditFocusLost", function(editBox)
 	editBox:SetNumber(main.bConfig.hideDelay)
 	editBox:HighlightText(0, 0)
+end)
+
+-- FADE
+main.fade = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
+main.fade:SetPoint("TOPLEFT", hideHandlerText, "BOTTOMLEFT", 0, -15)
+main.fade:SetScript("OnClick", function(btn)
+	local checked = btn:GetChecked()
+	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+	main.fadeOpacity:SetEnabled(checked)
+	main.barFrame:setFade(checked)
+end)
+
+-- FADE OPACITY
+main.fadeOpacity = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
+main.fadeOpacity:SetPoint("LEFT", main.fade.Text, "RIGHT", 20, 0)
+main.fadeOpacity:SetPoint("RIGHT", -49, 0)
+main.fadeOpacity:SetMinMaxValues(0, .95)
+main.fadeOpacity.step = 1 / .05
+main.fadeOpacity.text:SetText(L["Opacity"])
+main.fadeOpacity.edit:SetMaxLetters(4)
+main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value * slider.step + .5) / slider.step
+	main.barFrame:setFadeOpacity(value)
+	slider:SetValue(value)
+end)
+
+-- LINE WIDTH
+main.lineWidth = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
+main.lineWidth:SetPoint("TOPLEFT", main.fade, "BOTTOMLEFT", 0, -15)
+main.lineWidth:SetPoint("RIGHT", -35, 0)
+main.lineWidth:SetMinMaxValues(4, 20)
+main.lineWidth.edit:SetMaxLetters(2)
+main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	main.barFrame:setLineWidth(value)
+	slider:SetValue(value)
 end)
 
 -------------------------------------------
@@ -1797,22 +1817,24 @@ function main:setBar(bar)
 		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
 		bgColor.color:SetColorTexture(unpack(self.bConfig.bgColor))
 		local hexColor = toHex(self.bConfig.lineColor)
-		self.description:SetText(L["SETTINGS_DESCRIPTION"]:format(hexColor))
+		main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 		orientationCombobox:ddSetSelectedValue(self.bConfig.orientation)
 		orientationCombobox:ddSetSelectedText(orientationCombobox.texts[self.bConfig.orientation])
 		fsCombobox:ddSetSelectedValue(self.bConfig.frameStrata)
 		fsCombobox:ddSetSelectedText(fsCombobox.texts[self.bConfig.frameStrata])
 		lock:SetChecked(self.bConfig.lock)
+		showHandlerCombobox:ddSetSelectedValue(self.bConfig.showHandler)
+		showHandlerCombobox:ddSetSelectedText(showHandlerCombobox.texts[self.bConfig.showHandler])
+		delayToShowEditBox:SetNumber(self.bConfig.showDelay)
+		hideHandlerCombobox:ddSetSelectedValue(self.bConfig.hideHandler)
+		hideHandlerCombobox:ddSetSelectedText(hideHandlerCombobox.texts[self.bConfig.hideHandler])
+		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
 		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.fade:SetChecked(self.bConfig.fade)
 		self.fadeOpacity:SetValue(self.bConfig.fadeOpacity)
 		self.fadeOpacity:SetEnabled(self.bConfig.fade)
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
-		showHandlerCombobox:ddSetSelectedValue(self.bConfig.showHandler)
-		showHandlerCombobox:ddSetSelectedText(showHandlerCombobox.texts[self.bConfig.showHandler])
-		delayToShowEditBox:SetNumber(self.bConfig.showDelay)
-		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
 
 		buttonNumber:SetValue(self.bConfig.size)
 		buttonSize:SetValue(self.bConfig.buttonSize)
@@ -2128,7 +2150,7 @@ do
 	end
 
 	function main:createButton(name, button, update)
-		if not self.buttonPanel or buttonsByName[name] then return end
+		if buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
 		btn.name = button:GetName()
 		btn.title = name
@@ -2200,7 +2222,7 @@ do
 	end
 
 	function main:createMButton(button, name, icon, update)
-		if not self.buttonPanel or type(name) ~= "string" then return end
+		if type(name) ~= "string" then return end
 		if buttonsByName[name] then
 			self:restoreMbutton(button)
 			return
@@ -2231,7 +2253,7 @@ do
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
 
-		if update then
+		if update and self.barFrame then
 			btn.settings = self.pConfig.mbtnSettings[name]
 			local bar = self.currentBar
 			btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
@@ -2336,7 +2358,6 @@ end
 
 
 function main:applyLayout(delay)
-	if not self.buttonPanel then return end
 	if self.bConfig.orientation == 0 then
 		local anchor = self.bConfig.barTypePosition == 2 and self.bConfig.omb.anchor or self.bConfig.anchor
 		self.orientation = anchor == "top" or anchor == "bottom"
