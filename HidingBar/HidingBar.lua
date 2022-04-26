@@ -17,7 +17,7 @@ hb.bars, hb.barByName = {}, {}
 local LibStub = LibStub
 hb.cb = LibStub("CallbackHandler-1.0"):New(hb, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
-local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0")
+local ldbi = LibStub("LibDBIcon-1.0")
 local MSQ = LibStub("Masque", true)
 
 
@@ -38,69 +38,6 @@ local ignoreFrameList = {
 
 local function void() end
 
-local function updateTooltipPosition(bar, eventFrame)
-	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
-
-	if not tooltip or tooltip:GetUnit() then
-		if not eventFrame then return end
-		local lqtip = LibStub("LibQTip-1.0", true)
-		if not lqtip then return end
-		tooltip = nil
-		for k, t in lqtip:IterateTooltips() do
-			if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
-				t:SetClampedToScreen(true)
-				tooltip = t
-				break
-			end
-		end
-		if not tooltip then return end
-	else
-		tooltip:SetAnchorType("ANCHOR_NONE")
-	end
-
-	local pos, point, rPoint, rFrame = bar.config.interceptTooltipPosition
-
-	if pos == 0 then
-		local vPoint, vRPoint, hPoint
-
-		if bar:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
-			vPoint = "BOTTOM"
-			vRPoint = "TOP"
-		else
-			vPoint = "TOP"
-			vRPoint = "BOTTOM"
-			pos = 4
-		end
-
-		if bar.anchorObj.anchor == "left" then
-			hPoint = "LEFT"
-		elseif bar.anchorObj.anchor == "right" then
-			hPoint = "RIGHT"
-		else
-			hPoint = ""
-		end
-
-		point = vPoint..hPoint
-		rPoint = vRPoint..hPoint
-	else
-		point = bar.tooltipPoint
-		rPoint = bar.tooltipRPoint
-	end
-
-	if bar.drag:IsShown() and (bar.anchorObj.anchor == "bottom" and pos <= 3
-	                        or bar.anchorObj.anchor == "top" and pos >= 4 and pos <= 6
-	                        or bar.anchorObj.anchor == "right" and pos >= 7 and pos <= 9
-	                        or bar.anchorObj.anchor == "left" and pos >= 10)
-	then
-		rFrame = bar.drag
-	else
-		rFrame = bar
-	end
-
-	tooltip:ClearAllPoints()
-	tooltip:SetPoint(point, rFrame, rPoint)
-end
-
 local function enter(btn, eventFrame)
 	local bar = btn:GetParent()
 	if not bar:IsShown() then return end
@@ -108,7 +45,7 @@ local function enter(btn, eventFrame)
 	bar:enter()
 
 	if bar.config.interceptTooltip then
-		updateTooltipPosition(bar, eventFrame)
+		bar:updateTooltipPosition(eventFrame)
 	end
 end
 
@@ -523,11 +460,11 @@ function hb:init()
 	end
 
 	if self.pConfig.grabMinimap then
-		if ldbi and ldbi_ver >= 39 then
+		if ldbi then
 			local ldbiTbl = ldbi:GetButtonList()
 			for i = 1, #ldbiTbl do
 				local button = ldbi:GetMinimapButton(ldbiTbl[i])
-				if self:ignoreCheck(button:GetName()) then
+				if self:ignoreCheck(self.GetName(button)) then
 					self.minimapButtons[button[0]] = button
 					self:setHooks(button)
 				end
@@ -607,8 +544,16 @@ function hb:setProfile(profileName)
 		self:setBtnSettings(btn)
 	end
 
-	for _, btn in ipairs(self.minimapButtons) do
-		self:setMBtnSettings(btn)
+	local i = 1
+	local btn = self.minimapButtons[i]
+	while btn do
+		if type(btn) == "userdata" then
+			tremove(self.minimapButtons, i)
+		else
+			self:setMBtnSettings(btn)
+			i = i + 1
+		end
+		btn = self.minimapButtons[i]
 	end
 
 	local t = time()
@@ -851,7 +796,7 @@ function hb:grabDefButtons()
 		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
 			local bar = GameTimeFrame:GetParent()
 			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
-				updateTooltipPosition(bar)
+				bar:updateTooltipPosition()
 			end
 		end)
 
@@ -1599,14 +1544,7 @@ function hidingBarMixin:createOwnMinimapButton()
 					if func then func(self.drag) end
 				end
 			elseif button == "RightButton" then
-				if IsAltKeyDown() then
-					self:setLocked(not self.config.lock)
-					self.cb:Fire("LOCK_UPDATED", self.config.lock, self)
-				end
-				if IsShiftKeyDown() then
-					config:openConfig()
-					config:setBar(self.barSettings)
-				end
+				self.drag:GetScript("OnMouseDown")(self.drag, button)
 			end
 		end,
 		OnEnter = function(btn)
@@ -1728,6 +1666,70 @@ function hidingBarMixin:setTooltipPosition(position)
 		self.tooltipPoint = nil
 		self.tooltipRPoint = nil
 	end
+end
+
+
+function hidingBarMixin:updateTooltipPosition(eventFrame)
+	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
+
+	if not tooltip or tooltip:GetUnit() then
+		if not eventFrame then return end
+		local lqtip = LibStub("LibQTip-1.0", true)
+		if not lqtip then return end
+		tooltip = nil
+		for k, t in lqtip:IterateTooltips() do
+			if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
+				t:SetClampedToScreen(true)
+				tooltip = t
+				break
+			end
+		end
+		if not tooltip then return end
+	else
+		tooltip:SetAnchorType("ANCHOR_NONE")
+	end
+
+	local pos, point, rPoint, rFrame = self.config.interceptTooltipPosition
+
+	if pos == 0 then
+		local vPoint, vRPoint, hPoint
+
+		if self:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
+			vPoint = "BOTTOM"
+			vRPoint = "TOP"
+		else
+			vPoint = "TOP"
+			vRPoint = "BOTTOM"
+			pos = 4
+		end
+
+		if self.anchorObj.anchor == "left" then
+			hPoint = "LEFT"
+		elseif self.anchorObj.anchor == "right" then
+			hPoint = "RIGHT"
+		else
+			hPoint = ""
+		end
+
+		point = vPoint..hPoint
+		rPoint = vRPoint..hPoint
+	else
+		point = self.tooltipPoint
+		rPoint = self.tooltipRPoint
+	end
+
+	if self.drag:IsShown() and (self.anchorObj.anchor == "bottom" and pos <= 3
+	                        or self.anchorObj.anchor == "top" and pos >= 4 and pos <= 6
+	                        or self.anchorObj.anchor == "right" and pos >= 7 and pos <= 9
+	                        or self.anchorObj.anchor == "left" and pos >= 10)
+	then
+		rFrame = self.drag
+	else
+		rFrame = self
+	end
+
+	tooltip:ClearAllPoints()
+	tooltip:SetPoint(point, rFrame, rPoint)
 end
 
 

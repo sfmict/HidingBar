@@ -834,15 +834,6 @@ bgColor:SetScript("OnClick", function(btn)
 	OpenColorPicker(btn)
 end)
 
--- -- DESCRIPTION
--- main.description = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
--- main.description:SetPoint("TOPLEFT", 8, -10)
--- main.description:SetJustifyH("LEFT")
--- local locale = GetLocale()
--- if locale == "zhTW" or locale == "zhCN" then
--- 	main.description:SetFont(main.description:GetFont(), 12)
--- end
-
 -- ORIENTATION TEXT
 local orientationText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 orientationText:SetPoint("TOPLEFT", 8, -23)
