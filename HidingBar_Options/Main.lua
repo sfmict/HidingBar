@@ -33,8 +33,8 @@ main.colorButtonBackdrop = {
 
 
 local function toHex(tbl)
-	local str = ""
-	for i = 1, #tbl do
+	local str = ("%02x"):format(tbl[1] * 255)
+	for i = 2, #tbl do
 		str = str..("%02x"):format(tbl[i] * 255)
 	end
 	return str

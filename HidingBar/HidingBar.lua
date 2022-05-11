@@ -544,16 +544,8 @@ function hb:setProfile(profileName)
 		self:setBtnSettings(btn)
 	end
 
-	local i = 1
-	local btn = self.minimapButtons[i]
-	while btn do
-		if type(btn) == "userdata" then
-			tremove(self.minimapButtons, i)
-		else
-			self:setMBtnSettings(btn)
-			i = i + 1
-		end
-		btn = self.minimapButtons[i]
+	for _, btn in ipairs(self.minimapButtons) do
+		self:setMBtnSettings(btn)
 	end
 
 	local t = time()
@@ -1202,7 +1194,7 @@ end
 
 function hb:addCustomGrabButton(name)
 	local button = _G[name]
-	if not button or type(button[0]) ~= "userdata" or btnParams[button] or self.IsProtected(button) then return end
+	if type(button) ~= "table" or type(button[0]) ~= "userdata" or btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
 	if oType ~= "Button" and oType ~= "Frame" and oType ~= "CheckButton" then return end
 	if name:match(self.matchName) then
@@ -1289,8 +1281,6 @@ end
 
 
 function hb:removeMButton(button, update)
-	local bar = button:GetParent()
-
 	for i = 1, #self.minimapButtons do
 		if button == self.minimapButtons[i] then
 			tremove(self.minimapButtons, i)
@@ -1305,10 +1295,14 @@ function hb:removeMButton(button, update)
 		end
 	end
 
+	if update then
+		self.GetParent(button):applyLayout()
+	end
+
 	self:unsetHooks(button)
 	self:restoreParams(button)
 
-	if button:GetName():match(self.matchName) then
+	if self.GetName(button):match(self.matchName) then
 		button.isGrabbed = nil
 		button.SetPoint = setOMBPoint
 		button.bar:setOMBSize()
@@ -1316,8 +1310,6 @@ function hb:removeMButton(button, update)
 			ldbi:Hide(button.bar.ombName)
 		end
 	end
-
-	if update then bar:applyLayout() end
 end
 
 
@@ -2039,7 +2031,7 @@ end
 function hidingBarMixin:setBarExpand(expand)
 	if self.config.expand == expand then return end
 	local anchor, delta, position = self.config.anchor
-	local scale = UIParent:GetScale()
+	local scale = self:GetEffectiveScale()
 
 	if anchor == "left" or anchor == "right" then
 		delta = self:GetHeight()
@@ -2141,7 +2133,7 @@ end
 
 
 function hidingBarMixin:setBarCoords(position, secondPosition)
-	local scale = UIParent:GetScale()
+	local scale = self:GetEffectiveScale()
 
 	if position then
 		self.position = position
@@ -2174,14 +2166,14 @@ do
 					self.config.position = WorldFrame:GetWidth() / 2
 				end
 			end
-			self.position = self.config.position / UIParent:GetScale()
+			self.position = self.config.position / self:GetEffectiveScale()
 		end
 
 		if not self.secondPosition then
 			if not self.config.secondPosition then
 				self.config.secondPosition = 0
 			end
-			self.secondPosition = self.config.secondPosition / UIParent:GetScale()
+			self.secondPosition = self.config.secondPosition / self:GetEffectiveScale()
 		end
 
 		hb.cb:Fire("COORDS_UPDATED", self)
@@ -2207,7 +2199,7 @@ function hidingBarMixin:dragBar()
 	local UIwidth, UIheight = UIParent:GetSize()
 	local anchor = self.config.anchor
 	local secondPosition, position = 0
-	local scale = UIParent:GetScale()
+	local scale = self:GetEffectiveScale()
 	x, y = x / scale + self.dx, y / scale + self.dy
 
 	if self.config.barTypePosition == 0 then
@@ -2521,17 +2513,11 @@ end
 local function drag_OnMouseDown(self, button)
 	local bar = self.bar
 	if button == "LeftButton" and not bar.config.lock and bar:IsShown() then
-		bar.isDrag = true
-		cover:SetFrameStrata(bar:GetFrameStrata())
-		cover:SetFrameLevel(bar:GetFrameLevel() + 10)
-		cover:SetAllPoints(bar)
-		cover:Show()
 		local x, y = GetCursorPosition()
 		local cx, cy = self:GetCenter()
 		local scale = bar:GetEffectiveScale()
 		bar.dx = cx - x / scale
 		bar.dy = cy - y / scale
-		bar:SetScript("OnUpdate", bar.dragBar)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
 			bar:setLocked(not bar.config.lock)
@@ -2545,13 +2531,24 @@ local function drag_OnMouseDown(self, button)
 end
 
 
-local function drag_OnMouseUp(self, button)
+local function drag_OnDragStart(self)
 	local bar = self.bar
-	if button == "LeftButton" and bar.isDrag then
+	if not bar.config.lock and bar:IsShown() then
+		bar.isDrag = true
+		cover:SetFrameStrata(bar:GetFrameStrata())
+		cover:SetFrameLevel(bar:GetFrameLevel() + 10)
+		cover:SetAllPoints(bar)
+		cover:Show()
+		bar:SetScript("OnUpdate", bar.dragBar)
+	end
+end
+
+
+local function drag_OnDragStop(self)
+	local bar = self.bar
+	if bar.isDrag then
 		bar.isDrag = false
 		cover:Hide()
-		bar.dx = nil
-		bar.dy = nil
 		bar:SetScript("OnUpdate", nil)
 		if not bar.isMouse then
 			bar:leave()
@@ -2584,13 +2581,15 @@ setmetatable(hb.bars, {__index = function(self, key)
 
 	bar.drag = CreateFrame("BUTTON", nil, UIParent)
 	bar.drag.bar = bar
+	bar.drag:RegisterForDrag("LeftButton")
 	bar.drag:SetClampedToScreen(true)
 	bar.drag:SetHitRectInsets(-2, -2, -2, -2)
 	bar.drag:SetFrameLevel(bar:GetFrameLevel() + 10)
 	bar.drag.bg = bar.drag:CreateTexture(nil, "OVERLAY")
 	bar.drag.bg:SetAllPoints()
 	bar.drag:SetScript("OnMouseDown", drag_OnMouseDown)
-	bar.drag:SetScript("OnMouseUp", drag_OnMouseUp)
+	bar.drag:SetScript("OnDragStart", drag_OnDragStart)
+	bar.drag:SetScript("OnDragStop", drag_OnDragStop)
 	bar.drag:SetScript("OnLeave", drag_OnLeave)
 	for k, v in pairs(hidingBarDragMixin) do
 		bar.drag[k] = v
