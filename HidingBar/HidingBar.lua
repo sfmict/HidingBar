@@ -1254,7 +1254,7 @@ function hb:addMButton(button, force, MSQ_Group)
 		else
 			local clickable
 			local function getMouseEnabled(frame)
-				if self.IsMouseEnabled(frame) then
+				if self.IsMouseClickEnabled(frame) then
 					if self.HasScript(frame, "OnClick") and self.GetScript(frame, "OnClick")
 					or self.HasScript(frame, "OnMouseUp") and self.GetScript(frame, "OnMouseUp")
 					or self.HasScript(frame, "OnMouseDown") and self.GetScript(frame, "OnMouseDown") then
@@ -1425,7 +1425,7 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
-		if self.IsMouseEnabled(frame) then
+		if self.IsMouseMotionEnabled(frame) then
 			p.frames[frame] = {
 				insets = {self.GetHitRectInsets(frame)},
 				OnEnter = self.GetScript(frame, "OnEnter"),
@@ -2457,8 +2457,10 @@ end
 -- CREATE BAR
 -------------------------------------------
 local function bar_OnEnter(self)
-	self.isMouse = true
-	self:enter()
+	if self:IsShown() then
+		self.isMouse = true
+		self:enter()
+	end
 end
 
 
