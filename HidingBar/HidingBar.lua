@@ -18,6 +18,7 @@ local LibStub = LibStub
 hb.cb = LibStub("CallbackHandler-1.0"):New(hb, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
 local ldbi = LibStub("LibDBIcon-1.0")
+local media = LibStub("LibSharedMedia-3.0")
 local MSQ = LibStub("Masque", true)
 
 
@@ -405,6 +406,9 @@ function hb:checkProfile(profile)
 		bar.config.mbtnPosition = bar.config.mbtnPosition or 2
 		bar.config.bgColor = bar.config.bgColor or {.1, .1, .1, .7}
 		bar.config.lineColor = bar.config.lineColor or {.8, .6, 0}
+		bar.config.borderSize = bar.config.borderSize or 16
+		bar.config.borderOffset = bar.config.borderOffset or 4
+		bar.config.borderColor = bar.config.borderColor or {1, 1, 1, 1}
 		bar.config.omb = bar.config.omb or {}
 		if bar.config.omb.hide == nil then
 			bar.config.omb.hide = true
@@ -595,6 +599,8 @@ function hb:updateBars()
 			bar:setFrameStrata()
 			bar:setLineColor()
 			bar:setBackgroundColor()
+			bar:setBorder()
+			bar:setBorderOffset()
 			bar:setLineWidth()
 			bar.drag:setShowHandler()
 			bar:setBarTypePosition()
@@ -1517,7 +1523,7 @@ end
 -------------------------------------------
 -- HIDINGBAR MIXIN
 -------------------------------------------
-local hidingBarMixin = {}
+local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
 
 
 function hidingBarMixin:createOwnMinimapButton()
@@ -1744,6 +1750,35 @@ function hidingBarMixin:setBackgroundColor(r, g, b, a)
 end
 
 
+function hidingBarMixin:setBorder(edge, size, r, g, b, a)
+	if edge ~= nil then self.config.borderEdge = edge end
+	if size then self.config.borderSize = size end
+
+	local color = self.config.borderColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	if a then color[4] = a end
+
+	local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
+	local edgeFile = media:Fetch("border", self.config.borderEdge or nil)
+	self.isEdged = edgeFile and true or false
+	self:SetBackdrop({
+		edgeFile = edgeFile or "",
+		edgeSize = self.config.borderSize * scale,
+	})
+	self:SetBackdropBorderColor(unpack(color))
+end
+
+
+function hidingBarMixin:setBorderOffset(offset)
+	if offset then self.config.borderOffset = offset end
+	offset = self.isEdged and self.config.borderOffset or 0
+	self.bg:SetPoint("TOPLEFT", offset, -offset)
+	self.bg:SetPoint("BOTTOMRIGHT", -offset, offset)
+end
+
+
 function hidingBarMixin:setOrientation(orientation)
 	self.config.orientation = orientation
 	self:applyLayout()
@@ -1853,7 +1888,7 @@ end
 
 function hidingBarMixin:setPointBtn(btn, order, orientation)
 	order = order - 1
-	local offset = self.config.buttonSize / 2 + self.config.barOffset
+	local offset = self.config.buttonSize / 2 + self.barOffset
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
 	local x = order % self.config.size * buttonSize + offset
 	local y = -math.floor(order / self.config.size) * buttonSize - offset
@@ -1873,6 +1908,9 @@ function hidingBarMixin:applyLayout()
 	else
 		orientation = self.config.orientation == 2
 	end
+
+	self.barOffset = self.config.barOffset
+	if self.isEdged then self.barOffset = self.barOffset + self.config.borderOffset end
 
 	local i, maxButtons, line = 0
 	if self.config.mbtnPosition == 2 then
@@ -1910,7 +1948,7 @@ function hidingBarMixin:applyLayout()
 
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
-	local offset = self.config.barOffset * 2 - self.config.rangeBetweenBtns
+	local offset = self.barOffset * 2 - self.config.rangeBetweenBtns
 	local width = maxButtons * buttonSize + offset
 	local height = line * buttonSize + offset
 	if orientation then width, height = height, width end

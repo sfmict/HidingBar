@@ -7,6 +7,7 @@ externals:
 		site: https://www.curseforge.com/wow/addons/libdatabroker-1-1
 		url: https://github.com/tekkub/libdatabroker-1-1
 	HidingBar/libs/LibDBIcon-1.0: https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0
+	HidingBar/libs/LibSharedMedia-3.0: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
 	HidingBar_Options/libs/LibSFDropDown:
 		site: https://www.curseforge.com/wow/addons/libsfdropdown
 		url: https://github.com/sfmict/LibSFDropDown

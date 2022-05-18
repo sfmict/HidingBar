@@ -4,6 +4,7 @@ main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
 main.noIcon:Hide()
 main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
+local media = LibStub("LibSharedMedia-3.0")
 local lsfdd = LibStub("LibSFDropDown-1.4")
 
 
@@ -1032,6 +1033,146 @@ main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -------------------------------------------
+-- BAR BORDER SETTINGS
+-------------------------------------------
+main.displayPanel = createTabPanel(barSettingsTabs, L["Display"])
+
+-- BORDER TEXT
+local borderText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+borderText:SetPoint("TOPLEFT", main.displayPanel, "TOPLEFT", 8, -23)
+borderText:SetText(L["Border"])
+
+-- BORDER COMBOBOX
+local borderCombobox = lsfdd:CreateButton(main.displayPanel, 120)
+borderCombobox:SetPoint("LEFT", borderText, "RIGHT", 3, 0)
+
+local backdropFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
+backdropFrame:SetScript("OnHide", function(self)
+	self:GetParent(UIParent)
+	self:ClearAllPoints()
+	self:Hide()
+end)
+
+local function border_OnEnter(btn)
+	if not btn.value then return end
+
+	local frame = btn:GetParent()
+	while not frame.styles do
+		frame = frame:GetParent()
+	end
+
+	for name, style in pairs(frame.styles) do
+		if style:IsShown() then
+			style:Hide()
+			break
+		end
+	end
+
+	backdropFrame:SetParent(frame)
+	backdropFrame:SetAllPoints()
+	backdropFrame:SetBackdrop({
+		edgeFile = media:Fetch("border", btn.value),
+		bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]],
+		tile = true, tileSize = 16, edgeSize = 16,
+		insets = { left = 4, right = 4, top = 4, bottom = 4 },
+	})
+	backdropFrame:Show()
+end
+
+local function setBorder(btn)
+	borderCombobox:ddSetSelectedText(btn.text)
+	main.barFrame:setBorder(btn.value)
+	main.barFrame:setBorderOffset()
+	main.barFrame:applyLayout()
+	main:hidingBarUpdate()
+end
+
+borderCombobox:ddSetInitFunc(function(self)
+	local info = {}
+	info.list = {
+		{
+			text = NONE_KEY,
+			func = setBorder,
+			value = false,
+			checked = main.bConfig.borderEdge == nil,
+			OnEnter = border_OnEnter,
+		}
+	}
+	for i, edge in ipairs(media:List("border")) do
+		if edge ~= "None" then
+			info.list[#info.list + 1] = {
+				text = edge,
+				value = edge,
+				func = setBorder,
+				checked = main.bConfig.borderEdge == edge,
+				OnEnter = border_OnEnter,
+			}
+		end
+	end
+	self:ddAddButton(info)
+end)
+
+-- BACKGROUND COLOR
+local borderColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
+borderColor:SetPoint("LEFT", borderCombobox, "RIGHT", 3, 0)
+
+borderColor.hasOpacity = true
+borderColor.swatchFunc = function()
+	main.barFrame:setBorder(nil, nil, ColorPickerFrame:GetColorRGB())
+	borderColor.color:SetColorTexture(unpack(main.bConfig.borderColor))
+	main:hidingBarUpdate()
+end
+borderColor.opacityFunc = function()
+	main.barFrame:setBorder(nil, nil, nil, nil, nil, OpacitySliderFrame:GetValue())
+	borderColor.color:SetColorTexture(unpack(main.bConfig.borderColor))
+	main:hidingBarUpdate()
+end
+borderColor.cancelFunc = function(color)
+	main.barFrame:setBorder(nil, nil, color.r, color.g, color.b, color.opacity)
+	borderColor.color:SetColorTexture(unpack(main.bConfig.borderColor))
+	main:hidingBarUpdate()
+end
+borderColor:SetScript("OnClick", function(btn)
+	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
+		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
+		HideUIPanel(ColorPickerFrame)
+	end
+	btn.r, btn.g, btn.b, btn.opacity = unpack(main.bConfig.borderColor)
+	OpenColorPicker(btn)
+end)
+
+-- BORDER SIZE
+borderSize = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
+borderSize:SetPoint("TOPLEFT", borderText, "BOTTOMLEFT", 0, -15)
+borderSize:SetPoint("RIGHT", -35, 0)
+borderSize:SetMinMaxValues(1, 64)
+borderSize.text:SetText(L["Border Size"])
+borderSize.edit:SetMaxLetters(2)
+borderSize:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	main.barFrame:setBorder(nil, value)
+	slider:SetValue(value)
+	main:hidingBarUpdate()
+end)
+
+-- BORDER OFFSET
+borderOffset = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
+borderOffset:SetPoint("TOPLEFT", borderSize, "BOTTOMLEFT", 0, -15)
+borderOffset:SetPoint("RIGHT", -35, 0)
+borderOffset:SetMinMaxValues(0, 32)
+borderOffset.text:SetText(L["Border Offset"])
+borderOffset.edit:SetMaxLetters(2)
+borderOffset:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	main.barFrame:setBorderOffset(value)
+	main.barFrame:applyLayout()
+	slider:SetValue(value)
+	main:hidingBarUpdate()
+end)
+
+-------------------------------------------
 -- BUTTON SETTINGS TAB PANEL
 -------------------------------------------
 main.buttonSettingsPanel =  createTabPanel(barSettingsTabs, L["Button settings"])
@@ -1835,6 +1976,11 @@ function main:setBar(bar)
 		self.fadeOpacity:SetEnabled(self.bConfig.fade)
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
+
+		borderCombobox:ddSetSelectedText(self.bConfig.borderEdge or NONE_KEY)
+		borderSize:SetValue(self.bConfig.borderSize)
+		borderOffset:SetValue(self.bConfig.borderOffset)
+		borderColor.color:SetColorTexture(unpack(self.bConfig.borderColor))
 
 		buttonNumber:SetValue(self.bConfig.size)
 		buttonSize:SetValue(self.bConfig.buttonSize)
