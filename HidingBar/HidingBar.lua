@@ -404,8 +404,14 @@ function hb:checkProfile(profile)
 		bar.config.anchor = bar.config.anchor or "top"
 		bar.config.barTypePosition = bar.config.barTypePosition or 0
 		bar.config.mbtnPosition = bar.config.mbtnPosition or 2
+		if bar.config.bgTexture == nil then
+			bar.config.bgTexture = "Solid"
+		end
 		bar.config.bgColor = bar.config.bgColor or {.1, .1, .1, .7}
 		bar.config.lineColor = bar.config.lineColor or {.8, .6, 0}
+		if bar.config.borderEdge == nil then
+			bar.config.borderEdge = false
+		end
 		bar.config.borderSize = bar.config.borderSize or 16
 		bar.config.borderOffset = bar.config.borderOffset or 4
 		bar.config.borderColor = bar.config.borderColor or {1, 1, 1, 1}
@@ -598,10 +604,10 @@ function hb:updateBars()
 		if self.currentProfile.bars[i] then
 			bar:setFrameStrata()
 			bar:setLineColor()
-			bar:setBackgroundColor()
+			bar:setLineWidth()
 			bar:setBorder()
 			bar:setBorderOffset()
-			bar:setLineWidth()
+			bar:setBackground()
 			bar.drag:setShowHandler()
 			bar:setBarTypePosition()
 			bar:updateDragBarPosition()
@@ -1740,16 +1746,6 @@ function hidingBarMixin:setLineColor(r, g, b)
 end
 
 
-function hidingBarMixin:setBackgroundColor(r, g, b, a)
-	local color = self.config.bgColor
-	if r then color[1] = r end
-	if g then color[2] = g end
-	if b then color[3] = b end
-	if a then color[4] = a end
-	self.bg:SetVertexColor(unpack(color))
-end
-
-
 function hidingBarMixin:setBorder(edge, size, r, g, b, a)
 	if edge ~= nil then self.config.borderEdge = edge end
 	if size then self.config.borderSize = size end
@@ -1776,6 +1772,20 @@ function hidingBarMixin:setBorderOffset(offset)
 	offset = self.isEdged and self.config.borderOffset or 0
 	self.bg:SetPoint("TOPLEFT", offset, -offset)
 	self.bg:SetPoint("BOTTOMRIGHT", -offset, offset)
+end
+
+
+function hidingBarMixin:setBackground(bgTexture, r, g, b, a)
+	if bgTexture ~= nil then self.config.bgTexture = bgTexture end
+
+	local color = self.config.bgColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	if a then color[4] = a end
+
+	self.bg:SetTexture(media:Fetch("background", self.config.bgTexture))
+	self.bg:SetVertexColor(unpack(color))
 end
 
 

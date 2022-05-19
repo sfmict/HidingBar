@@ -764,77 +764,6 @@ expandToCombobox:ddSetInitFunc(function(self)
 	end
 end)
 
--- LINE COLOR
-local lineColor = CreateFrame("BUTTON", nil, main.barSettingsPanel, "HidingBarAddonColorButton")
-lineColor:SetPoint("TOPRIGHT", expandToCombobox, "BOTTOMRIGHT", -3, -7)
-local lineColorText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-lineColorText:SetPoint("RIGHT", lineColor, "LEFT", -3, 0)
-lineColorText:SetJustifyH("RIGHT")
-lineColorText:SetText(L["Line"])
-
-lineColor.swatchFunc = function()
-	main.barFrame:setLineColor(ColorPickerFrame:GetColorRGB())
-	local hexColor = toHex(main.bConfig.lineColor)
-	main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
-	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
-	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
-	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
-	main:hidingBarUpdate()
-end
-lineColor.cancelFunc = function(color)
-	main.barFrame:setLineColor(color.r, color.g, color.b)
-	local hexColor = toHex(main.bConfig.lineColor)
-	main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
-	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
-	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
-	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
-	main:hidingBarUpdate()
-end
-lineColor:SetScript("OnClick", function(btn)
-	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
-		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
-		HideUIPanel(ColorPickerFrame)
-	end
-	btn.r, btn.g, btn.b = unpack(main.bConfig.lineColor)
-	OpenColorPicker(btn)
-end)
-
--- BACKGROUND COLOR
-local bgColor = CreateFrame("BUTTON", nil, main.barSettingsPanel, "HidingBarAddonColorButton")
-bgColor:SetPoint("TOPRIGHT", lineColor, "BOTTOMRIGHT", 0, -3)
-local bgColorText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-bgColorText:SetPoint("RIGHT", bgColor, "LEFT", -3, 0)
-bgColorText:SetJustifyH("RIGHT")
-bgColorText:SetText(L["Background"])
-
-bgColor.hasOpacity = true
-bgColor.swatchFunc = function()
-	main.barFrame:setBackgroundColor(ColorPickerFrame:GetColorRGB())
-	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
-	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
-	main:hidingBarUpdate()
-end
-bgColor.opacityFunc = function()
-	main.barFrame:setBackgroundColor(nil, nil, nil, OpacitySliderFrame:GetValue())
-	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
-	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
-	main:hidingBarUpdate()
-end
-bgColor.cancelFunc = function(color)
-	main.barFrame:setBackgroundColor(color.r, color.g, color.b, color.opacity)
-	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
-	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
-	main:hidingBarUpdate()
-end
-bgColor:SetScript("OnClick", function(btn)
-	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
-		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
-		HideUIPanel(ColorPickerFrame)
-	end
-	btn.r, btn.g, btn.b, btn.opacity = unpack(main.bConfig.bgColor)
-	OpenColorPicker(btn)
-end)
-
 -- ORIENTATION TEXT
 local orientationText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 orientationText:SetPoint("TOPLEFT", 8, -23)
@@ -1019,9 +948,48 @@ main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
 	slider:SetValue(value)
 end)
 
+-------------------------------------------
+-- BAR BORDER SETTINGS
+-------------------------------------------
+main.displayPanel = createTabPanel(barSettingsTabs, L["Display"])
+
+-- LINE COLOR
+local lineColorText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+lineColorText:SetPoint("TOPLEFT", main.displayPanel, 8, -23)
+lineColorText:SetText(L["Line"])
+local lineColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
+lineColor:SetPoint("BOTTOMLEFT", lineColorText, "BOTTOMRIGHT", 3, 0)
+
+lineColor.swatchFunc = function()
+	main.barFrame:setLineColor(ColorPickerFrame:GetColorRGB())
+	local hexColor = toHex(main.bConfig.lineColor)
+	main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
+	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
+	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
+	main:hidingBarUpdate()
+end
+lineColor.cancelFunc = function(color)
+	main.barFrame:setLineColor(color.r, color.g, color.b)
+	local hexColor = toHex(main.bConfig.lineColor)
+	main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
+	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
+	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
+	main:hidingBarUpdate()
+end
+lineColor:SetScript("OnClick", function(btn)
+	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
+		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
+		HideUIPanel(ColorPickerFrame)
+	end
+	btn.r, btn.g, btn.b = unpack(main.bConfig.lineColor)
+	OpenColorPicker(btn)
+end)
+
 -- LINE WIDTH
-main.lineWidth = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
-main.lineWidth:SetPoint("TOPLEFT", main.fade, "BOTTOMLEFT", 0, -15)
+main.lineWidth = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
+main.lineWidth:SetPoint("LEFT", lineColor, "RIGHT", 20, -3)
 main.lineWidth:SetPoint("RIGHT", -35, 0)
 main.lineWidth:SetMinMaxValues(4, 20)
 main.lineWidth.edit:SetMaxLetters(2)
@@ -1032,14 +1000,9 @@ main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
 	slider:SetValue(value)
 end)
 
--------------------------------------------
--- BAR BORDER SETTINGS
--------------------------------------------
-main.displayPanel = createTabPanel(barSettingsTabs, L["Display"])
-
 -- BORDER TEXT
 local borderText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-borderText:SetPoint("TOPLEFT", main.displayPanel, "TOPLEFT", 8, -23)
+borderText:SetPoint("TOPLEFT", lineColorText, "BOTTOMLEFT", 0, -20)
 borderText:SetText(L["Border"])
 
 -- BORDER COMBOBOX
@@ -1048,13 +1011,16 @@ borderCombobox:SetPoint("LEFT", borderText, "RIGHT", 3, 0)
 
 local backdropFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
 backdropFrame:SetScript("OnHide", function(self)
-	self:GetParent(UIParent)
+	self:SetParent(UIParent)
 	self:ClearAllPoints()
 	self:Hide()
 end)
-
-local function border_OnEnter(btn)
-	if not btn.value then return end
+backdropFrame.setBackdrop = function(self, btn, backdrop)
+	if not btn.value then
+		if self.style then self.style:Show() end
+		self:Hide()
+		return
+	end
 
 	local frame = btn:GetParent()
 	while not frame.styles do
@@ -1063,24 +1029,29 @@ local function border_OnEnter(btn)
 
 	for name, style in pairs(frame.styles) do
 		if style:IsShown() then
+			self.style = style
 			style:Hide()
 			break
 		end
 	end
 
-	backdropFrame:SetParent(frame)
-	backdropFrame:SetAllPoints()
-	backdropFrame:SetBackdrop({
+	self:SetParent(frame)
+	self:SetAllPoints()
+	self:SetBackdrop(backdrop)
+	self:Show()
+end
+
+local function border_OnEnter(btn)
+	backdropFrame:setBackdrop(btn, {
 		edgeFile = media:Fetch("border", btn.value),
 		bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]],
 		tile = true, tileSize = 16, edgeSize = 16,
 		insets = { left = 4, right = 4, top = 4, bottom = 4 },
 	})
-	backdropFrame:Show()
 end
 
 local function setBorder(btn)
-	borderCombobox:ddSetSelectedText(btn.text)
+	borderCombobox:ddSetSelectedValue(btn.value)
 	main.barFrame:setBorder(btn.value)
 	main.barFrame:setBorderOffset()
 	main.barFrame:applyLayout()
@@ -1091,10 +1062,9 @@ borderCombobox:ddSetInitFunc(function(self)
 	local info = {}
 	info.list = {
 		{
-			text = NONE_KEY,
+			text = NONE,
 			func = setBorder,
 			value = false,
-			checked = main.bConfig.borderEdge == nil,
 			OnEnter = border_OnEnter,
 		}
 	}
@@ -1104,7 +1074,6 @@ borderCombobox:ddSetInitFunc(function(self)
 				text = edge,
 				value = edge,
 				func = setBorder,
-				checked = main.bConfig.borderEdge == edge,
 				OnEnter = border_OnEnter,
 			}
 		end
@@ -1114,7 +1083,7 @@ end)
 
 -- BACKGROUND COLOR
 local borderColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
-borderColor:SetPoint("LEFT", borderCombobox, "RIGHT", 3, 0)
+borderColor:SetPoint("LEFT", borderCombobox, "RIGHT", 3, 2)
 
 borderColor.hasOpacity = true
 borderColor.swatchFunc = function()
@@ -1170,6 +1139,81 @@ borderOffset:SetScript("OnValueChanged", function(slider, value, userInput)
 	main.barFrame:applyLayout()
 	slider:SetValue(value)
 	main:hidingBarUpdate()
+end)
+
+-- BACKGROUND TEXT
+local bgText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+bgText:SetPoint("TOPLEFT", borderOffset, "BOTTOMLEFT", 0, -20)
+bgText:SetText(L["Background"])
+
+-- BACKGROUND COMBOBOX
+local bgCombobox = lsfdd:CreateButton(main.displayPanel, 120)
+bgCombobox:SetPoint("LEFT", bgText, "RIGHT", 3, 0)
+
+local function background_OnEnter(btn)
+	backdropFrame:setBackdrop(btn, {bgFile = media:Fetch("background", btn.value)})
+end
+
+local function setBackground(btn)
+	bgCombobox:ddSetSelectedValue(btn.value)
+	main.barFrame:setBackground(btn.value)
+	main.buttonPanel.bg:SetTexture(media:Fetch("background", main.bConfig.bgTexture))
+	main:hidingBarUpdate()
+end
+
+bgCombobox:ddSetInitFunc(function(self)
+	local info = {}
+	info.list = {
+		{
+			text = NONE,
+			func = setBackground,
+			value = false,
+			OnEnter = background_OnEnter,
+		}
+	}
+	for i, bgTex in ipairs(media:List("background")) do
+		if bgTex ~= "None" then
+			info.list[#info.list + 1] = {
+				text = bgTex,
+				value = bgTex,
+				func = setBackground,
+				OnEnter = background_OnEnter,
+			}
+		end
+	end
+	self:ddAddButton(info)
+end)
+
+-- BACKGROUND COLOR
+local bgColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
+bgColor:SetPoint("LEFT", bgCombobox, "RIGHT", 3, 2)
+
+bgColor.hasOpacity = true
+bgColor.swatchFunc = function()
+	main.barFrame:setBackground(nil, ColorPickerFrame:GetColorRGB())
+	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
+	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
+	main:hidingBarUpdate()
+end
+bgColor.opacityFunc = function()
+	main.barFrame:setBackground(nil, nil, nil, nil, OpacitySliderFrame:GetValue())
+	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
+	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
+	main:hidingBarUpdate()
+end
+bgColor.cancelFunc = function(color)
+	main.barFrame:setBackground(nil, color.r, color.g, color.b, color.opacity)
+	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
+	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
+	main:hidingBarUpdate()
+end
+bgColor:SetScript("OnClick", function(btn)
+	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
+		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
+		HideUIPanel(ColorPickerFrame)
+	end
+	btn.r, btn.g, btn.b, btn.opacity = unpack(main.bConfig.bgColor)
+	OpenColorPicker(btn)
 end)
 
 -------------------------------------------
@@ -1952,11 +1996,10 @@ function main:setBar(bar)
 		self.direction = self.barFrame.direction
 		barCombobox:ddSetSelectedText(self.currentBar.name)
 
+		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture))
 		self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
 		expandToCombobox:ddSetSelectedValue(self.bConfig.expand)
 		expandToCombobox:ddSetSelectedText(expandToCombobox.texts[self.bConfig.expand])
-		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
-		bgColor.color:SetColorTexture(unpack(self.bConfig.bgColor))
 		local hexColor = toHex(self.bConfig.lineColor)
 		main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 		orientationCombobox:ddSetSelectedValue(self.bConfig.orientation)
@@ -1977,10 +2020,15 @@ function main:setBar(bar)
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
 
-		borderCombobox:ddSetSelectedText(self.bConfig.borderEdge or NONE_KEY)
+		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
+		borderCombobox:ddSetSelectedValue(self.bConfig.borderEdge)
+		borderCombobox:ddSetSelectedText(self.bConfig.borderEdge or NONE)
 		borderSize:SetValue(self.bConfig.borderSize)
 		borderOffset:SetValue(self.bConfig.borderOffset)
 		borderColor.color:SetColorTexture(unpack(self.bConfig.borderColor))
+		bgCombobox:ddSetSelectedValue(self.bConfig.bgTexture)
+		bgCombobox:ddSetSelectedText(self.bConfig.bgTexture or NONE)
+		bgColor.color:SetColorTexture(unpack(self.bConfig.bgColor))
 
 		buttonNumber:SetValue(self.bConfig.size)
 		buttonSize:SetValue(self.bConfig.buttonSize)
