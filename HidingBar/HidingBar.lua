@@ -408,6 +408,7 @@ function hb:checkProfile(profile)
 			bar.config.bgTexture = "Solid"
 		end
 		bar.config.bgColor = bar.config.bgColor or {.1, .1, .1, .7}
+		bar.config.lineTexture = bar.config.lineTexture or "Solid"
 		bar.config.lineColor = bar.config.lineColor or {.8, .6, 0}
 		if bar.config.borderEdge == nil then
 			bar.config.borderEdge = false
@@ -603,13 +604,12 @@ function hb:updateBars()
 
 		if self.currentProfile.bars[i] then
 			bar:setFrameStrata()
-			bar:setLineColor()
 			bar:setLineWidth()
 			bar:setBorder()
-			bar:setBorderOffset()
 			bar:setBackground()
 			bar.drag:setShowHandler()
 			bar:setBarTypePosition()
+			bar:setLineTexture()
 			bar:updateDragBarPosition()
 			bar:setButtonDirection()
 			bar:setTooltipPosition()
@@ -1737,12 +1737,29 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 end
 
 
-function hidingBarMixin:setLineColor(r, g, b)
+function hidingBarMixin:setLineTexture(texture, r, g, b)
+	if texture then self.config.lineTexture = texture end
+
 	local color = self.config.lineColor
 	if r then color[1] = r end
 	if g then color[2] = g end
 	if b then color[3] = b end
-	self.drag.bg:SetColorTexture(unpack(color))
+
+	texture = media:Fetch("statusbar", self.config.lineTexture, true)
+	if texture then
+		self.drag.bg:SetTexture(texture)
+		self.drag.bg:SetVertexColor(unpack(color))
+
+		if self.anchorObj.anchor == "left" then
+			self.drag.bg:SetTexCoord(0, 1, 1, 1, 0, 0, 1, 0)
+		elseif self.anchorObj.anchor == "right" then
+			self.drag.bg:SetTexCoord(1, 0, 0, 0, 1, 1, 0, 1)
+		else
+			self.drag.bg:SetTexCoord(0, 1, 0, 1)
+		end
+	else
+		self.drag.bg:SetColorTexture(unpack(color))
+	end
 end
 
 
@@ -1764,6 +1781,7 @@ function hidingBarMixin:setBorder(edge, size, r, g, b, a)
 		edgeSize = self.config.borderSize * scale,
 	})
 	self:SetBackdropBorderColor(unpack(color))
+	self:setBorderOffset()
 end
 
 
@@ -2073,6 +2091,7 @@ function hidingBarMixin:setBarAnchor(anchor)
 
 	self:setBarCoords(position, secondPosition)
 	self:updateBarPosition()
+	self:setLineTexture()
 end
 
 
@@ -2289,6 +2308,7 @@ function hidingBarMixin:dragBar()
 			self:setButtonDirection()
 			width, height = self:applyLayout()
 			self:updateDragBarPosition()
+			self:setLineTexture()
 
 			hb.cb:Fire("ANCHOR_UPDATED", self.config.anchor, self)
 		end
