@@ -408,14 +408,21 @@ function hb:checkProfile(profile)
 			bar.config.bgTexture = "Solid"
 		end
 		bar.config.bgColor = bar.config.bgColor or {.1, .1, .1, .7}
-		bar.config.lineTexture = bar.config.lineTexture or "Solid"
-		bar.config.lineColor = bar.config.lineColor or {.8, .6, 0}
 		if bar.config.borderEdge == nil then
 			bar.config.borderEdge = false
 		end
-		bar.config.borderSize = bar.config.borderSize or 16
-		bar.config.borderOffset = bar.config.borderOffset or 4
 		bar.config.borderColor = bar.config.borderColor or {1, 1, 1, 1}
+		bar.config.borderOffset = bar.config.borderOffset or 4
+		bar.config.borderSize = bar.config.borderSize or 16
+		bar.config.lineTexture = bar.config.lineTexture or "Solid"
+		bar.config.lineColor = bar.config.lineColor or {.8, .6, 0}
+		if bar.config.lineBorderEdge == nil then
+			bar.config.lineBorderEdge = false
+		end
+		bar.config.lineBorderColor = bar.config.lineBorderColor or {1, 1, 1, 1}
+		bar.config.lineBorderOffset = bar.config.lineBorderOffset or 1
+		bar.config.lineBorderSize = bar.config.lineBorderSize or 2
+		bar.config.gapSize = bar.config.gapSize or 0
 		bar.config.omb = bar.config.omb or {}
 		if bar.config.omb.hide == nil then
 			bar.config.omb.hide = true
@@ -604,13 +611,13 @@ function hb:updateBars()
 
 		if self.currentProfile.bars[i] then
 			bar:setFrameStrata()
-			bar:setLineWidth()
-			bar:setBorder()
-			bar:setBackground()
 			bar.drag:setShowHandler()
 			bar:setBarTypePosition()
+			bar:setBackground()
+			bar:setBorder()
 			bar:setLineTexture()
-			bar:updateDragBarPosition()
+			bar:setLineBorder()
+			bar:setGapPosition()
 			bar:setButtonDirection()
 			bar:setTooltipPosition()
 		else
@@ -1737,32 +1744,6 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 end
 
 
-function hidingBarMixin:setLineTexture(texture, r, g, b)
-	if texture then self.config.lineTexture = texture end
-
-	local color = self.config.lineColor
-	if r then color[1] = r end
-	if g then color[2] = g end
-	if b then color[3] = b end
-
-	texture = media:Fetch("statusbar", self.config.lineTexture, true)
-	if texture then
-		self.drag.bg:SetTexture(texture)
-		self.drag.bg:SetVertexColor(unpack(color))
-
-		if self.anchorObj.anchor == "left" then
-			self.drag.bg:SetTexCoord(0, 1, 1, 1, 0, 0, 1, 0)
-		elseif self.anchorObj.anchor == "right" then
-			self.drag.bg:SetTexCoord(1, 0, 0, 0, 1, 1, 0, 1)
-		else
-			self.drag.bg:SetTexCoord(0, 1, 0, 1)
-		end
-	else
-		self.drag.bg:SetColorTexture(unpack(color))
-	end
-end
-
-
 function hidingBarMixin:setBorder(edge, size, r, g, b, a)
 	if edge ~= nil then self.config.borderEdge = edge end
 	if size then self.config.borderSize = size end
@@ -1807,6 +1788,94 @@ function hidingBarMixin:setBackground(bgTexture, r, g, b, a)
 end
 
 
+function hidingBarMixin:setLineTexture(texture, r, g, b)
+	if texture then self.config.lineTexture = texture end
+
+	local color = self.config.lineColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+
+	texture = media:Fetch("statusbar", self.config.lineTexture, true)
+	if texture then
+		self.drag.bg:SetTexture(texture)
+		self.drag.bg:SetVertexColor(unpack(color))
+
+		if self.anchorObj.anchor == "left" then
+			self.drag.bg:SetTexCoord(1, 1, 0, 1, 1, 0, 0, 0)
+		elseif self.anchorObj.anchor == "right" then
+			self.drag.bg:SetTexCoord(1, 0, 0, 0, 1, 1, 0, 1)
+		else
+			self.drag.bg:SetTexCoord(0, 1, 0, 1)
+		end
+	else
+		self.drag.bg:SetColorTexture(unpack(color))
+	end
+end
+
+
+function hidingBarMixin:setLineBorder(edge, size, r, g, b, a)
+	if edge ~= nil then self.config.lineBorderEdge = edge end
+	if size then self.config.lineBorderSize = size end
+
+	local color = self.config.lineBorderColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	if a then color[4] = a end
+
+	local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
+	local edgeFile = media:Fetch("border", self.config.lineBorderEdge or nil)
+	self.drag:SetBackdrop({
+		edgeFile = edgeFile or "",
+		edgeSize = self.config.lineBorderSize * scale,
+	})
+	self.drag:SetBackdropBorderColor(unpack(color))
+	self.drag.isEdged = edgeFile and true or false
+	self:setLineBorderOffset()
+end
+
+
+function hidingBarMixin:setLineBorderOffset(offset)
+	if offset then self.config.lineBorderOffset = offset end
+	offset = self.drag.isEdged and self.config.lineBorderOffset or 0
+	self.drag.bg:SetPoint("TOPLEFT", offset, -offset)
+	self.drag.bg:SetPoint("BOTTOMRIGHT", -offset, offset)
+	self:setLineWidth()
+end
+
+
+function hidingBarMixin:setLineWidth(lineWidth)
+	if lineWidth then self.config.lineWidth = lineWidth end
+	lineWidth = self.config.lineWidth
+	if self.drag.isEdged then
+		lineWidth = lineWidth + self.config.lineBorderOffset * 2
+	end
+	self.drag:SetSize(lineWidth, lineWidth)
+end
+
+
+function hidingBarMixin:setGapPosition(gapSize)
+	if gapSize then self.config.gapSize = gapSize end
+
+	if self.config.anchor == "left" then
+		self.gup:SetPoint("TOPLEFT", self, "TOPRIGHT")
+		self.gup:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
+	elseif self.config.anchor == "right" then
+		self.gup:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
+		self.gup:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+	elseif self.config.anchor == "top" then
+		self.gup:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+		self.gup:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
+	else
+		self.gup:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
+		self.gup:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+	end
+
+	self:updateDragBarPosition()
+end
+
+
 function hidingBarMixin:setOrientation(orientation)
 	self.config.orientation = orientation
 	self:applyLayout()
@@ -1826,12 +1895,6 @@ end
 function hidingBarMixin:setFadeOpacity(opacity)
 	self.config.fadeOpacity = opacity
 	self.drag:stopFade(opacity)
-end
-
-
-function hidingBarMixin:setLineWidth(width)
-	if width then self.config.lineWidth = width end
-	self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
 end
 
 
@@ -2023,17 +2086,17 @@ function hidingBarMixin:updateDragBarPosition()
 	self.drag:ClearAllPoints()
 	if self:IsShown() then
 		if anchor == "left" then
-			self.drag:SetPoint("TOPLEFT", self, "TOPRIGHT")
-			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT")
+			self.drag:SetPoint("TOPLEFT", self, "TOPRIGHT", self.config.gapSize, 0)
+			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT", self.config.gapSize, 0)
 		elseif anchor == "right" then
-			self.drag:SetPoint("TOPRIGHT", self, "TOPLEFT")
-			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+			self.drag:SetPoint("TOPRIGHT", self, "TOPLEFT", -self.config.gapSize, 0)
+			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", -self.config.gapSize, 0)
 		elseif anchor == "top" then
-			self.drag:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
-			self.drag:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
+			self.drag:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -self.config.gapSize)
+			self.drag:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, -self.config.gapSize)
 		else
-			self.drag:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-			self.drag:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+			self.drag:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, self.config.gapSize)
+			self.drag:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 0, self.config.gapSize)
 		end
 	else
 		if anchor == "left" then
@@ -2090,7 +2153,7 @@ function hidingBarMixin:setBarAnchor(anchor)
 	end
 
 	self:setBarCoords(position, secondPosition)
-	self:updateBarPosition()
+	self:setGapPosition()
 	self:setLineTexture()
 end
 
@@ -2309,6 +2372,7 @@ function hidingBarMixin:dragBar()
 			width, height = self:applyLayout()
 			self:updateDragBarPosition()
 			self:setLineTexture()
+			self:setGapPosition()
 
 			hb.cb:Fire("ANCHOR_UPDATED", self.config.anchor, self)
 		end
@@ -2637,6 +2701,18 @@ local function drag_OnLeave(self)
 end
 
 
+local function gup_OnEnter(self)
+	self.bar.isMouse = true
+	self.bar:enter()
+end
+
+
+local function gup_OnLeave(self)
+	self.bar.isMouse = false
+	self.bar:leave()
+end
+
+
 setmetatable(hb.bars, {__index = function(self, key)
 	local bar = CreateFrame("FRAME", nil, UIParent, "HidingBarAddonPanel")
 	bar:SetClampedToScreen(true)
@@ -2649,14 +2725,13 @@ setmetatable(hb.bars, {__index = function(self, key)
 		bar[k] = v
 	end
 
-	bar.drag = CreateFrame("BUTTON", nil, UIParent)
+	bar.drag = CreateFrame("BUTTON", nil, UIParent, "BackdropTemplate")
 	bar.drag.bar = bar
 	bar.drag:RegisterForDrag("LeftButton")
 	bar.drag:SetClampedToScreen(true)
 	bar.drag:SetHitRectInsets(-2, -2, -2, -2)
 	bar.drag:SetFrameLevel(bar:GetFrameLevel() + 10)
-	bar.drag.bg = bar.drag:CreateTexture(nil, "OVERLAY")
-	bar.drag.bg:SetAllPoints()
+	bar.drag.bg = bar.drag:CreateTexture(nil, "BACKGROUND")
 	bar.drag:SetScript("OnMouseDown", drag_OnMouseDown)
 	bar.drag:SetScript("OnDragStart", drag_OnDragStart)
 	bar.drag:SetScript("OnDragStop", drag_OnDragStop)
@@ -2664,6 +2739,12 @@ setmetatable(hb.bars, {__index = function(self, key)
 	for k, v in pairs(hidingBarDragMixin) do
 		bar.drag[k] = v
 	end
+
+	bar.gup = CreateFrame("FRAME", nil, bar)
+	bar.gup.bar = bar
+	bar.gup:SetMouseMotionEnabled(true)
+	bar.gup:SetScript("OnEnter", gup_OnEnter)
+	bar.gup:SetScript("OnLeave", gup_OnLeave)
 
 	bar.id = key
 	self[key] = bar
