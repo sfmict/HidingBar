@@ -753,7 +753,7 @@ do
 		end
 
 		if self.MSQ_Button then
-			if data.iconCoords then self:setTexCurCoord(button.icon, unpack(data.iconCoords)) end
+			self:setTexCurCoord(button.icon, button.icon:GetTexCoord())
 			button.icon.SetTexCoord = self.setTexCoord
 			button:SetHighlightTexture(" ")
 			local buttonData = {
