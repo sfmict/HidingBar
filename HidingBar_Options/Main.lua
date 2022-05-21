@@ -978,6 +978,36 @@ bgText:SetText(L["Background"])
 local bgCombobox = lsfdd:CreateButton(main.displayPanel, 120)
 bgCombobox:SetPoint("LEFT", bgText, "RIGHT", 3, 0)
 
+local backdropFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
+backdropFrame:SetScript("OnHide", function(self)
+	self:SetParent(UIParent)
+	self:ClearAllPoints()
+	self:Hide()
+end)
+backdropFrame.setBackdrop = function(self, btn, backdrop)
+	if not btn.value then
+		if self.style then self.style:Show() end
+		self:Hide()
+		return
+	end
+
+	local f, t = lsfdd:IterateMenus()
+	local menu = t[1]
+
+	for name, style in pairs(menu.styles) do
+		if style:IsShown() then
+			self.style = style
+			style:Hide()
+			break
+		end
+	end
+
+	self:SetParent(menu)
+	self:SetAllPoints()
+	self:SetBackdrop(backdrop)
+	self:Show()
+end
+
 local function background_OnEnter(btn)
 	backdropFrame:setBackdrop(btn, {bgFile = media:Fetch("background", btn.value)})
 end
@@ -1052,36 +1082,6 @@ borderText:SetText(L["Border"])
 -- BORDER COMBOBOX
 local borderCombobox = lsfdd:CreateButton(main.displayPanel, 120)
 borderCombobox:SetPoint("LEFT", borderText, "RIGHT", 3, 0)
-
-local backdropFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
-backdropFrame:SetScript("OnHide", function(self)
-	self:SetParent(UIParent)
-	self:ClearAllPoints()
-	self:Hide()
-end)
-backdropFrame.setBackdrop = function(self, btn, backdrop)
-	if not btn.value then
-		if self.style then self.style:Show() end
-		self:Hide()
-		return
-	end
-
-	local f, t = lsfdd:IterateMenus()
-	local menu = t[1]
-
-	for name, style in pairs(menu.styles) do
-		if style:IsShown() then
-			self.style = style
-			style:Hide()
-			break
-		end
-	end
-
-	self:SetParent(menu)
-	self:SetAllPoints()
-	self:SetBackdrop(backdrop)
-	self:Show()
-end
 
 local function border_OnEnter(btn)
 	backdropFrame:setBackdrop(btn, {
