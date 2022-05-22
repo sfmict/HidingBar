@@ -1210,7 +1210,7 @@ lineTextureCombobox:ddSetInitFunc(function(self)
 	for i, texName in ipairs(media:List("statusbar")) do
 		info.list[i] = {
 			text = texName,
-			fontObject = GameFontHighlightOutline, -- Game10Font_o1
+			fontObject = Game10Font_o1, -- GameFontHighlightOutline
 			icon = textures[texName],
 			iconOnly = true,
 			iconInfo = {
@@ -2207,7 +2207,7 @@ function main:setBar(bar)
 			tSizeX = 0,
 			tSizeY = 14,
 		}
-		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, GameFontHighlightOutline)
+		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, Game10Font_o1)
 		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
