@@ -969,6 +969,12 @@ alignText(orientationText, showHandlerText, hideHandlerText)
 -------------------------------------------
 main.displayPanel = createTabPanel(barSettingsTabs, L["Display"])
 
+-- TEXTURES HELP TOOLTIP
+local texturesHelpTooltip = CreateFrame("FRAME", nil, main.displayPanel, "HidingBarAddonHelpPlate")
+texturesHelpTooltip:SetPoint("TOPRIGHT", 10, 10)
+texturesHelpTooltip.tooltip = L["TEXTURES_HELP_TOOLTIP"]
+texturesHelpTooltip.wrap = true
+
 -- BACKGROUND TEXT
 local bgText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 bgText:SetPoint("TOPLEFT", 8, -20)
@@ -1224,7 +1230,7 @@ lineColor:SetPoint("LEFT", lineTextureCombobox, "RIGHT", 3, 2)
 
 local function updateLineColor()
 	local hexColor = toHex(main.bConfig.lineColor)
-	main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
+	main.helpPlate.tooltipTitle = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 	main.lineBorderOffset.text:SetText(L["Line Border Offset"]:format(hexColor))
@@ -2170,7 +2176,7 @@ function main:setBar(bar)
 		expandToCombobox:ddSetSelectedValue(self.bConfig.expand)
 		expandToCombobox:ddSetSelectedText(expandToCombobox.texts[self.bConfig.expand])
 		local hexColor = toHex(self.bConfig.lineColor)
-		main.helpPlate.tooltip = L["SETTINGS_DESCRIPTION"]:format(hexColor)
+		main.helpPlate.tooltipTitle = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 		orientationCombobox:ddSetSelectedValue(self.bConfig.orientation)
 		orientationCombobox:ddSetSelectedText(orientationCombobox.texts[self.bConfig.orientation])
 		fsCombobox:ddSetSelectedValue(self.bConfig.frameStrata)
