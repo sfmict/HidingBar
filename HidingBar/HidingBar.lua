@@ -1273,13 +1273,11 @@ function hb:addMButton(button, force, MSQ_Group)
 		else
 			local clickable
 			local function getMouseEnabled(frame)
-				if self.IsMouseClickEnabled(frame) then
-					if self.HasScript(frame, "OnClick") and self.GetScript(frame, "OnClick")
-					or self.HasScript(frame, "OnMouseUp") and self.GetScript(frame, "OnMouseUp")
-					or self.HasScript(frame, "OnMouseDown") and self.GetScript(frame, "OnMouseDown") then
-						clickable = true
-						return
-					end
+				if self.HasScript(frame, "OnClick") and self.GetScript(frame, "OnClick")
+				or self.HasScript(frame, "OnMouseUp") and self.GetScript(frame, "OnMouseUp")
+				or self.HasScript(frame, "OnMouseDown") and self.GetScript(frame, "OnMouseDown") then
+					clickable = true
+					return
 				end
 				for _, fchild in ipairs({self.GetChildren(frame)}) do
 					getMouseEnabled(fchild)
@@ -1444,16 +1442,24 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
-		if self.IsMouseMotionEnabled(frame) then
-			p.frames[frame] = {
-				insets = {self.GetHitRectInsets(frame)},
-				OnEnter = self.GetScript(frame, "OnEnter"),
-				OnLeave = self.GetScript(frame, "OnLeave"),
-			}
+		if self.IsMouseMotionEnabled(frame) or self.IsMouseClickEnabled(frame) then
+			p.frames[frame] = {}
+			local fParams = p.frames[frame]
+
+			fParams.insets = {self.GetHitRectInsets(frame)}
 			self.SetHitRectInsets(frame, 0, 0, 0, 0)
-			self.HookScript(frame, "OnEnter", OnEnter)
-			self.HookScript(frame, "OnLeave", OnLeave)
-			noGMEFrames[frame] = true
+
+			if self.HasScript(frame, "OnEnter") then
+				fParams.OnEnter = self.GetScript(frame, "OnEnter")
+				self.HookScript(frame, "OnEnter", OnEnter)
+			end
+
+			if self.HasScript(frame, "OnLeave") then
+				fParams.OnLeave = self.GetScript(frame, "OnLeave")
+				self.HookScript(frame, "OnLeave", OnLeave)
+			end
+
+			noGMEFrames[frame] = btn
 		end
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
 			setMouseEvents(fchild)
@@ -1490,8 +1496,8 @@ function hb:restoreParams(btn)
 
 	for frame, param in pairs(p.frames) do
 		self.SetHitRectInsets(frame, unpack(param.insets))
-		self.SetScript(frame, "OnEnter", param.OnEnter)
-		self.SetScript(frame, "OnLeave", param.OnLeave)
+		if param.OnEnter then self.SetScript(frame, "OnEnter", param.OnEnter) end
+		if param.OnLeave then self.SetScript(frame, "OnLeave", param.OnLeave) end
 		noGMEFrames[frame] = nil
 	end
 
@@ -2602,10 +2608,12 @@ local function bar_OnLeave(self)
 end
 
 
-local function isNoGMEParent()
+local function isNoGMEParent(bar)
 	local frame = GetMouseFocus()
 	while frame do
-		if noGMEFrames[frame] then return true end
+		if noGMEFrames[frame] then
+			return noGMEFrames[frame]:GetParent() == bar
+		end
 		frame = frame:GetParent()
 	end
 end
@@ -2616,7 +2624,7 @@ local function bar_OnEvent(self, event, button)
 	and not (self.isMouse
 		or self.drag:IsShown() and self.drag:IsMouseOver()
 		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver()
-		or isNoGMEParent())
+		or isNoGMEParent(self))
 	then
 		self:Hide()
 		self:updateDragBarPosition()
