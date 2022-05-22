@@ -1021,7 +1021,7 @@ end
 local function setBackground(btn)
 	bgCombobox:ddSetSelectedValue(btn.value)
 	main.barFrame:setBackground(btn.value)
-	main.buttonPanel.bg:SetTexture(media:Fetch("background", main.bConfig.bgTexture))
+	main.buttonPanel.bg:SetTexture(media:Fetch("background", main.bConfig.bgTexture, true))
 	main:hidingBarUpdate()
 end
 
@@ -1279,15 +1279,6 @@ lineBorderText:SetText(L["Line Border"])
 local lineBorderCombobox = lsfdd:CreateButton(main.displayPanel, 120)
 lineBorderCombobox:SetPoint("LEFT", lineBorderText, "RIGHT", 3, 0)
 
-local function lineBorder_OnEnter(btn)
-	backdropFrame:setBackdrop(btn, {
-		edgeFile = media:Fetch("border", btn.value),
-		bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]],
-		tile = true, tileSize = 16, edgeSize = 16,
-		insets = { left = 4, right = 4, top = 4, bottom = 4 },
-	})
-end
-
 local function setLineBorder(btn)
 	lineBorderCombobox:ddSetSelectedValue(btn.value)
 	main.barFrame:setLineBorder(btn.value)
@@ -1301,7 +1292,7 @@ lineBorderCombobox:ddSetInitFunc(function(self)
 			text = NONE,
 			func = setLineBorder,
 			value = false,
-			OnEnter = lineBorder_OnEnter,
+			OnEnter = border_OnEnter,
 		}
 	}
 	for i, edge in ipairs(media:List("border")) do
@@ -1310,7 +1301,7 @@ lineBorderCombobox:ddSetInitFunc(function(self)
 				text = edge,
 				value = edge,
 				func = setLineBorder,
-				OnEnter = lineBorder_OnEnter,
+				OnEnter = border_OnEnter,
 			}
 		end
 	end
@@ -2171,7 +2162,7 @@ function main:setBar(bar)
 		self.direction = self.barFrame.direction
 		barCombobox:ddSetSelectedText(self.currentBar.name)
 
-		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture))
+		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture), true)
 		self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
 		expandToCombobox:ddSetSelectedValue(self.bConfig.expand)
 		expandToCombobox:ddSetSelectedText(expandToCombobox.texts[self.bConfig.expand])

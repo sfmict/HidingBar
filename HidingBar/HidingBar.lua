@@ -1744,6 +1744,20 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 end
 
 
+function hidingBarMixin:setBackground(bgTexture, r, g, b, a)
+	if bgTexture ~= nil then self.config.bgTexture = bgTexture end
+
+	local color = self.config.bgColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	if a then color[4] = a end
+
+	self.bg:SetTexture(media:Fetch("background", self.config.bgTexture or nil, true))
+	self.bg:SetVertexColor(unpack(color))
+end
+
+
 function hidingBarMixin:setBorder(edge, size, r, g, b, a)
 	if edge ~= nil then self.config.borderEdge = edge end
 	if size then self.config.borderSize = size end
@@ -1755,13 +1769,13 @@ function hidingBarMixin:setBorder(edge, size, r, g, b, a)
 	if a then color[4] = a end
 
 	local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
-	local edgeFile = media:Fetch("border", self.config.borderEdge or nil)
-	self.isEdged = edgeFile and true or false
+	local edgeFile = media:Fetch("border", self.config.borderEdge or nil, true)
 	self:SetBackdrop({
 		edgeFile = edgeFile or "",
 		edgeSize = self.config.borderSize * scale,
 	})
 	self:SetBackdropBorderColor(unpack(color))
+	self.isEdged = edgeFile and true or false
 	self:setBorderOffset()
 end
 
@@ -1771,20 +1785,6 @@ function hidingBarMixin:setBorderOffset(offset)
 	offset = self.isEdged and self.config.borderOffset or 0
 	self.bg:SetPoint("TOPLEFT", offset, -offset)
 	self.bg:SetPoint("BOTTOMRIGHT", -offset, offset)
-end
-
-
-function hidingBarMixin:setBackground(bgTexture, r, g, b, a)
-	if bgTexture ~= nil then self.config.bgTexture = bgTexture end
-
-	local color = self.config.bgColor
-	if r then color[1] = r end
-	if g then color[2] = g end
-	if b then color[3] = b end
-	if a then color[4] = a end
-
-	self.bg:SetTexture(media:Fetch("background", self.config.bgTexture))
-	self.bg:SetVertexColor(unpack(color))
 end
 
 
@@ -1825,7 +1825,7 @@ function hidingBarMixin:setLineBorder(edge, size, r, g, b, a)
 	if a then color[4] = a end
 
 	local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
-	local edgeFile = media:Fetch("border", self.config.lineBorderEdge or nil)
+	local edgeFile = media:Fetch("border", self.config.lineBorderEdge or nil, true)
 	self.drag:SetBackdrop({
 		edgeFile = edgeFile or "",
 		edgeSize = self.config.lineBorderSize * scale,
@@ -1859,17 +1859,17 @@ function hidingBarMixin:setGapPosition(gapSize)
 	if gapSize then self.config.gapSize = gapSize end
 
 	if self.config.anchor == "left" then
-		self.gup:SetPoint("TOPLEFT", self, "TOPRIGHT")
-		self.gup:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
+		self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
+		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
 	elseif self.config.anchor == "right" then
-		self.gup:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
-		self.gup:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+		self.gap:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
+		self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
 	elseif self.config.anchor == "top" then
-		self.gup:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
-		self.gup:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
+		self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
 	else
-		self.gup:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
-		self.gup:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+		self.gap:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
+		self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
 	end
 
 	self:updateDragBarPosition()
@@ -2613,7 +2613,7 @@ end
 
 local function bar_OnEvent(self, event, button)
 	if (button == "LeftButton" or button == "RightButton")
-	and not (self:IsMouseOver()
+	and not (self.isMouse
 		or self.drag:IsShown() and self.drag:IsMouseOver()
 		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver()
 		or isNoGMEParent())
@@ -2701,13 +2701,13 @@ local function drag_OnLeave(self)
 end
 
 
-local function gup_OnEnter(self)
+local function gap_OnEnter(self)
 	self.bar.isMouse = true
 	self.bar:enter()
 end
 
 
-local function gup_OnLeave(self)
+local function gap_OnLeave(self)
 	self.bar.isMouse = false
 	self.bar:leave()
 end
@@ -2740,11 +2740,11 @@ setmetatable(hb.bars, {__index = function(self, key)
 		bar.drag[k] = v
 	end
 
-	bar.gup = CreateFrame("FRAME", nil, bar)
-	bar.gup.bar = bar
-	bar.gup:SetMouseMotionEnabled(true)
-	bar.gup:SetScript("OnEnter", gup_OnEnter)
-	bar.gup:SetScript("OnLeave", gup_OnLeave)
+	bar.gap = CreateFrame("FRAME", nil, bar)
+	bar.gap.bar = bar
+	bar.gap:SetMouseMotionEnabled(true)
+	bar.gap:SetScript("OnEnter", gap_OnEnter)
+	bar.gap:SetScript("OnLeave", gap_OnLeave)
 
 	bar.id = key
 	self[key] = bar
