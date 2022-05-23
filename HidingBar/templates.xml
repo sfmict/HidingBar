@@ -71,32 +71,4 @@
 			</OnClick>
 		</Scripts>
 	</Button>
-
-	<Button name="HidingBarAddonMailTemplate" virtual="true">
-		<Size x="32" y="32"/>
-		<Layers>
-			<Layer level="ARTWORK">
-				<Texture parentKey="icon" file="Interface/Icons/INV_Letter_15">
-					<Size x="18" y="18"/>
-					<Anchors>
-						<Anchor point="CENTER"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-			<Layer level="OVERLAY">
-				<Texture parentKey="border" file ="Interface/Minimap/MiniMap-TrackingBorder">
-					<Size x="54" y="54"/>
-					<Anchors>
-						<Anchor point="TOPLEFT" y="-1"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-		<HighlightTexture parentKey="highlight" file="Interface/Minimap/UI-Minimap-ZoomButton-Highlight" alphaMode="ADD">
-			<Size x="32" y="32"/>
-			<Anchors>
-				<Anchor point="CENTER" y="-1"/>
-			</Anchors>
-		</HighlightTexture>
-	</Button>
 </Ui>

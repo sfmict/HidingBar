@@ -213,10 +213,11 @@ if MSQ then
 
 
 	function hb:setMButtonRegions(btn, iconCoords, MSQ_Group)
-		local name, texture, tIsString, layer, border, background, icon, highlight, normal
+		local name, texture, tIsString, layer, border, background, icon, highlight
+		local isButton = btn:IsObjectType("Button")
 
 		for _, region in ipairs({btn:GetRegions()}) do
-			if region:GetObjectType() == "Texture" then
+			if region:IsObjectType("Texture") then
 				name = region:GetDebugName():gsub(".*%.", ""):lower()
 				texture = region:GetTexture()
 				tIsString = type(texture) == "string"
@@ -237,7 +238,7 @@ if MSQ then
 			end
 		end
 
-		normal = btn:GetNormalTexture()
+		local normal = isButton and btn:GetNormalTexture()
 		if normal and (not icon or icon ~= btn.icon) then
 			icon = btn:CreateTexture(nil, "BACKGROUND")
 			local atlas = normal:GetAtlas()
@@ -259,9 +260,7 @@ if MSQ then
 		end
 
 		if not highlight then
-			btn:SetHighlightTexture(" ")
-			highlight = btn:GetHighlightTexture()
-			highlight:SetTexture()
+			highlight = isButton and btn:GetHighlightTexture() or btn:CreateTexture(nil, "HIGHLIGHT")
 		end
 
 		if icon then
@@ -275,7 +274,7 @@ if MSQ then
 			background = nil
 		end
 
-		local pushed = btn:GetPushedTexture()
+		local pushed = isButton and btn:GetPushedTexture()
 		if border or background or pushed or normal then
 			self.MSQ_Button_Data[btn] = {
 				_Border = border,
@@ -755,12 +754,10 @@ do
 		if self.MSQ_Button then
 			self:setTexCurCoord(button.icon, button.icon:GetTexCoord())
 			button.icon.SetTexCoord = self.setTexCoord
-			button:SetHighlightTexture(" ")
 			local buttonData = {
 				Icon = button.icon,
-				Highlight = button:GetHighlightTexture(),
+				Highlight = button:CreateTexture(nil, "HIGHLIGHT"),
 			}
-			buttonData.Highlight:SetTexture()
 			self.MSQ_Button:AddButton(button, buttonData, "Legacy", true)
 			self:MSQ_CoordUpdate(button)
 		end
@@ -1018,50 +1015,42 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL
-	if self:ignoreCheck("HidingBarAddonMail") and not btnParams[HidingBarAddonMail] then
-		local proxyMail = HidingBarAddonMail or CreateFrame("BUTTON", "HidingBarAddonMail", nil, "HidingBarAddonMailTemplate")
-		local mail = MiniMapMailFrame
-		proxyMail.show = mail:IsShown()
-		self:setHooks(mail)
-		self.Hide(mail)
-		mail:UnregisterAllEvents()
-		proxyMail:SetScript("OnEvent", mail:GetScript("OnEvent"))
-		proxyMail:SetScript("OnEnter", mail:GetScript("OnEnter"))
-		proxyMail:SetScript("OnLeave", mail:GetScript("OnLeave"))
-		proxyMail:RegisterEvent("UPDATE_PENDING_MAIL")
+	if self:ignoreCheck("MiniMapMailFrame") and not btnParams[MiniMapMailFrame] then
+		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
+		if btnData then
+			self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
+			self.pConfig.mbtnSettings["HidingBarAddonMail"] = nil
+		end
 
-		proxyMail.Show = function(proxyMail)
-			if not proxyMail.show then
-				proxyMail.show = true
-				proxyMail:GetParent():applyLayout()
+		local mail = MiniMapMailFrame
+		mail.show = mail:IsShown()
+		self:setHooks(mail)
+		self:setParams(mail)
+
+		mail.Show = function(mail)
+			if not mail.show then
+				mail.show = true
+				mail:GetParent():applyLayout()
 			end
 		end
-		proxyMail.Hide = function(proxyMail)
-			if proxyMail.show then
-				proxyMail.show = false
-				proxyMail:GetParent():applyLayout()
+		mail.Hide = function(mail)
+			if mail.show then
+				mail.show = false
+				mail:GetParent():applyLayout()
 			end
 		end
-		proxyMail.IsShown = function(proxyMail)
-			local show = proxyMail.show and not btnSettings[proxyMail][1]
-			self.SetShown(proxyMail, show)
+		mail.IsShown = function(mail)
+			local show = mail.show and not btnSettings[mail][1]
+			self.SetShown(mail, show)
 			return show
 		end
 
-		self:setParams(proxyMail, function(p, proxyMail)
-			proxyMail:Hide()
-			proxyMail:UnregisterAllEvents()
-			self:unsetHooks(mail)
-			mail:RegisterEvent("UPDATE_PENDING_MAIL")
-			mail:GetScript("OnEvent")(mail, "UPDATE_PENDING_MAIL")
-		end)
-
-		if self.MSQ_MButton and not proxyMail.__MSQ_Addon then
-			self:setMButtonRegions(proxyMail)
+		if self.MSQ_MButton and not mail.__MSQ_Addon then
+			self:setMButtonRegions(mail)
 		end
 
-		tinsert(self.minimapButtons, proxyMail)
-		tinsert(self.mixedButtons, proxyMail)
+		tinsert(self.minimapButtons, mail)
+		tinsert(self.mixedButtons, mail)
 	end
 
 	-- ZOOM IN & ZOOM OUT
@@ -1123,12 +1112,15 @@ function hb:grabDefButtons()
 			if mapButton.__MSQ_Addon then return end
 			mapButton.icon:SetTexture(p.iconTexture)
 			mapButton.icon:SetTexCoord(unpack(p.iconCoords))
+			mapButton.icon:SetAllPoints()
 			mapButton.puched:SetTexture(p.pushedTexture)
 			mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
+			mapButton.puched:SetAllPoints()
 			mapButton.highlight:SetTexture(p.highlightTexture)
 			mapButton.highlight:SetTexCoord(unpack(p.highlightCoords))
 			mapButton.highlight:ClearAllPoints()
 			mapButton.highlight:SetPoint(unpack(p.highlightPoint))
+			mapButton.border:Hide()
 		end)
 
 		if not mapButton.__MSQ_Addon then
@@ -1137,17 +1129,28 @@ function hb:grabDefButtons()
 			p.iconCoords = {mapButton.icon:GetTexCoord()}
 			mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
 			mapButton.icon:SetTexCoord(.125, .875, 0, .5)
+			mapButton.icon:SetSize(27, 27)
+			mapButton.icon:ClearAllPoints()
+			mapButton.icon:SetPoint("CENTER")
 			mapButton.puched = mapButton:GetPushedTexture()
 			p.pushedTexture = mapButton.puched:GetTexture()
 			p.pushedCoords = {mapButton.puched:GetTexCoord()}
 			mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
 			mapButton.puched:SetTexCoord(.125, .875, .5, 1)
+			mapButton.puched:SetSize(27, 27)
+			mapButton.puched:ClearAllPoints()
+			mapButton.puched:SetPoint("CENTER")
 			mapButton.highlight = mapButton:GetHighlightTexture()
 			p.highlightTexture = mapButton.highlight:GetTexture()
 			p.highlightCoords = {mapButton.highlight:GetTexCoord()}
 			p.highlightPoint = {mapButton.highlight:GetPoint()}
-			mapButton.highlight:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
+			mapButton.highlight:SetTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
 			mapButton.highlight:SetAllPoints()
+			mapButton.border = mapButton.border or mapButton:CreateTexture(nil, "OVERLAY")
+			mapButton.border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
+			mapButton.border:SetSize(54, 54)
+			mapButton.border:SetPoint("TOPLEFT", 0, -1)
+			mapButton.border:Show()
 
 			if self.MSQ_MButton then
 				mapButton.icon = mapButton:CreateTexture(nil, "BACKGROUND")
@@ -1262,7 +1265,7 @@ function hb:addMButton(button, force, MSQ_Group)
 				self:setHooks(button)
 			end
 
-			if self.MSQ_MButton and self.GetObjectType(button) == "Button" and not button.__MSQ_Addon then
+			if self.MSQ_MButton and not button.__MSQ_Addon then
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
