@@ -785,71 +785,46 @@ end
 
 function hb:grabDefButtons()
 	-- TRACKING BUTTON
-	if self:ignoreCheck("HidingBarAddonTracking") and not btnParams[HidingBarAddonTracking] then
-		local proxyTracking = HidingBarAddonTracking
-		local tracking = MiniMapTrackingFrame
-		if not proxyTracking then
-			proxyTracking = CreateFrame("BUTTON", "HidingBarAddonTracking")
-			proxyTracking:SetSize(tracking:GetSize())
-			local icon = MiniMapTrackingIcon
-			proxyTracking.icon = proxyTracking:CreateTexture(nil, "BACKGROUND")
-			proxyTracking.icon:SetSize(icon:GetSize())
-			proxyTracking.icon:SetTexture(icon:GetTexture() or 132328)
-			for i = 1, icon:GetNumPoints() do
-				local point, _, rPoint, x, y = icon:GetPoint(i)
-				proxyTracking.icon:SetPoint(point, proxyTracking, rPoint, x, y)
-			end
-			hooksecurefunc(icon, "SetTexture", function(_, texture)
-				proxyTracking.icon:SetTexture(texture)
-			end)
-			local border = MiniMapTrackingBorder
-			proxyTracking.border = proxyTracking:CreateTexture(nil, "BORDER")
-			proxyTracking.border:SetSize(border:GetSize())
-			proxyTracking.border:SetTexture(border:GetTexture())
-			for i = 1, border:GetNumPoints() do
-				local point, _, rPoint, x, y = border:GetPoint(i)
-				proxyTracking.border:SetPoint(point, proxyTracking, rPoint, x, y)
-			end
+	if self:ignoreCheck("MiniMapTrackingFrame") and not btnParams[MiniMapTrackingFrame] then
+		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonTracking")
+		if btnData then
+			self.pConfig.mbtnSettings["MiniMapTrackingFrame"] = btnData
+			self.pConfig.mbtnSettings["HidingBarAddonTracking"] = nil
 		end
 
-		proxyTracking.show = tracking:IsShown()
+		local tracking =  MiniMapTrackingFrame
+		tracking.icon = MiniMapTrackingIcon
+		tracking.icon:SetTexture(132328)
+		tracking:GetScript("OnEvent")(tracking, "UNIT_AURA")
+		tracking.show = tracking:IsShown()
 		self:setHooks(tracking)
-		tracking.SetPoint = nil
-		self.Hide(tracking)
-		proxyTracking:SetScript("OnMouseUp", tracking:GetScript("OnMouseUp"))
-		proxyTracking:SetScript("OnEnter", tracking:GetScript("OnEnter"))
-		proxyTracking:SetScript("OnLeave", tracking:GetScript("OnLeave"))
+		self:setParams(tracking)
 
 		tracking.Show = function()
-			if not proxyTracking.show then
-				proxyTracking.show = true
-				proxyTracking:GetParent():applyLayout()
+			if not tracking.show then
+				fprint(tracking.icon:GetTexture())
+				tracking.show = true
+				tracking:GetParent():applyLayout()
 			end
 		end
 		tracking.Hide = function()
-			if proxyTracking.show then
-				proxyTracking.show = false
-				proxyTracking:GetParent():applyLayout()
+			if tracking.show then
+				tracking.show = false
+				tracking:GetParent():applyLayout()
 			end
 		end
-		proxyTracking.IsShown = function(proxyTracking)
-			local show = proxyTracking.show and not btnSettings[proxyTracking][1]
-			self.SetShown(proxyTracking, show)
+		tracking.IsShown = function(tracking)
+			local show = tracking.show and not btnSettings[tracking][1]
+			self.SetShown(tracking, show)
 			return show
 		end
 
-		self:setParams(proxyTracking, function(p, proxyTracking)
-			proxyTracking:Hide()
-			self:unsetHooks(tracking)
-			tracking:SetShown(proxyTracking.show)
-		end)
-
-		if self.MSQ_MButton and not proxyTracking.__MSQ_Addon then
-			self:setMButtonRegions(proxyTracking)
+		if self.MSQ_MButton and not tracking.__MSQ_Addon then
+			self:setMButtonRegions(tracking)
 		end
 
-		tinsert(self.minimapButtons, proxyTracking)
-		tinsert(self.mixedButtons, proxyTracking)
+		tinsert(self.minimapButtons, tracking)
+		tinsert(self.mixedButtons, tracking)
 	end
 
 	-- MINIMAP LFG FRAME
