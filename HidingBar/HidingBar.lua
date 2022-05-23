@@ -1018,54 +1018,29 @@ function hb:grabDefButtons()
 		self:setHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
 			if mapButton.__MSQ_Addon then return end
-			mapButton.icon:SetTexture(p.iconTexture)
-			mapButton.icon:SetTexCoord(unpack(p.iconCoords))
-			mapButton.icon:SetAllPoints()
-			mapButton.puched:SetTexture(p.pushedTexture)
-			mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
-			mapButton.puched:SetAllPoints()
-			mapButton.highlight:SetTexture(p.highlightTexture)
-			mapButton.highlight:SetTexCoord(unpack(p.highlightCoords))
-			mapButton.highlight:ClearAllPoints()
-			mapButton.highlight:SetPoint(unpack(p.highlightPoint))
-			mapButton.border:Hide()
+			mapButton.normal:ClearAllPoints()
+			mapButton.normal:SetPoint(unpack(p.iconPoint))
+			mapButton.puched:ClearAllPoints()
+			mapButton.puched:SetPoint(unpack(p.pushedPoint))
+			mapButton.border:ClearAllPoints()
+			mapButton.border:SetPoint(unpack(p.borderPoint))
 		end)
 
 		if not mapButton.__MSQ_Addon then
-			mapButton.icon = mapButton:GetNormalTexture()
-			p.iconTexture = mapButton.icon:GetTexture()
-			p.iconCoords = {mapButton.icon:GetTexCoord()}
-			mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.icon:SetTexCoord(.125, .875, 0, .5)
-			mapButton.icon:SetSize(27, 27)
-			mapButton.icon:ClearAllPoints()
-			mapButton.icon:SetPoint("CENTER")
+			mapButton.normal = mapButton:GetNormalTexture()
+			p.iconPoint = {mapButton.normal:GetPoint()}
+			mapButton.normal:ClearAllPoints()
+			mapButton.normal:SetPoint("CENTER")
 			mapButton.puched = mapButton:GetPushedTexture()
-			p.pushedTexture = mapButton.puched:GetTexture()
-			p.pushedCoords = {mapButton.puched:GetTexCoord()}
-			mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.puched:SetTexCoord(.125, .875, .5, 1)
-			mapButton.puched:SetSize(27, 27)
+			p.pushedPoint = {mapButton.puched:GetPoint()}
 			mapButton.puched:ClearAllPoints()
-			mapButton.puched:SetPoint("CENTER")
-			mapButton.highlight = mapButton:GetHighlightTexture()
-			p.highlightTexture = mapButton.highlight:GetTexture()
-			p.highlightCoords = {mapButton.highlight:GetTexCoord()}
-			p.highlightPoint = {mapButton.highlight:GetPoint()}
-			mapButton.highlight:SetTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
-			mapButton.highlight:SetAllPoints()
-			mapButton.border = mapButton.border or mapButton:CreateTexture(nil, "OVERLAY")
-			mapButton.border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
-			mapButton.border:SetSize(54, 54)
-			mapButton.border:SetPoint("TOPLEFT", 0, -1)
-			mapButton.border:Show()
+			mapButton.puched:SetPoint("CENTER", 1, -1)
+			mapButton.border = MiniMapWorldBorder
+			p.borderPoint = {mapButton.border:GetPoint()}
+			mapButton.border:ClearAllPoints()
+			mapButton.border:SetPoint("TOPLEFT", 1, -1)
 
 			if self.MSQ_MButton then
-				mapButton.icon = mapButton:CreateTexture(nil, "BACKGROUND")
-				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
-				mapButton:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
-				mapButton:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
 				self:setMButtonRegions(mapButton)
 			end
 		end
