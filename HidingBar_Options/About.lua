@@ -12,6 +12,8 @@ aboutConfig:SetScript("OnShow", function(self)
 	local addonName = self:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	addonName:SetPoint("TOP", 0, -48)
 	addonName:SetText(addon)
+	local font, size, flags = addonName:GetFont()
+	addonName:SetFont(font, 30, flags)
 
 	-- AUTHOR
 	local author = self:CreateFontString(nil, "ARTWORK", "GameFontNormal")

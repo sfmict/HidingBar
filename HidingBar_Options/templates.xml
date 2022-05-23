@@ -538,9 +538,14 @@
 		<Scripts>
 			<OnEnter>
 				self.highlight:Show()
-				if self.tooltip then
+				if self.tooltipTitle or self.tooltip then
 					GameTooltip:SetOwner(self, "ANCHOR_TOP", 0, -15)
-					GameTooltip:SetText(self.tooltip, 1, 1, 1, 1, false)
+					if self.tooltipTitle then
+						GameTooltip:SetText(self.tooltipTitle, 1, 1, 1, 1, self.wrap)
+					end
+					if self.tooltip then
+						GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, self.wrap)
+					end
 					GameTooltip:Show()
 				end
 			</OnEnter>
