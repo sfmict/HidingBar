@@ -17,7 +17,8 @@ hb.bars, hb.barByName = {}, {}
 local LibStub = LibStub
 hb.cb = LibStub("CallbackHandler-1.0"):New(hb, "on", "off")
 local ldb = LibStub("LibDataBroker-1.1")
-local ldbi, ldbi_ver = LibStub("LibDBIcon-1.0")
+local ldbi = LibStub("LibDBIcon-1.0")
+local media = LibStub("LibSharedMedia-3.0")
 local MSQ = LibStub("Masque", true)
 
 
@@ -36,69 +37,6 @@ local ignoreFrameList = {
 
 local function void() end
 
-local function updateTooltipPosition(bar, eventFrame)
-	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
-
-	if not tooltip or tooltip:GetUnit() then
-		if not eventFrame then return end
-		local lqtip = LibStub("LibQTip-1.0", true)
-		if not lqtip then return end
-		tooltip = nil
-		for k, t in lqtip:IterateTooltips() do
-			if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
-				t:SetClampedToScreen(true)
-				tooltip = t
-				break
-			end
-		end
-		if not tooltip then return end
-	else
-		tooltip:SetAnchorType("ANCHOR_NONE")
-	end
-
-	local pos, point, rPoint, rFrame = bar.config.interceptTooltipPosition
-
-	if pos == 0 then
-		local vPoint, vRPoint, hPoint
-
-		if bar:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
-			vPoint = "BOTTOM"
-			vRPoint = "TOP"
-		else
-			vPoint = "TOP"
-			vRPoint = "BOTTOM"
-			pos = 4
-		end
-
-		if bar.anchorObj.anchor == "left" then
-			hPoint = "LEFT"
-		elseif bar.anchorObj.anchor == "right" then
-			hPoint = "RIGHT"
-		else
-			hPoint = ""
-		end
-
-		point = vPoint..hPoint
-		rPoint = vRPoint..hPoint
-	else
-		point = bar.tooltipPoint
-		rPoint = bar.tooltipRPoint
-	end
-
-	if bar.drag:IsShown() and (bar.anchorObj.anchor == "bottom" and pos <= 3
-	                        or bar.anchorObj.anchor == "top" and pos >= 4 and pos <= 6
-	                        or bar.anchorObj.anchor == "right" and pos >= 7 and pos <= 9
-	                        or bar.anchorObj.anchor == "left" and pos >= 10)
-	then
-		rFrame = bar.drag
-	else
-		rFrame = bar
-	end
-
-	tooltip:ClearAllPoints()
-	tooltip:SetPoint(point, rFrame, rPoint)
-end
-
 local function enter(btn, eventFrame)
 	local bar = btn:GetParent()
 	if not bar:IsShown() then return end
@@ -106,7 +44,7 @@ local function enter(btn, eventFrame)
 	bar:enter()
 
 	if bar.config.interceptTooltip then
-		updateTooltipPosition(bar, eventFrame)
+		bar:updateTooltipPosition(eventFrame)
 	end
 end
 
@@ -273,10 +211,11 @@ if MSQ then
 
 
 	function hb:setMButtonRegions(btn, iconCoords, MSQ_Group)
-		local name, texture, tIsString, layer, border, background, icon, highlight, normal
+		local name, texture, tIsString, layer, border, background, icon, highlight
+		local isButton = btn:IsObjectType("Button")
 
 		for _, region in ipairs({btn:GetRegions()}) do
-			if region:GetObjectType() == "Texture" then
+			if region:IsObjectType("Texture") then
 				name = region:GetDebugName():gsub(".*%.", ""):lower()
 				texture = region:GetTexture()
 				tIsString = type(texture) == "string"
@@ -297,7 +236,7 @@ if MSQ then
 			end
 		end
 
-		normal = btn:GetNormalTexture()
+		local normal = isButton and btn:GetNormalTexture()
 		if normal and (not icon or icon ~= btn.icon) then
 			icon = btn:CreateTexture(nil, "BACKGROUND")
 			local atlas = normal:GetAtlas()
@@ -319,9 +258,7 @@ if MSQ then
 		end
 
 		if not highlight then
-			btn:SetHighlightTexture(" ")
-			highlight = btn:GetHighlightTexture()
-			highlight:SetTexture()
+			highlight = isButton and btn:GetHighlightTexture() or btn:CreateTexture(nil, "HIGHLIGHT")
 		end
 
 		if icon then
@@ -335,7 +272,7 @@ if MSQ then
 			background = nil
 		end
 
-		local pushed = btn:GetPushedTexture()
+		local pushed = isButton and btn:GetPushedTexture()
 		if border or background or pushed or normal then
 			self.MSQ_Button_Data[btn] = {
 				_Border = border,
@@ -464,8 +401,25 @@ function hb:checkProfile(profile)
 		bar.config.anchor = bar.config.anchor or "top"
 		bar.config.barTypePosition = bar.config.barTypePosition or 0
 		bar.config.mbtnPosition = bar.config.mbtnPosition or 2
+		if bar.config.bgTexture == nil then
+			bar.config.bgTexture = "Solid"
+		end
 		bar.config.bgColor = bar.config.bgColor or {.1, .1, .1, .7}
+		if bar.config.borderEdge == nil then
+			bar.config.borderEdge = false
+		end
+		bar.config.borderColor = bar.config.borderColor or {1, 1, 1, 1}
+		bar.config.borderOffset = bar.config.borderOffset or 4
+		bar.config.borderSize = bar.config.borderSize or 16
+		bar.config.lineTexture = bar.config.lineTexture or "Solid"
 		bar.config.lineColor = bar.config.lineColor or {.8, .6, 0}
+		if bar.config.lineBorderEdge == nil then
+			bar.config.lineBorderEdge = false
+		end
+		bar.config.lineBorderColor = bar.config.lineBorderColor or {1, 1, 1, 1}
+		bar.config.lineBorderOffset = bar.config.lineBorderOffset or 1
+		bar.config.lineBorderSize = bar.config.lineBorderSize or 2
+		bar.config.gapSize = bar.config.gapSize or 0
 		bar.config.omb = bar.config.omb or {}
 		if bar.config.omb.hide == nil then
 			bar.config.omb.hide = true
@@ -521,11 +475,11 @@ function hb:init()
 	end
 
 	if self.pConfig.grabMinimap then
-		if ldbi and ldbi_ver >= 39 then
+		if ldbi then
 			local ldbiTbl = ldbi:GetButtonList()
 			for i = 1, #ldbiTbl do
 				local button = ldbi:GetMinimapButton(ldbiTbl[i])
-				if self:ignoreCheck(button:GetName()) then
+				if self:ignoreCheck(self.GetName(button)) then
 					self.minimapButtons[button[0]] = button
 					self:setHooks(button)
 				end
@@ -660,12 +614,13 @@ function hb:updateBars()
 
 		if self.currentProfile.bars[i] then
 			bar:setFrameStrata()
-			bar:setLineColor()
-			bar:setBackgroundColor()
-			bar:setLineWidth()
 			bar.drag:setShowHandler()
 			bar:setBarTypePosition()
-			bar:updateDragBarPosition()
+			bar:setBackground()
+			bar:setBorder()
+			bar:setLineTexture()
+			bar:setLineBorder()
+			bar:setGapPosition()
 			bar:setButtonDirection()
 			bar:setTooltipPosition()
 		else
@@ -801,14 +756,12 @@ do
 		end
 
 		if self.MSQ_Button then
-			if data.iconCoords then self:setTexCurCoord(button.icon, unpack(data.iconCoords)) end
+			self:setTexCurCoord(button.icon, button.icon:GetTexCoord())
 			button.icon.SetTexCoord = self.setTexCoord
-			button:SetHighlightTexture(" ")
 			local buttonData = {
 				Icon = button.icon,
-				Highlight = button:GetHighlightTexture(),
+				Highlight = button:CreateTexture(nil, "HIGHLIGHT"),
 			}
-			buttonData.Highlight:SetTexture()
 			self.MSQ_Button:AddButton(button, buttonData, "Legacy", true)
 			self:MSQ_CoordUpdate(button)
 		end
@@ -921,50 +874,42 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL
-	if self:ignoreCheck("HidingBarAddonMail") and not btnParams[HidingBarAddonMail] then
-		local proxyMail = HidingBarAddonMail or CreateFrame("BUTTON", "HidingBarAddonMail", nil, "HidingBarAddonMailTemplate")
-		local mail = MiniMapMailFrame
-		proxyMail.show = mail:IsShown()
-		self:setHooks(mail)
-		self.Hide(mail)
-		mail:UnregisterAllEvents()
-		proxyMail:SetScript("OnEvent", mail:GetScript("OnEvent"))
-		proxyMail:SetScript("OnEnter", mail:GetScript("OnEnter"))
-		proxyMail:SetScript("OnLeave", mail:GetScript("OnLeave"))
-		proxyMail:RegisterEvent("UPDATE_PENDING_MAIL")
+	if self:ignoreCheck("MiniMapMailFrame") and not btnParams[MiniMapMailFrame] then
+		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
+		if btnData then
+			self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
+			self.pConfig.mbtnSettings["HidingBarAddonMail"] = nil
+		end
 
-		proxyMail.Show = function(proxyMail)
-			if not proxyMail.show then
-				proxyMail.show = true
-				proxyMail:GetParent():applyLayout()
+		local mail = MiniMapMailFrame
+		mail.show = mail:IsShown()
+		self:setHooks(mail)
+		self:setParams(mail)
+
+		mail.Show = function(mail)
+			if not mail.show then
+				mail.show = true
+				mail:GetParent():applyLayout()
 			end
 		end
-		proxyMail.Hide = function(proxyMail)
-			if proxyMail.show then
-				proxyMail.show = false
-				proxyMail:GetParent():applyLayout()
+		mail.Hide = function(mail)
+			if mail.show then
+				mail.show = false
+				mail:GetParent():applyLayout()
 			end
 		end
-		proxyMail.IsShown = function(proxyMail)
-			local show = proxyMail.show and not btnSettings[proxyMail][1]
-			self.SetShown(proxyMail, show)
+		mail.IsShown = function(mail)
+			local show = mail.show and not btnSettings[mail][1]
+			self.SetShown(mail, show)
 			return show
 		end
 
-		self:setParams(proxyMail, function(p, proxyMail)
-			proxyMail:Hide()
-			proxyMail:UnregisterAllEvents()
-			self:unsetHooks(mail)
-			mail:RegisterEvent("UPDATE_PENDING_MAIL")
-			mail:GetScript("OnEvent")(mail, "UPDATE_PENDING_MAIL")
-		end)
-
-		if self.MSQ_MButton and not proxyMail.__MSQ_Addon then
-			self:setMButtonRegions(proxyMail)
+		if self.MSQ_MButton and not mail.__MSQ_Addon then
+			self:setMButtonRegions(mail)
 		end
 
-		tinsert(self.minimapButtons, proxyMail)
-		tinsert(self.mixedButtons, proxyMail)
+		tinsert(self.minimapButtons, mail)
+		tinsert(self.mixedButtons, mail)
 	end
 
 	-- ZOOM IN & ZOOM OUT
@@ -1024,40 +969,29 @@ function hb:grabDefButtons()
 		self:setHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
 			if mapButton.__MSQ_Addon then return end
-			mapButton.icon:SetTexture(p.iconTexture)
-			mapButton.icon:SetTexCoord(unpack(p.iconCoords))
-			mapButton.puched:SetTexture(p.pushedTexture)
-			mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
-			mapButton.highlight:SetTexture(p.highlightTexture)
-			mapButton.highlight:SetTexCoord(unpack(p.highlightCoords))
-			mapButton.highlight:ClearAllPoints()
-			mapButton.highlight:SetPoint(unpack(p.highlightPoint))
+			mapButton.normal:ClearAllPoints()
+			mapButton.normal:SetPoint(unpack(p.iconPoint))
+			mapButton.puched:ClearAllPoints()
+			mapButton.puched:SetPoint(unpack(p.pushedPoint))
+			mapButton.border:ClearAllPoints()
+			mapButton.border:SetPoint(unpack(p.borderPoint))
 		end)
 
 		if not mapButton.__MSQ_Addon then
-			mapButton.icon = mapButton:GetNormalTexture()
-			p.iconTexture = mapButton.icon:GetTexture()
-			p.iconCoords = {mapButton.icon:GetTexCoord()}
-			mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.icon:SetTexCoord(.125, .875, 0, .5)
+			mapButton.normal = mapButton:GetNormalTexture()
+			p.iconPoint = {mapButton.normal:GetPoint()}
+			mapButton.normal:ClearAllPoints()
+			mapButton.normal:SetPoint("CENTER")
 			mapButton.puched = mapButton:GetPushedTexture()
-			p.pushedTexture = mapButton.puched:GetTexture()
-			p.pushedCoords = {mapButton.puched:GetTexCoord()}
-			mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.puched:SetTexCoord(.125, .875, .5, 1)
-			mapButton.highlight = mapButton:GetHighlightTexture()
-			p.highlightTexture = mapButton.highlight:GetTexture()
-			p.highlightCoords = {mapButton.highlight:GetTexCoord()}
-			p.highlightPoint = {mapButton.highlight:GetPoint()}
-			mapButton.highlight:SetTexture("Interface/BUTTONS/ButtonHilight-Square")
-			mapButton.highlight:SetAllPoints()
+			p.pushedPoint = {mapButton.puched:GetPoint()}
+			mapButton.puched:ClearAllPoints()
+			mapButton.puched:SetPoint("CENTER", 1, -1)
+			mapButton.border = MiniMapWorldBorder
+			p.borderPoint = {mapButton.border:GetPoint()}
+			mapButton.border:ClearAllPoints()
+			mapButton.border:SetPoint("TOPLEFT", 1, -1)
 
 			if self.MSQ_MButton then
-				mapButton.icon = mapButton:CreateTexture(nil, "BACKGROUND")
-				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
-				mapButton:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
-				mapButton:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
 				self:setMButtonRegions(mapButton)
 			end
 		end
@@ -1116,7 +1050,7 @@ end
 
 function hb:addCustomGrabButton(name)
 	local button = _G[name]
-	if not button or type(button[0]) ~= "userdata" or btnParams[button] or self.IsProtected(button) then return end
+	if type(button) ~= "table" or type(button[0]) ~= "userdata" or btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
 	if oType ~= "Button" and oType ~= "Frame" and oType ~= "CheckButton" then return end
 	if name:match(self.matchName) then
@@ -1165,7 +1099,7 @@ function hb:addMButton(button, force, MSQ_Group)
 				self:setHooks(button)
 			end
 
-			if self.MSQ_MButton and self.GetObjectType(button) == "Button" and not button.__MSQ_Addon then
+			if self.MSQ_MButton and not button.__MSQ_Addon then
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
@@ -1176,13 +1110,11 @@ function hb:addMButton(button, force, MSQ_Group)
 		else
 			local clickable
 			local function getMouseEnabled(frame)
-				if self.IsMouseEnabled(frame) then
-					if self.HasScript(frame, "OnClick") and self.GetScript(frame, "OnClick")
-					or self.HasScript(frame, "OnMouseUp") and self.GetScript(frame, "OnMouseUp")
-					or self.HasScript(frame, "OnMouseDown") and self.GetScript(frame, "OnMouseDown") then
-						clickable = true
-						return
-					end
+				if self.HasScript(frame, "OnClick") and self.GetScript(frame, "OnClick")
+				or self.HasScript(frame, "OnMouseUp") and self.GetScript(frame, "OnMouseUp")
+				or self.HasScript(frame, "OnMouseDown") and self.GetScript(frame, "OnMouseDown") then
+					clickable = true
+					return
 				end
 				for _, fchild in ipairs({self.GetChildren(frame)}) do
 					getMouseEnabled(fchild)
@@ -1203,8 +1135,6 @@ end
 
 
 function hb:removeMButton(button, update)
-	local bar = button:GetParent()
-
 	for i = 1, #self.minimapButtons do
 		if button == self.minimapButtons[i] then
 			tremove(self.minimapButtons, i)
@@ -1219,10 +1149,14 @@ function hb:removeMButton(button, update)
 		end
 	end
 
+	if update then
+		self.GetParent(button):applyLayout()
+	end
+
 	self:unsetHooks(button)
 	self:restoreParams(button)
 
-	if button:GetName():match(self.matchName) then
+	if self.GetName(button):match(self.matchName) then
 		button.isGrabbed = nil
 		button.SetPoint = setOMBPoint
 		button.bar:setOMBSize()
@@ -1230,8 +1164,6 @@ function hb:removeMButton(button, update)
 			ldbi:Hide(button.bar.ombName)
 		end
 	end
-
-	if update then bar:applyLayout() end
 end
 
 
@@ -1347,16 +1279,24 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
-		if self.IsMouseEnabled(frame) then
-			p.frames[frame] = {
-				insets = {self.GetHitRectInsets(frame)},
-				OnEnter = self.GetScript(frame, "OnEnter"),
-				OnLeave = self.GetScript(frame, "OnLeave"),
-			}
+		if self.IsMouseMotionEnabled(frame) or self.IsMouseClickEnabled(frame) then
+			p.frames[frame] = {}
+			local fParams = p.frames[frame]
+
+			fParams.insets = {self.GetHitRectInsets(frame)}
 			self.SetHitRectInsets(frame, 0, 0, 0, 0)
-			self.HookScript(frame, "OnEnter", OnEnter)
-			self.HookScript(frame, "OnLeave", OnLeave)
-			noGMEFrames[frame] = true
+
+			if self.HasScript(frame, "OnEnter") then
+				fParams.OnEnter = self.GetScript(frame, "OnEnter")
+				self.HookScript(frame, "OnEnter", OnEnter)
+			end
+
+			if self.HasScript(frame, "OnLeave") then
+				fParams.OnLeave = self.GetScript(frame, "OnLeave")
+				self.HookScript(frame, "OnLeave", OnLeave)
+			end
+
+			noGMEFrames[frame] = btn
 		end
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
 			setMouseEvents(fchild)
@@ -1393,8 +1333,8 @@ function hb:restoreParams(btn)
 
 	for frame, param in pairs(p.frames) do
 		self.SetHitRectInsets(frame, unpack(param.insets))
-		self.SetScript(frame, "OnEnter", param.OnEnter)
-		self.SetScript(frame, "OnLeave", param.OnLeave)
+		if param.OnEnter then self.SetScript(frame, "OnEnter", param.OnEnter) end
+		if param.OnLeave then self.SetScript(frame, "OnLeave", param.OnLeave) end
 		noGMEFrames[frame] = nil
 	end
 
@@ -1439,7 +1379,7 @@ end
 -------------------------------------------
 -- HIDINGBAR MIXIN
 -------------------------------------------
-local hidingBarMixin = {}
+local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
 
 
 function hidingBarMixin:createOwnMinimapButton()
@@ -1458,14 +1398,7 @@ function hidingBarMixin:createOwnMinimapButton()
 					if func then func(self.drag) end
 				end
 			elseif button == "RightButton" then
-				if IsAltKeyDown() then
-					self:setLocked(not self.config.lock)
-					self.cb:Fire("LOCK_UPDATED", self.config.lock, self)
-				end
-				if IsShiftKeyDown() then
-					config:openConfig()
-					config:setBar(self.barSettings)
-				end
+				self.drag:GetScript("OnMouseDown")(self.drag, button)
 			end
 		end,
 		OnEnter = function(btn)
@@ -1590,22 +1523,199 @@ function hidingBarMixin:setTooltipPosition(position)
 end
 
 
-function hidingBarMixin:setLineColor(r, g, b)
-	local color = self.config.lineColor
-	if r then color[1] = r end
-	if g then color[2] = g end
-	if b then color[3] = b end
-	self.drag.bg:SetColorTexture(unpack(color))
+function hidingBarMixin:updateTooltipPosition(eventFrame)
+	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
+
+	if not tooltip or tooltip:GetUnit() then
+		if not eventFrame then return end
+		local lqtip = LibStub("LibQTip-1.0", true)
+		if not lqtip then return end
+		tooltip = nil
+		for k, t in lqtip:IterateTooltips() do
+			if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
+				t:SetClampedToScreen(true)
+				tooltip = t
+				break
+			end
+		end
+		if not tooltip then return end
+	else
+		tooltip:SetAnchorType("ANCHOR_NONE")
+	end
+
+	local pos, point, rPoint, rFrame = self.config.interceptTooltipPosition
+
+	if pos == 0 then
+		local vPoint, vRPoint, hPoint
+
+		if self:GetTop() + tooltip:GetHeight() + 10 < UIParent:GetHeight() then
+			vPoint = "BOTTOM"
+			vRPoint = "TOP"
+		else
+			vPoint = "TOP"
+			vRPoint = "BOTTOM"
+			pos = 4
+		end
+
+		if self.anchorObj.anchor == "left" then
+			hPoint = "LEFT"
+		elseif self.anchorObj.anchor == "right" then
+			hPoint = "RIGHT"
+		else
+			hPoint = ""
+		end
+
+		point = vPoint..hPoint
+		rPoint = vRPoint..hPoint
+	else
+		point = self.tooltipPoint
+		rPoint = self.tooltipRPoint
+	end
+
+	if self.drag:IsShown() and (self.anchorObj.anchor == "bottom" and pos <= 3
+	                        or self.anchorObj.anchor == "top" and pos >= 4 and pos <= 6
+	                        or self.anchorObj.anchor == "right" and pos >= 7 and pos <= 9
+	                        or self.anchorObj.anchor == "left" and pos >= 10)
+	then
+		rFrame = self.drag
+	else
+		rFrame = self
+	end
+
+	tooltip:ClearAllPoints()
+	tooltip:SetPoint(point, rFrame, rPoint)
 end
 
 
-function hidingBarMixin:setBackgroundColor(r, g, b, a)
+function hidingBarMixin:setBackground(bgTexture, r, g, b, a)
+	if bgTexture ~= nil then self.config.bgTexture = bgTexture end
+
 	local color = self.config.bgColor
 	if r then color[1] = r end
 	if g then color[2] = g end
 	if b then color[3] = b end
 	if a then color[4] = a end
+
+	self.bg:SetTexture(media:Fetch("background", self.config.bgTexture or nil, true))
 	self.bg:SetVertexColor(unpack(color))
+end
+
+
+function hidingBarMixin:setBorder(edge, size, r, g, b, a)
+	if edge ~= nil then self.config.borderEdge = edge end
+	if size then self.config.borderSize = size end
+
+	local color = self.config.borderColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	if a then color[4] = a end
+
+	local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
+	local edgeFile = media:Fetch("border", self.config.borderEdge or nil, true)
+	self:SetBackdrop({
+		edgeFile = edgeFile or "",
+		edgeSize = self.config.borderSize * scale,
+	})
+	self:SetBackdropBorderColor(unpack(color))
+	self.isEdged = edgeFile and true or false
+	self:setBorderOffset()
+end
+
+
+function hidingBarMixin:setBorderOffset(offset)
+	if offset then self.config.borderOffset = offset end
+	offset = self.isEdged and self.config.borderOffset or 0
+	self.bg:SetPoint("TOPLEFT", offset, -offset)
+	self.bg:SetPoint("BOTTOMRIGHT", -offset, offset)
+end
+
+
+function hidingBarMixin:setLineTexture(texture, r, g, b)
+	if texture then self.config.lineTexture = texture end
+
+	local color = self.config.lineColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+
+	texture = media:Fetch("statusbar", self.config.lineTexture, true)
+	if texture then
+		self.drag.bg:SetTexture(texture)
+		self.drag.bg:SetVertexColor(unpack(color))
+
+		if self.anchorObj.anchor == "left" then
+			self.drag.bg:SetTexCoord(1, 1, 0, 1, 1, 0, 0, 0)
+		elseif self.anchorObj.anchor == "right" then
+			self.drag.bg:SetTexCoord(1, 0, 0, 0, 1, 1, 0, 1)
+		else
+			self.drag.bg:SetTexCoord(0, 1, 0, 1)
+		end
+	else
+		self.drag.bg:SetColorTexture(unpack(color))
+	end
+end
+
+
+function hidingBarMixin:setLineBorder(edge, size, r, g, b, a)
+	if edge ~= nil then self.config.lineBorderEdge = edge end
+	if size then self.config.lineBorderSize = size end
+
+	local color = self.config.lineBorderColor
+	if r then color[1] = r end
+	if g then color[2] = g end
+	if b then color[3] = b end
+	if a then color[4] = a end
+
+	local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
+	local edgeFile = media:Fetch("border", self.config.lineBorderEdge or nil, true)
+	self.drag:SetBackdrop({
+		edgeFile = edgeFile or "",
+		edgeSize = self.config.lineBorderSize * scale,
+	})
+	self.drag:SetBackdropBorderColor(unpack(color))
+	self.drag.isEdged = edgeFile and true or false
+	self:setLineBorderOffset()
+end
+
+
+function hidingBarMixin:setLineBorderOffset(offset)
+	if offset then self.config.lineBorderOffset = offset end
+	offset = self.drag.isEdged and self.config.lineBorderOffset or 0
+	self.drag.bg:SetPoint("TOPLEFT", offset, -offset)
+	self.drag.bg:SetPoint("BOTTOMRIGHT", -offset, offset)
+	self:setLineWidth()
+end
+
+
+function hidingBarMixin:setLineWidth(lineWidth)
+	if lineWidth then self.config.lineWidth = lineWidth end
+	lineWidth = self.config.lineWidth
+	if self.drag.isEdged then
+		lineWidth = lineWidth + self.config.lineBorderOffset * 2
+	end
+	self.drag:SetSize(lineWidth, lineWidth)
+end
+
+
+function hidingBarMixin:setGapPosition(gapSize)
+	if gapSize then self.config.gapSize = gapSize end
+
+	if self.config.anchor == "left" then
+		self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
+		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
+	elseif self.config.anchor == "right" then
+		self.gap:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
+		self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+	elseif self.config.anchor == "top" then
+		self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
+	else
+		self.gap:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
+		self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+	end
+
+	self:updateDragBarPosition()
 end
 
 
@@ -1628,12 +1738,6 @@ end
 function hidingBarMixin:setFadeOpacity(opacity)
 	self.config.fadeOpacity = opacity
 	self.drag:stopFade(opacity)
-end
-
-
-function hidingBarMixin:setLineWidth(width)
-	if width then self.config.lineWidth = width end
-	self.drag:SetSize(self.config.lineWidth, self.config.lineWidth)
 end
 
 
@@ -1718,7 +1822,7 @@ end
 
 function hidingBarMixin:setPointBtn(btn, order, orientation)
 	order = order - 1
-	local offset = self.config.buttonSize / 2 + self.config.barOffset
+	local offset = self.config.buttonSize / 2 + self.barOffset
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
 	local x = order % self.config.size * buttonSize + offset
 	local y = -math.floor(order / self.config.size) * buttonSize - offset
@@ -1738,6 +1842,9 @@ function hidingBarMixin:applyLayout()
 	else
 		orientation = self.config.orientation == 2
 	end
+
+	self.barOffset = self.config.barOffset
+	if self.isEdged then self.barOffset = self.barOffset + self.config.borderOffset end
 
 	local i, maxButtons, line = 0
 	if self.config.mbtnPosition == 2 then
@@ -1775,7 +1882,7 @@ function hidingBarMixin:applyLayout()
 
 	if maxButtons > self.config.size then maxButtons = self.config.size end
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
-	local offset = self.config.barOffset * 2 - self.config.rangeBetweenBtns
+	local offset = self.barOffset * 2 - self.config.rangeBetweenBtns
 	local width = maxButtons * buttonSize + offset
 	local height = line * buttonSize + offset
 	if orientation then width, height = height, width end
@@ -1822,17 +1929,17 @@ function hidingBarMixin:updateDragBarPosition()
 	self.drag:ClearAllPoints()
 	if self:IsShown() then
 		if anchor == "left" then
-			self.drag:SetPoint("TOPLEFT", self, "TOPRIGHT")
-			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT")
+			self.drag:SetPoint("TOPLEFT", self, "TOPRIGHT", self.config.gapSize, 0)
+			self.drag:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT", self.config.gapSize, 0)
 		elseif anchor == "right" then
-			self.drag:SetPoint("TOPRIGHT", self, "TOPLEFT")
-			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+			self.drag:SetPoint("TOPRIGHT", self, "TOPLEFT", -self.config.gapSize, 0)
+			self.drag:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", -self.config.gapSize, 0)
 		elseif anchor == "top" then
-			self.drag:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
-			self.drag:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
+			self.drag:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -self.config.gapSize)
+			self.drag:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT", 0, -self.config.gapSize)
 		else
-			self.drag:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-			self.drag:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+			self.drag:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, self.config.gapSize)
+			self.drag:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 0, self.config.gapSize)
 		end
 	else
 		if anchor == "left" then
@@ -1889,14 +1996,15 @@ function hidingBarMixin:setBarAnchor(anchor)
 	end
 
 	self:setBarCoords(position, secondPosition)
-	self:updateBarPosition()
+	self:setGapPosition()
+	self:setLineTexture()
 end
 
 
 function hidingBarMixin:setBarExpand(expand)
 	if self.config.expand == expand then return end
 	local anchor, delta, position = self.config.anchor
-	local scale = UIParent:GetScale()
+	local scale = self:GetEffectiveScale()
 
 	if anchor == "left" or anchor == "right" then
 		delta = self:GetHeight()
@@ -1998,7 +2106,7 @@ end
 
 
 function hidingBarMixin:setBarCoords(position, secondPosition)
-	local scale = UIParent:GetScale()
+	local scale = self:GetEffectiveScale()
 
 	if position then
 		self.position = position
@@ -2031,14 +2139,14 @@ do
 					self.config.position = WorldFrame:GetWidth() / 2
 				end
 			end
-			self.position = self.config.position / UIParent:GetScale()
+			self.position = self.config.position / self:GetEffectiveScale()
 		end
 
 		if not self.secondPosition then
 			if not self.config.secondPosition then
 				self.config.secondPosition = 0
 			end
-			self.secondPosition = self.config.secondPosition / UIParent:GetScale()
+			self.secondPosition = self.config.secondPosition / self:GetEffectiveScale()
 		end
 
 		hb.cb:Fire("COORDS_UPDATED", self)
@@ -2064,7 +2172,7 @@ function hidingBarMixin:dragBar()
 	local UIwidth, UIheight = UIParent:GetSize()
 	local anchor = self.config.anchor
 	local secondPosition, position = 0
-	local scale = UIParent:GetScale()
+	local scale = self:GetEffectiveScale()
 	x, y = x / scale + self.dx, y / scale + self.dy
 
 	if self.config.barTypePosition == 0 then
@@ -2106,6 +2214,8 @@ function hidingBarMixin:dragBar()
 			self:setButtonDirection()
 			width, height = self:applyLayout()
 			self:updateDragBarPosition()
+			self:setLineTexture()
+			self:setGapPosition()
 
 			hb.cb:Fire("ANCHOR_UPDATED", self.config.anchor, self)
 		end
@@ -2322,8 +2432,10 @@ end
 -- CREATE BAR
 -------------------------------------------
 local function bar_OnEnter(self)
-	self.isMouse = true
-	self:enter()
+	if self:IsShown() then
+		self.isMouse = true
+		self:enter()
+	end
 end
 
 
@@ -2333,10 +2445,12 @@ local function bar_OnLeave(self)
 end
 
 
-local function isNoGMEParent()
+local function isNoGMEParent(bar)
 	local frame = GetMouseFocus()
 	while frame do
-		if noGMEFrames[frame] then return true end
+		if noGMEFrames[frame] then
+			return noGMEFrames[frame]:GetParent() == bar
+		end
 		frame = frame:GetParent()
 	end
 end
@@ -2344,10 +2458,10 @@ end
 
 local function bar_OnEvent(self, event, button)
 	if (button == "LeftButton" or button == "RightButton")
-	and not (self:IsMouseOver()
+	and not (self.isMouse
 		or self.drag:IsShown() and self.drag:IsMouseOver()
 		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver()
-		or isNoGMEParent())
+		or isNoGMEParent(self))
 	then
 		self:Hide()
 		self:updateDragBarPosition()
@@ -2378,17 +2492,11 @@ end
 local function drag_OnMouseDown(self, button)
 	local bar = self.bar
 	if button == "LeftButton" and not bar.config.lock and bar:IsShown() then
-		bar.isDrag = true
-		cover:SetFrameStrata(bar:GetFrameStrata())
-		cover:SetFrameLevel(bar:GetFrameLevel() + 10)
-		cover:SetAllPoints(bar)
-		cover:Show()
 		local x, y = GetCursorPosition()
 		local cx, cy = self:GetCenter()
 		local scale = bar:GetEffectiveScale()
 		bar.dx = cx - x / scale
 		bar.dy = cy - y / scale
-		bar:SetScript("OnUpdate", bar.dragBar)
 	elseif button == "RightButton" then
 		if IsAltKeyDown() then
 			bar:setLocked(not bar.config.lock)
@@ -2402,13 +2510,24 @@ local function drag_OnMouseDown(self, button)
 end
 
 
-local function drag_OnMouseUp(self, button)
+local function drag_OnDragStart(self)
 	local bar = self.bar
-	if button == "LeftButton" and bar.isDrag then
+	if not bar.config.lock and bar:IsShown() then
+		bar.isDrag = true
+		cover:SetFrameStrata(bar:GetFrameStrata())
+		cover:SetFrameLevel(bar:GetFrameLevel() + 10)
+		cover:SetAllPoints(bar)
+		cover:Show()
+		bar:SetScript("OnUpdate", bar.dragBar)
+	end
+end
+
+
+local function drag_OnDragStop(self)
+	local bar = self.bar
+	if bar.isDrag then
 		bar.isDrag = false
 		cover:Hide()
-		bar.dx = nil
-		bar.dy = nil
 		bar:SetScript("OnUpdate", nil)
 		if not bar.isMouse then
 			bar:leave()
@@ -2427,6 +2546,18 @@ local function drag_OnLeave(self)
 end
 
 
+local function gap_OnEnter(self)
+	self.bar.isMouse = true
+	self.bar:enter()
+end
+
+
+local function gap_OnLeave(self)
+	self.bar.isMouse = false
+	self.bar:leave()
+end
+
+
 setmetatable(hb.bars, {__index = function(self, key)
 	local bar = CreateFrame("FRAME", nil, UIParent, "HidingBarAddonPanel")
 	bar:SetClampedToScreen(true)
@@ -2439,19 +2570,26 @@ setmetatable(hb.bars, {__index = function(self, key)
 		bar[k] = v
 	end
 
-	bar.drag = CreateFrame("BUTTON", nil, UIParent)
+	bar.drag = CreateFrame("BUTTON", nil, UIParent, "BackdropTemplate")
 	bar.drag.bar = bar
+	bar.drag:RegisterForDrag("LeftButton")
 	bar.drag:SetClampedToScreen(true)
 	bar.drag:SetHitRectInsets(-2, -2, -2, -2)
 	bar.drag:SetFrameLevel(bar:GetFrameLevel() + 10)
-	bar.drag.bg = bar.drag:CreateTexture(nil, "OVERLAY")
-	bar.drag.bg:SetAllPoints()
+	bar.drag.bg = bar.drag:CreateTexture(nil, "BACKGROUND")
 	bar.drag:SetScript("OnMouseDown", drag_OnMouseDown)
-	bar.drag:SetScript("OnMouseUp", drag_OnMouseUp)
+	bar.drag:SetScript("OnDragStart", drag_OnDragStart)
+	bar.drag:SetScript("OnDragStop", drag_OnDragStop)
 	bar.drag:SetScript("OnLeave", drag_OnLeave)
 	for k, v in pairs(hidingBarDragMixin) do
 		bar.drag[k] = v
 	end
+
+	bar.gap = CreateFrame("FRAME", nil, bar)
+	bar.gap.bar = bar
+	bar.gap:SetMouseMotionEnabled(true)
+	bar.gap:SetScript("OnEnter", gap_OnEnter)
+	bar.gap:SetScript("OnLeave", gap_OnLeave)
 
 	bar.id = key
 	self[key] = bar
