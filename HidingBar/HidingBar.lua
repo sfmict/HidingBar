@@ -906,6 +906,7 @@ function hb:grabDefButtons()
 		end
 
 		local mail = MiniMapMailFrame
+		mail.icon = MiniMapMailIcon
 		mail.show = mail:IsShown()
 		self:setHooks(mail)
 		self:setParams(mail)
