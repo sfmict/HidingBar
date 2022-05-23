@@ -1023,6 +1023,7 @@ function hb:grabDefButtons()
 		end
 
 		local mail = MiniMapMailFrame
+		mail.icon = MiniMapMailIcon
 		mail.show = mail:IsShown()
 		self:setHooks(mail)
 		self:setParams(mail)
@@ -1110,9 +1111,9 @@ function hb:grabDefButtons()
 		self:setHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
 			if mapButton.__MSQ_Addon then return end
-			mapButton.icon:SetTexture(p.iconTexture)
-			mapButton.icon:SetTexCoord(unpack(p.iconCoords))
-			mapButton.icon:SetAllPoints()
+			mapButton.normal:SetTexture(p.normalTexture)
+			mapButton.normal:SetTexCoord(unpack(p.normalCoords))
+			mapButton.normal:SetAllPoints()
 			mapButton.puched:SetTexture(p.pushedTexture)
 			mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
 			mapButton.puched:SetAllPoints()
@@ -1124,14 +1125,14 @@ function hb:grabDefButtons()
 		end)
 
 		if not mapButton.__MSQ_Addon then
-			mapButton.icon = mapButton:GetNormalTexture()
-			p.iconTexture = mapButton.icon:GetTexture()
-			p.iconCoords = {mapButton.icon:GetTexCoord()}
-			mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.icon:SetTexCoord(.125, .875, 0, .5)
-			mapButton.icon:SetSize(27, 27)
-			mapButton.icon:ClearAllPoints()
-			mapButton.icon:SetPoint("CENTER")
+			mapButton.normal = mapButton:GetNormalTexture()
+			p.normalTexture = mapButton.normal:GetTexture()
+			p.normalCoords = {mapButton.normal:GetTexCoord()}
+			mapButton.normal:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+			mapButton.normal:SetTexCoord(.125, .875, 0, .5)
+			mapButton.normal:SetSize(27, 27)
+			mapButton.normal:ClearAllPoints()
+			mapButton.normal:SetPoint("CENTER")
 			mapButton.puched = mapButton:GetPushedTexture()
 			p.pushedTexture = mapButton.puched:GetTexture()
 			p.pushedCoords = {mapButton.puched:GetTexCoord()}
@@ -1153,11 +1154,6 @@ function hb:grabDefButtons()
 			mapButton.border:Show()
 
 			if self.MSQ_MButton then
-				mapButton.icon = mapButton:CreateTexture(nil, "BACKGROUND")
-				mapButton.icon:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-				mapButton.icon:SetTexCoord(.125, .875, 0, .5)
-				mapButton:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
-				mapButton:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
 				self:setMButtonRegions(mapButton)
 			end
 		end
