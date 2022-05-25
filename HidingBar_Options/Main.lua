@@ -8,6 +8,16 @@ local media = LibStub("LibSharedMedia-3.0")
 local lsfdd = LibStub("LibSFDropDown-1.4")
 
 
+local lang, margin, lineFont = GetLocale()
+if lang == "zhTW" or lang == "zhCN" then
+	margin = 16
+	lineFont = GameFontHighlightOutline
+else
+	margin = 18
+	lineFont = Game10Font_o1
+end
+
+
 local scale = WorldFrame:GetWidth() / GetPhysicalScreenSize() / UIParent:GetScale()
 main.optionsPanelBackdrop = {
 	bgFile = "Interface/Tooltips/UI-Tooltip-Background",
@@ -892,7 +902,7 @@ end)
 
 -- HIDE HANDLER TEXT
 local hideHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-hideHandlerText:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -18)
+hideHandlerText:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -margin)
 hideHandlerText:SetText(L["Hide by"])
 
 -- HIDE HANDLER
@@ -1082,7 +1092,7 @@ end)
 
 -- BORDER TEXT
 local borderText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-borderText:SetPoint("TOPLEFT", bgText, "BOTTOMLEFT", 0, -18)
+borderText:SetPoint("TOPLEFT", bgText, "BOTTOMLEFT", 0, -margin)
 borderText:SetText(L["Border"])
 
 -- BORDER COMBOBOX
@@ -1175,7 +1185,7 @@ end)
 
 -- BORDER SIZE
 local borderSize = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-borderSize:SetPoint("TOPLEFT", borderText, "BOTTOMLEFT", 0, -18)
+borderSize:SetPoint("TOPLEFT", borderText, "BOTTOMLEFT", 0, -margin)
 borderSize:SetPoint("RIGHT", -35, 0)
 borderSize:SetMinMaxValues(1, 64)
 borderSize.text:SetText(L["Border Size"])
@@ -1190,7 +1200,7 @@ end)
 
 -- LINE TEXT
 local lineText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-lineText:SetPoint("TOPLEFT", borderSize, "BOTTOMLEFT", 0, -18)
+lineText:SetPoint("TOPLEFT", borderSize, "BOTTOMLEFT", 0, -margin)
 lineText:SetText(L["Line"])
 
 -- LINE TEXTURE COMBOBOX
@@ -1210,7 +1220,7 @@ lineTextureCombobox:ddSetInitFunc(function(self)
 	for i, texName in ipairs(media:List("statusbar")) do
 		info.list[i] = {
 			text = texName,
-			fontObject = Game10Font_o1, -- GameFontHighlightOutline
+			fontObject = lineFont,
 			icon = textures[texName],
 			iconOnly = true,
 			iconInfo = {
@@ -1272,7 +1282,7 @@ end)
 
 -- LINE BORDER TEXT
 local lineBorderText = main.displayPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-lineBorderText:SetPoint("TOPLEFT", lineText, "BOTTOMLEFT", 0, -18)
+lineBorderText:SetPoint("TOPLEFT", lineText, "BOTTOMLEFT", 0, -margin)
 lineBorderText:SetText(L["Line Border"])
 
 -- BORDER COMBOBOX
@@ -1353,7 +1363,7 @@ end)
 
 -- BORDER SIZE
 main.lineBorderSize = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.lineBorderSize:SetPoint("TOPLEFT", lineBorderText, "BOTTOMLEFT", 0, -18)
+main.lineBorderSize:SetPoint("TOPLEFT", lineBorderText, "BOTTOMLEFT", 0, -margin)
 main.lineBorderSize:SetPoint("RIGHT", -35, 0)
 main.lineBorderSize:SetMinMaxValues(1, 64)
 main.lineBorderSize.edit:SetMaxLetters(2)
@@ -1367,7 +1377,7 @@ end)
 
 -- DISTANCE FROM LINE TO BAR
 main.gapSize = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.gapSize:SetPoint("TOPLEFT", main.lineBorderSize, "BOTTOMLEFT", 0, -18)
+main.gapSize:SetPoint("TOPLEFT", main.lineBorderSize, "BOTTOMLEFT", 0, -margin)
 main.gapSize:SetPoint("RIGHT", -35, 0)
 main.gapSize:SetMinMaxValues(-8, 64)
 main.gapSize.edit:SetMaxLetters(2)
@@ -1407,7 +1417,7 @@ end)
 
 -- SLIDER BUTTONS SIZE
 local buttonSize = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -18)
+buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -margin)
 buttonSize:SetPoint("RIGHT", -35, 0)
 buttonSize:SetMinMaxValues(16, 64)
 buttonSize.text:SetText(L["Buttons Size"])
@@ -1426,7 +1436,7 @@ end)
 
 -- SLIDER DISTANCE TO BAR BORDER
 local barOffset =  CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-barOffset:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -18)
+barOffset:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -margin)
 barOffset:SetPoint("RIGHT", -35, 0)
 barOffset:SetMinMaxValues(0, 20)
 barOffset.text:SetText(L["Distance to bar border"])
@@ -1444,7 +1454,7 @@ end)
 
 -- SLIDER DISTANCE BETWEEN BUTTONS
 local rangeBetweenBtns = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-rangeBetweenBtns:SetPoint("TOPLEFT", barOffset, "BOTTOMLEFT", 0, -18)
+rangeBetweenBtns:SetPoint("TOPLEFT", barOffset, "BOTTOMLEFT", 0, -margin)
 rangeBetweenBtns:SetPoint("RIGHT", -35, 0)
 rangeBetweenBtns:SetMinMaxValues(-5, 30)
 rangeBetweenBtns.text:SetText(L["Distance between buttons"])
@@ -1462,7 +1472,7 @@ end)
 
 -- POSTION OF MINIMAP BUTTON TEXT
 local mbtnPostionText = main.buttonSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-mbtnPostionText:SetPoint("TOPLEFT", rangeBetweenBtns, "BOTTOMLEFT", 0, -18)
+mbtnPostionText:SetPoint("TOPLEFT", rangeBetweenBtns, "BOTTOMLEFT", 0, -margin)
 mbtnPostionText:SetText(L["Position of minimap buttons"])
 
 -- POSITION OF MINIMAP BUTTON
@@ -2198,7 +2208,7 @@ function main:setBar(bar)
 			tSizeX = 0,
 			tSizeY = 14,
 		}
-		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, Game10Font_o1)
+		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, lineFont)
 		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
 		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
