@@ -54,7 +54,7 @@ end
 
 local function showColorPicker(color, cb)
 	if ColorPickerFrame:IsShown() then
-		ColorPickerFrame.cancelFunc and ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
+		if ColorPickerFrame.cancelFunc then ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues) end
 		HideUIPanel(ColorPickerFrame)
 	end
 	local info = {}
