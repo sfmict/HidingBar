@@ -52,6 +52,30 @@ local function toHex(tbl)
 end
 
 
+local function showColorPicker(color, cb)
+	if ColorPickerFrame:IsShown() then
+		ColorPickerFrame.cancelFunc and ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
+		HideUIPanel(ColorPickerFrame)
+	end
+	local info = {}
+	info.r, info.g, info.b, info.opacity = unpack(color)
+	if info.opacity then
+		info.hasOpacity = true
+		info.opacity = 1 - info.opacity
+		info.opacityFunc = function()
+			cb(nil, nil, nil, 1 - OpacitySliderFrame:GetValue())
+		end
+	end
+	info.swatchFunc = function()
+		cb(ColorPickerFrame:GetColorRGB())
+	end
+	info.cancelFunc = function(color)
+		cb(color.r, color.g, color.b, color.opacity and 1 - color.opacity)
+	end
+	OpenColorPicker(info)
+end
+
+
 local function alignText(...)
 	local maxWidth = 0
 	for i = 1, select("#", ...) do
@@ -1062,32 +1086,13 @@ end)
 local bgColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
 bgColor:SetPoint("LEFT", bgCombobox, "RIGHT", 3, 2)
 
-bgColor.hasOpacity = true
-bgColor.swatchFunc = function()
-	main.barFrame:setBackground(nil, ColorPickerFrame:GetColorRGB())
-	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
-	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
-	main:hidingBarUpdate()
-end
-bgColor.opacityFunc = function()
-	main.barFrame:setBackground(nil, nil, nil, nil, OpacitySliderFrame:GetValue())
-	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
-	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
-	main:hidingBarUpdate()
-end
-bgColor.cancelFunc = function(color)
-	main.barFrame:setBackground(nil, color.r, color.g, color.b, color.opacity)
-	main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
-	bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
-	main:hidingBarUpdate()
-end
-bgColor:SetScript("OnClick", function(btn)
-	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
-		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
-		HideUIPanel(ColorPickerFrame)
-	end
-	btn.r, btn.g, btn.b, btn.opacity = unpack(main.bConfig.bgColor)
-	OpenColorPicker(btn)
+bgColor:SetScript("OnClick", function()
+	showColorPicker(main.bConfig.bgColor, function(...)
+		main.barFrame:setBackground(nil, ...)
+		main.buttonPanel.bg:SetVertexColor(unpack(main.bConfig.bgColor))
+		bgColor.color:SetColorTexture(unpack(main.bConfig.bgColor))
+		main:hidingBarUpdate()
+	end)
 end)
 
 -- BORDER TEXT
@@ -1142,29 +1147,12 @@ end)
 local borderColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
 borderColor:SetPoint("LEFT", borderCombobox, "RIGHT", 3, 2)
 
-borderColor.hasOpacity = true
-borderColor.swatchFunc = function()
-	main.barFrame:setBorder(nil, nil, ColorPickerFrame:GetColorRGB())
-	borderColor.color:SetColorTexture(unpack(main.bConfig.borderColor))
-	main:hidingBarUpdate()
-end
-borderColor.opacityFunc = function()
-	main.barFrame:setBorder(nil, nil, nil, nil, nil, OpacitySliderFrame:GetValue())
-	borderColor.color:SetColorTexture(unpack(main.bConfig.borderColor))
-	main:hidingBarUpdate()
-end
-borderColor.cancelFunc = function(color)
-	main.barFrame:setBorder(nil, nil, color.r, color.g, color.b, color.opacity)
-	borderColor.color:SetColorTexture(unpack(main.bConfig.borderColor))
-	main:hidingBarUpdate()
-end
-borderColor:SetScript("OnClick", function(btn)
-	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
-		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
-		HideUIPanel(ColorPickerFrame)
-	end
-	btn.r, btn.g, btn.b, btn.opacity = unpack(main.bConfig.borderColor)
-	OpenColorPicker(btn)
+borderColor:SetScript("OnClick", function()
+	showColorPicker(main.bConfig.borderColor, function(...)
+		main.barFrame:setBorder(nil, nil, ...)
+		borderColor.color:SetColorTexture(unpack(main.bConfig.borderColor))
+		main:hidingBarUpdate()
+	end)
 end)
 
 -- BORDER OFFSET
@@ -1238,7 +1226,7 @@ end)
 local lineColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
 lineColor:SetPoint("LEFT", lineTextureCombobox, "RIGHT", 3, 2)
 
-local function updateLineColor()
+lineColor.updateLineColor = function()
 	local hexColor = toHex(main.bConfig.lineColor)
 	main.helpPlate.tooltipTitle = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
@@ -1250,21 +1238,11 @@ local function updateLineColor()
 	main:hidingBarUpdate()
 end
 
-lineColor.swatchFunc = function()
-	main.barFrame:setLineTexture(nil, ColorPickerFrame:GetColorRGB())
-	updateLineColor()
-end
-lineColor.cancelFunc = function(color)
-	main.barFrame:setLineTexture(nil, color.r, color.g, color.b)
-	updateLineColor()
-end
-lineColor:SetScript("OnClick", function(btn)
-	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
-		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
-		HideUIPanel(ColorPickerFrame)
-	end
-	btn.r, btn.g, btn.b = unpack(main.bConfig.lineColor)
-	OpenColorPicker(btn)
+lineColor:SetScript("OnClick", function()
+	showColorPicker(main.bConfig.lineColor, function(...)
+		main.barFrame:setLineTexture(nil, ...)
+		lineColor.updateLineColor()
+	end)
 end)
 
 -- LINE WIDTH
@@ -1322,29 +1300,12 @@ end)
 local lineBorderColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
 lineBorderColor:SetPoint("LEFT", lineBorderCombobox, "RIGHT", 3, 2)
 
-lineBorderColor.hasOpacity = true
-lineBorderColor.swatchFunc = function()
-	main.barFrame:setLineBorder(nil, nil, ColorPickerFrame:GetColorRGB())
-	lineBorderColor.color:SetColorTexture(unpack(main.bConfig.lineBorderColor))
-	main:hidingBarUpdate()
-end
-lineBorderColor.opacityFunc = function()
-	main.barFrame:setLineBorder(nil, nil, nil, nil, nil, OpacitySliderFrame:GetValue())
-	lineBorderColor.color:SetColorTexture(unpack(main.bConfig.lineBorderColor))
-	main:hidingBarUpdate()
-end
-lineBorderColor.cancelFunc = function(color)
-	main.barFrame:setLineBorder(nil, nil, color.r, color.g, color.b, color.opacity)
-	lineBorderColor.color:SetColorTexture(unpack(main.bConfig.lineBorderColor))
-	main:hidingBarUpdate()
-end
-lineBorderColor:SetScript("OnClick", function(btn)
-	if ColorPickerFrame:IsShown() and ColorPickerFrame.cancelFunc then
-		ColorPickerFrame.cancelFunc(ColorPickerFrame.previousValues)
-		HideUIPanel(ColorPickerFrame)
-	end
-	btn.r, btn.g, btn.b, btn.opacity = unpack(main.bConfig.lineBorderColor)
-	OpenColorPicker(btn)
+lineBorderColor:SetScript("OnClick", function()
+	showColorPicker(main.bConfig.lineBorderColor, function(...)
+		main.barFrame:setLineBorder(nil, nil, ...)
+		lineBorderColor.color:SetColorTexture(unpack(main.bConfig.lineBorderColor))
+		main:hidingBarUpdate()
+	end)
 end)
 
 -- LINE BORDER OFFSET
@@ -2176,8 +2137,6 @@ function main:setBar(bar)
 		self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
 		expandToCombobox:ddSetSelectedValue(self.bConfig.expand)
 		expandToCombobox:ddSetSelectedText(expandToCombobox.texts[self.bConfig.expand])
-		local hexColor = toHex(self.bConfig.lineColor)
-		main.helpPlate.tooltipTitle = L["SETTINGS_DESCRIPTION"]:format(hexColor)
 		orientationCombobox:ddSetSelectedValue(self.bConfig.orientation)
 		orientationCombobox:ddSetSelectedText(orientationCombobox.texts[self.bConfig.orientation])
 		fsCombobox:ddSetSelectedValue(self.bConfig.frameStrata)
@@ -2189,7 +2148,6 @@ function main:setBar(bar)
 		hideHandlerCombobox:ddSetSelectedValue(self.bConfig.hideHandler)
 		hideHandlerCombobox:ddSetSelectedText(hideHandlerCombobox.texts[self.bConfig.hideHandler])
 		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
-		self.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 		self.fade:SetChecked(self.bConfig.fade)
 		self.fadeOpacity:SetValue(self.bConfig.fadeOpacity)
 		self.fadeOpacity:SetEnabled(self.bConfig.fade)
@@ -2210,16 +2168,13 @@ function main:setBar(bar)
 		}
 		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, lineFont)
 		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
-		self.lineWidth.text:SetText(L["Line width"]:format(hexColor))
+		lineColor.updateLineColor()
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
 		lineBorderCombobox:ddSetSelectedValue(self.bConfig.lineBorderEdge)
 		lineBorderCombobox:ddSetSelectedText(self.bConfig.lineBorderEdge or NONE)
 		lineBorderColor.color:SetColorTexture(unpack(self.bConfig.lineBorderColor))
-		self.lineBorderOffset.text:SetText(L["Line Border Offset"]:format(hexColor))
 		self.lineBorderOffset:SetValue(self.bConfig.lineBorderOffset)
-		self.lineBorderSize.text:SetText(L["Line Border Size"]:format(hexColor))
 		self.lineBorderSize:SetValue(self.bConfig.lineBorderSize)
-		self.gapSize.text:SetText(L["Distance from line to bar"]:format(hexColor))
 		self.gapSize:SetValue(self.bConfig.gapSize)
 
 		buttonNumber:SetValue(self.bConfig.size)
