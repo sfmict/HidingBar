@@ -802,7 +802,6 @@ function hb:grabDefButtons()
 
 		tracking.Show = function()
 			if not tracking.show then
-				fprint(tracking.icon:GetTexture())
 				tracking.show = true
 				tracking:GetParent():applyLayout()
 			end
