@@ -87,6 +87,7 @@ if MSQ then
 	end)
 
 
+	local defTexture = MSQ:GetSkin("Default").Normal.Texture
 	hb.MSQ_Button_Data = {}
 	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
 	hb.MSQ_MButton:SetCallback(function()
@@ -188,16 +189,31 @@ if MSQ then
 				data._Background:Hide()
 			end
 			if data._Normal then
+				data._Normal:SetTexture()
 				data._Normal.SetAtlas = function(_, atlas)
 					data._Icon:SetAtlas(atlas)
 				end
 				data._Normal.SetTexture = function(_, texture)
 					if texture then
-						data._Icon:SetTexture(texture)
+						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
+						if skin.UseStates and texture == skin.Texture or texture == defTexture then
+							data._isMSQ = true
+						else
+							data._Icon:SetTexture(texture)
+						end
 					end
 				end
 				data._Normal.SetTexCoord = function(_, ...)
-					data._Icon:SetTexCoord(...)
+					if not data._isMSQ then
+						data._Icon:SetTexCoord(...)
+					end
+				end
+				data._Normal.SetVertexColor = function(_, ...)
+					if data._isMSQ then
+						data._isMSQ = nil
+					else
+						data._Icon:SetVertexColor(...)
+					end
 				end
 				data._Normal = nil
 			end
@@ -274,6 +290,13 @@ if MSQ then
 			background = nil
 		end
 
+		local data = {
+			Icon = icon,
+			Highlight = highlight,
+		}
+		MSQ_Group = MSQ_Group or self.MSQ_MButton
+		MSQ_Group:AddButton(btn, data, "Legacy", true)
+
 		local pushed = isButton and btn:GetPushedTexture()
 		if border or background or pushed or normal then
 			self.MSQ_Button_Data[btn] = {
@@ -284,14 +307,9 @@ if MSQ then
 			if normal then
 				self.MSQ_Button_Data[btn]._Normal = normal
 				self.MSQ_Button_Data[btn]._Icon = icon
+				self.MSQ_Button_Data[btn]._Group = MSQ_Group
 			end
 		end
-
-		local data = {
-			Icon = icon,
-			Highlight = highlight,
-		}
-		(MSQ_Group or self.MSQ_MButton):AddButton(btn, data, "Legacy", true)
 		self:MSQ_Button_Update(btn)
 		self:MSQ_CoordUpdate(btn)
 	end
