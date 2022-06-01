@@ -501,14 +501,12 @@ function hb:init()
 	end
 
 	if self.pConfig.grabMinimap then
-		if ldbi then
-			local ldbiTbl = ldbi:GetButtonList()
-			for i = 1, #ldbiTbl do
-				local button = ldbi:GetMinimapButton(ldbiTbl[i])
-				if self:ignoreCheck(self.GetName(button)) then
-					self.minimapButtons[button[0]] = button
-					self:setHooks(button)
-				end
+		local ldbiTbl = ldbi:GetButtonList()
+		for i = 1, #ldbiTbl do
+			local button = ldbi:GetMinimapButton(ldbiTbl[i])
+			if self:ignoreCheck(self.GetName(button)) then
+				self.minimapButtons[button[0]] = button
+				self:setHooks(button)
 			end
 		end
 

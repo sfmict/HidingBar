@@ -437,7 +437,13 @@ barCombobox:ddSetInitFunc(function(self)
 		main:setBar(btn.value)
 	end
 
-	for i, bar in ipairs(main.pBars) do
+	local bars = {}
+	for i = 1, #main.pBars do
+		bars[i] = main.pBars[i]
+	end
+	sort(bars, function(a, b) return a.name < b.name end)
+
+	for i, bar in ipairs(bars) do
 		local subInfo = {
 			text = bar.isDefault and bar.name.." "..DARKGRAY_COLOR:WrapTextInColorCode(DEFAULT) or bar.name,
 			value = bar,
@@ -1793,7 +1799,7 @@ main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will b
 main.canGrabbed:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	local omb = main.barFrame.omb
-	main.bConfig.omb.canGrabbed = btn:GetChecked()
+	main.bConfig.omb.canGrabbed = checked
 	if checked then
 		main.pConfig.ombGrabQueue[#main.pConfig.ombGrabQueue + 1] = main.barFrame.id
 		if hb:grabOwnButton(omb) then
@@ -2066,7 +2072,6 @@ function main:createBar()
 			tinsert(self.currentProfile.bars, bar)
 			hb:checkProfile(self.currentProfile)
 			hb:updateBars()
-			sort(self.currentProfile.bars, function(a, b) return a.name < b.name end)
 		end
 	end)
 	if dialog and self.lastBarName then
