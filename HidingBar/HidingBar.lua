@@ -87,6 +87,7 @@ if MSQ then
 	end)
 
 
+	local defTexture = MSQ:GetSkin("Default").Normal.Texture
 	hb.MSQ_Button_Data = {}
 	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
 	hb.MSQ_MButton:SetCallback(function()
@@ -188,18 +189,38 @@ if MSQ then
 				data._Background:Hide()
 			end
 			if data._Normal then
-				data._Normal.SetAtlas = function(_, atlas)
-					data._Icon:SetAtlas(atlas)
-				end
-				data._Normal.SetTexture = function(_, texture)
-					if texture then
-						data._Icon:SetTexture(texture)
+				data._Normal:SetTexture()
+				if data._IsNormalIcon then
+					data._Normal.SetAtlas = function(_, atlas)
+						data._Icon:SetAtlas(atlas)
 					end
+					data._Normal.SetTexture = function(_, texture)
+						if texture then
+							local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
+							if skin.UseStates and texture == skin.Texture or texture == defTexture then
+								data._isMSQ = true
+							else
+								data._Icon:SetTexture(texture)
+							end
+						end
+					end
+					data._Normal.SetTexCoord = function(_, ...)
+						if not data._isMSQ then
+							data._Icon:SetTexCoord(...)
+						end
+					end
+					data._Normal.SetVertexColor = function(_, ...)
+						if data._isMSQ then
+							data._isMSQ = nil
+						else
+							data._Icon:SetVertexColor(...)
+						end
+					end
+					data._Normal = nil
+				else
+					data._Normal.SetAtlas = void
+					data._Normal.SetTexture = void
 				end
-				data._Normal.SetTexCoord = function(_, ...)
-					data._Icon:SetTexCoord(...)
-				end
-				data._Normal = nil
 			end
 			if data._Pushed then
 				data._Pushed:SetAlpha(0)
@@ -238,8 +259,9 @@ if MSQ then
 			end
 		end
 
-		local normal = isButton and btn:GetNormalTexture()
-		if normal and (not icon or icon ~= btn.icon) then
+		local normal, isNormalIcon = isButton and btn:GetNormalTexture()
+		if normal and (not icon or icon ~= btn.icon or icon == normal) then
+			isNormalIcon = true
 			icon = btn:CreateTexture(nil, "BACKGROUND")
 			local atlas = normal:GetAtlas()
 			if atlas then
@@ -255,8 +277,6 @@ if MSQ then
 			end
 			self.HookScript(btn, "OnMouseDown", function() icon:SetScale(.9) end)
 			self.HookScript(btn, "OnMouseUp", function() icon:SetScale(1) end)
-		else
-			normal = nil
 		end
 
 		if not highlight then
@@ -274,6 +294,13 @@ if MSQ then
 			background = nil
 		end
 
+		local data = {
+			Icon = icon,
+			Highlight = highlight,
+		}
+		MSQ_Group = MSQ_Group or self.MSQ_MButton
+		MSQ_Group:AddButton(btn, data, "Legacy", true)
+
 		local pushed = isButton and btn:GetPushedTexture()
 		if border or background or pushed or normal then
 			self.MSQ_Button_Data[btn] = {
@@ -282,16 +309,13 @@ if MSQ then
 				_Pushed = pushed,
 			}
 			if normal then
-				self.MSQ_Button_Data[btn]._Normal = normal
-				self.MSQ_Button_Data[btn]._Icon = icon
+				local data = self.MSQ_Button_Data[btn]
+				data._Normal = normal
+				data._IsNormalIcon = isNormalIcon
+				data._Icon = icon
+				data._Group = MSQ_Group
 			end
 		end
-
-		local data = {
-			Icon = icon,
-			Highlight = highlight,
-		}
-		(MSQ_Group or self.MSQ_MButton):AddButton(btn, data, "Legacy", true)
 		self:MSQ_Button_Update(btn)
 		self:MSQ_CoordUpdate(btn)
 	end
