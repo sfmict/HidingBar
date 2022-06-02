@@ -2548,11 +2548,11 @@ function hidingBarMixin:refreshShown()
 		self.drag:Hide()
 	elseif self.config.barTypePosition == 2 then
 		self.drag:Hide()
+		frameFadeStop(self, 1)
 		if self.config.showHandler == 3 then
 			self:enter(true)
 			self:leave()
 		elseif self:IsShown() and not self.isMouse then
-			frameFadeStop(self, 1)
 			self:leave()
 		end
 	elseif self.config.showHandler == 3 then
@@ -2674,7 +2674,6 @@ end
 
 
 local function bar_OnEvent(self, event, button)
-	fprint("asd")
 	if (button == "LeftButton" or button == "RightButton")
 	and not (self.isMouse
 		or self.drag:IsShown() and self.drag:IsMouseOver()
