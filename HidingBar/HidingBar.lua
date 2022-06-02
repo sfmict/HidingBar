@@ -453,6 +453,14 @@ function hb:checkProfile(profile)
 		bar.config.omb.anchor = bar.config.omb.anchor or "right"
 		bar.config.omb.size = bar.config.omb.size or 31
 	end
+
+	-- FIX OLD QUEUE
+	for i = 1, #profile.config.ombGrabQueue do
+		local queue = profile.config.ombGrabQueue[i]
+		if type(queue) == "number" then
+			profile.config.ombGrabQueue[i] = profile.bars[queue].name
+		end
+	end
 end
 
 
@@ -650,7 +658,7 @@ function hb:updateBars()
 
 	self.queueEmpty = nil
 	for i = 1, #self.pConfig.ombGrabQueue do
-		local omb = self.bars[self.pConfig.ombGrabQueue[i]].omb
+		local omb = self.barByName[self.pConfig.ombGrabQueue[i]].omb
 		if omb and not omb.isGrabbed then self:grabOwnButton(omb) end
 	end
 
@@ -1633,7 +1641,7 @@ function hidingBarMixin:initOwnMinimapButton()
 	end
 
 	if self.config.omb.canGrabbed and (hb.queueEmpty or not next(hb.pConfig.ombGrabQueue)) then
-		hb.pConfig.ombGrabQueue[#hb.pConfig.ombGrabQueue + 1] = self.id
+		hb.pConfig.ombGrabQueue[#hb.pConfig.ombGrabQueue + 1] = self.name
 		hb.queueEmpty = true
 	end
 end

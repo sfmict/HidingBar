@@ -437,13 +437,7 @@ barCombobox:ddSetInitFunc(function(self)
 		main:setBar(btn.value)
 	end
 
-	local bars = {}
-	for i = 1, #main.pBars do
-		bars[i] = main.pBars[i]
-	end
-	sort(bars, function(a, b) return a.name < b.name end)
-
-	for i, bar in ipairs(bars) do
+	for i, bar in ipairs(main.pBars) do
 		local subInfo = {
 			text = bar.isDefault and bar.name.." "..DARKGRAY_COLOR:WrapTextInColorCode(DEFAULT) or bar.name,
 			value = bar,
@@ -1801,13 +1795,13 @@ main.canGrabbed:SetScript("OnClick", function(btn)
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then
-		main.pConfig.ombGrabQueue[#main.pConfig.ombGrabQueue + 1] = main.barFrame.id
+		main.pConfig.ombGrabQueue[#main.pConfig.ombGrabQueue + 1] = main.currentBar.name
 		if hb:grabOwnButton(omb) then
 			hb:sort()
 			omb:GetParent():setButtonSize()
 		end
 	else
-		main:removeOmbGrabQueue(main.barFrame.id)
+		main:removeOmbGrabQueue(main.currentBar.name)
 		for i, btn in ipairs(main.mbuttons) do
 			if btn.rButton == omb then
 				main:removeMButton(btn, i)
@@ -2071,7 +2065,10 @@ function main:createBar()
 			local bar = {name = text}
 			tinsert(self.currentProfile.bars, bar)
 			hb:checkProfile(self.currentProfile)
+			self:removeAllOMB()
 			hb:updateBars()
+			self:setBar(self.currentBar)
+			sort(self.currentProfile.bars, function(a, b) return a.name < b.name end)
 		end
 	end)
 	if dialog and self.lastBarName then
@@ -2084,10 +2081,8 @@ end
 
 function main:removeBar(barName)
 	StaticPopup_Show(self.addonName.."DELETE_BAR", NORMAL_FONT_COLOR:WrapTextInColorCode(barName), nil, function()
-		local barID
 		for i, bar in ipairs(self.currentProfile.bars) do
 			if bar.name == barName then
-				barID = i
 				tremove(self.currentProfile.bars, i)
 				if bar.isDefault then
 					self.currentProfile.bars[1].isDefault = true
@@ -2105,12 +2100,8 @@ function main:removeBar(barName)
 				settings[3] = nil
 			end
 		end
-		self:removeOmbGrabQueue(barID)
-		for i, btn in ipairs(self.mbuttons) do
-			if btn.name:match(hb.matchName) then
-				self:removeMButton(btn, i)
-			end
-		end
+		self:removeOmbGrabQueue(barName)
+		self:removeAllOMB()
 		hb:updateBars()
 		if self.currentBar.name == barName then
 			self:setBar()
@@ -2134,8 +2125,6 @@ function main:setBar(bar)
 	if self.currentBar ~= bar then
 		self.currentBar = bar
 		self.bConfig = self.currentBar.config
-		self.barFrame = hb.barByName[self.currentBar.name]
-		self.direction = self.barFrame.direction
 		barCombobox:ddSetSelectedText(self.currentBar.name)
 
 		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture), true)
@@ -2204,6 +2193,9 @@ function main:setBar(bar)
 		self:updateCoords()
 	end
 
+	self.barFrame = hb.barByName[self.currentBar.name]
+	self.direction = self.barFrame.direction
+
 	for _, btn in ipairs(self.mixedButtons) do
 		local show = btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault
 		btn:SetShown(show)
@@ -2217,9 +2209,9 @@ function main:setBar(bar)
 end
 
 
-function main:removeOmbGrabQueue(id)
+function main:removeOmbGrabQueue(barName)
 	for i = 1, #self.pConfig.ombGrabQueue do
-		if self.pConfig.ombGrabQueue[i] == id then
+		if self.pConfig.ombGrabQueue[i] == barName then
 			tremove(self.pConfig.ombGrabQueue, i)
 			break
 		end
@@ -2243,6 +2235,20 @@ hb:on("COORDS_UPDATED", function(_, bar)
 		main:updateCoords()
 	end
 end)
+
+
+function main:removeAllOMB()
+	local i = 1
+	local btn = self.mbuttons[i]
+	while btn do
+		if btn.name:match(hb.matchName) and btn.rButton.isGrabbed then
+			self:removeMButton(btn, i)
+		else
+			i = i + 1
+		end
+		btn = self.mbuttons[i]
+	end
+end
 
 
 function main:removeMButtonByName(name, update)
