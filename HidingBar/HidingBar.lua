@@ -1569,6 +1569,35 @@ end
 
 
 -------------------------------------------
+-- FRAME FADE
+-------------------------------------------
+local function fade(self, elapsed)
+	self.timer = self.timer - elapsed
+	if self.timer <= 0 then
+		self:SetScript("OnUpdate", nil)
+		self:SetAlpha(self.endAlpha)
+	else
+		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer / self.delay)
+	end
+end
+
+
+function frameFade(self, delay, endAlpha)
+	self.timer = delay
+	self.delay = delay
+	self.endAlpha = endAlpha
+	self.deltaAlpha = endAlpha - self:GetAlpha()
+	self:SetScript("OnUpdate", fade)
+end
+
+
+function frameFadeStop(self, alpha)
+	self:SetScript("OnUpdate", nil)
+	self:SetAlpha(alpha)
+end
+
+
+-------------------------------------------
 -- HIDINGBAR MIXIN
 -------------------------------------------
 local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
@@ -1919,17 +1948,18 @@ end
 
 function hidingBarMixin:setFade(fade)
 	self.config.fade = fade
-	if fade and self.drag:IsShown() then
-		self.drag:fade(1.5, self.config.fadeOpacity)
+	local frame = self.config.showHandler == 3 and self or self.drag
+	if fade and frame:IsShown() then
+		frameFade(frame, 1.5, self.config.fadeOpacity)
 	else
-		self.drag:stopFade(1)
+		frameFadeStop(frame, 1)
 	end
 end
 
 
 function hidingBarMixin:setFadeOpacity(opacity)
 	self.config.fadeOpacity = opacity
-	self.drag:stopFade(opacity)
+	frameFadeStop(self.config.showHandler == 3 and self or self.drag, opacity)
 end
 
 
@@ -2465,12 +2495,19 @@ end
 
 
 function hidingBarMixin:enter(force)
-	if not self.isDrag and self.shown and (self.config.showHandler ~= 3 or force) then
-		self.drag:stopFade(1)
-		self:SetScript("OnUpdate", nil)
-		self:Show()
-		self:Raise()
-		self:updateDragBarPosition()
+	if not self.isDrag and self.shown then
+		if self.config.showHandler ~= 3 or force then
+			frameFadeStop(self.drag, 1)
+			self:SetScript("OnUpdate", nil)
+			self:Show()
+			self:Raise()
+			self:updateDragBarPosition()
+		else
+			frameFadeStop(self, 1)
+			if self.drag:IsShown() then
+				frameFadeStop(self.drag, 1)
+			end
+		end
 	end
 end
 
@@ -2482,16 +2519,25 @@ function hidingBarMixin:hideBar(elapsed)
 		self:updateDragBarPosition()
 		self:SetScript("OnUpdate", nil)
 		if self.config.fade and self.drag:IsShown() then
-			self.drag:fade(1.5, self.config.fadeOpacity)
+			frameFade(self.drag, 1.5, self.config.fadeOpacity)
 		end
 	end
 end
 
 
 function hidingBarMixin:leave(timer)
-	if not self.isDrag and self:IsShown() and self.config.showHandler ~= 3 and self.config.hideHandler ~= 1 then
-		self.timer = timer or self.config.hideDelay
-		self:SetScript("OnUpdate", self.hideBar)
+	if not self.isDrag and self:IsShown() then
+		if self.config.showHandler == 3 then
+			if self.config.fade then
+				frameFade(self, 1.5, self.config.fadeOpacity)
+				if self.drag:IsShown() then
+					frameFade(self.drag, 1.5, self.config.fadeOpacity)
+				end
+			end
+		elseif self.config.hideHandler ~= 1 then
+			self.timer = timer or self.config.hideDelay
+			self:SetScript("OnUpdate", self.hideBar)
+		end
 	end
 end
 
@@ -2504,13 +2550,19 @@ function hidingBarMixin:refreshShown()
 		self.drag:Hide()
 		if self.config.showHandler == 3 then
 			self:enter(true)
+			self:leave()
 		elseif self:IsShown() and not self.isMouse then
+			frameFadeStop(self, 1)
 			self:leave()
 		end
 	elseif self.config.showHandler == 3 then
-		self:enter(true)
 		self.drag:SetShown(not self.config.lock)
+		self:enter(true)
+		self:leave()
 	else
+		frameFadeStop(self, 1)
+		frameFadeStop(self.drag, 1)
+		self.drag:Show()
 		if self:IsShown() then
 			if not self.isMouse then
 				self:leave()
@@ -2518,10 +2570,9 @@ function hidingBarMixin:refreshShown()
 		else
 			self:updateDragBarPosition()
 			if self.config.fade then
-				self.drag:fade(1.5, self.config.fadeOpacity)
+				frameFade(self.drag, 1.5, self.config.fadeOpacity)
 			end
 		end
-		self.drag:Show()
 	end
 end
 
@@ -2532,38 +2583,12 @@ end
 local hidingBarDragMixin = {}
 
 
-local function fade(self, elapsed)
-	self.timer = self.timer - elapsed
-	if self.timer <= 0 then
-		self:SetScript("OnUpdate", nil)
-		self:SetAlpha(self.endAlpha)
-	else
-		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer / self.delay)
-	end
-end
-
-
-function hidingBarDragMixin:fade(delay, endAlpha)
-	self.timer = delay
-	self.delay = delay
-	self.endAlpha = endAlpha
-	self.deltaAlpha = endAlpha - self:GetAlpha()
-	self:SetScript("OnUpdate", fade)
-end
-
-
-function hidingBarDragMixin:stopFade(alpha)
-	self:SetScript("OnUpdate", nil)
-	self:SetAlpha(alpha)
-end
-
-
 function hidingBarDragMixin:hoverWithClick()
 	local bar = self.bar
 	if bar:IsShown() then
 		bar:enter()
 	elseif self:IsShown() and bar.config.fade then
-		self:fade(bar.config.showDelay, 1)
+		frameFade(self, bar.config.showDelay, 1)
 	end
 end
 
@@ -2588,7 +2613,7 @@ do
 			bar:enter()
 		else
 			if self:IsShown() and bar.config.fade then
-				self:fade(bar.config.showDelay, 1)
+				frameFade(self, bar.config.showDelay, 1)
 			end
 			hb.tBar = bar
 			hb.timer = bar.config.showDelay
@@ -2649,6 +2674,7 @@ end
 
 
 local function bar_OnEvent(self, event, button)
+	fprint("asd")
 	if (button == "LeftButton" or button == "RightButton")
 	and not (self.isMouse
 		or self.drag:IsShown() and self.drag:IsMouseOver()
@@ -2659,7 +2685,7 @@ local function bar_OnEvent(self, event, button)
 		self:updateDragBarPosition()
 		self:SetScript("OnUpdate", nil)
 		if self.config.fade and self.drag:IsShown() then
-			self.drag:fade(1.5, self.config.fadeOpacity)
+			frameFade(self.drag, 1.5, self.config.fadeOpacity)
 		end
 	end
 end
@@ -2732,7 +2758,7 @@ local function drag_OnLeave(self)
 	hb:SetScript("OnUpdate", nil)
 	local bar = self.bar
 	if bar.config.fade and not bar:IsShown() and self:IsShown() then
-		self:fade(bar.config.showDelay, bar.config.fadeOpacity)
+		frameFade(self, bar.config.showDelay, bar.config.fadeOpacity)
 	end
 	bar:leave()
 end

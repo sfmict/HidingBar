@@ -32,6 +32,7 @@ L["TEXTURES_HELP_TOOLTIP"] = "Some textures are added from other addons, so they
 L["Line"] = "Line"
 L["Background"] = "Background"
 L["Fade out line"] = "Fade out |cff%sline|r"
+L["Fade out bar"] = "Fade out bar"
 L["Opacity"] = "Opacity"
 L["Line width"] = "|cff%sLine|r width"
 L["Line Border"] = "Line Border"

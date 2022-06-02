@@ -36,6 +36,7 @@ L["TEXTURES_HELP_TOOLTIP"] = "Некоторые текстуры добавле
 L["Line"] = "Линия"
 L["Background"] = "Фон"
 L["Fade out line"] = "Исчезновение |cff%sлинии|r"
+L["Fade out bar"] = "Исчезновение панели"
 L["Opacity"] = "Прозрачность"
 L["Line width"] = "Ширина |cff%sлинии|r"
 L["Line Border"] = "Граница линии"

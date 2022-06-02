@@ -878,55 +878,9 @@ hb:on("LOCK_UPDATED", function(_, isLocked, bar)
 	end
 end)
 
--- SHOW HANDLER TEXT
-local showHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-showHandlerText:SetPoint("TOPLEFT", lock, "BOTTOMLEFT", 0, -10)
-showHandlerText:SetText(L["Show on"])
-
--- SHOW HANDLER
-local showHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
-showHandlerCombobox:SetPoint("LEFT", showHandlerText, "RIGHT", 3, 0)
-showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], L["Allways"]}
-
-local function updateShowHandler(btn)
-	showHandlerCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame.drag:setShowHandler(btn.value)
-end
-
-showHandlerCombobox:ddSetInitFunc(function(self)
-	local info = {}
-	for i = 0, #self.texts do
-		info.text = self.texts[i]
-		info.value = i
-		info.func = updateShowHandler
-		self:ddAddButton(info)
-	end
-end)
-
--- DELAY TO SHOW
-local delayToShowText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-delayToShowText:SetPoint("LEFT", showHandlerCombobox, "RIGHT", 10, 0)
-delayToShowText:SetText(L["Delay to show"])
-
-local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
-delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
-delayToShowEditBox:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		main.bConfig.showDelay = tonumber(decimalText) or 0
-	end
-end)
-delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
-	editBox:SetNumber(main.bConfig.showDelay)
-	editBox:HighlightText(0, 0)
-end)
-
 -- HIDE HANDLER TEXT
 local hideHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-hideHandlerText:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -margin)
+hideHandlerText:SetPoint("TOPLEFT", lock, "BOTTOMLEFT", 0, -10)
 hideHandlerText:SetText(L["Hide by"])
 
 -- HIDE HANDLER
@@ -937,6 +891,7 @@ hideHandlerCombobox.texts = {[0] = L["Timer"], L["Clicking on a free place"], L[
 local function updatehideHandler(btn)
 	hideHandlerCombobox:ddSetSelectedValue(btn.value)
 	main.bConfig.hideHandler = btn.value
+	main:hidingBarUpdate()
 end
 
 hideHandlerCombobox:ddSetInitFunc(function(self)
@@ -970,9 +925,58 @@ delayToHideEditBox:SetScript("OnEditFocusLost", function(editBox)
 	editBox:HighlightText(0, 0)
 end)
 
+-- SHOW HANDLER TEXT
+local showHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+showHandlerText:SetPoint("TOPLEFT", hideHandlerText, "BOTTOMLEFT", 0, -margin)
+showHandlerText:SetText(L["Show on"])
+
+-- SHOW HANDLER
+local showHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+showHandlerCombobox:SetPoint("LEFT", showHandlerText, "RIGHT", 3, 0)
+showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], L["Allways"]}
+
+local function updateShowHandler(btn)
+	showHandlerCombobox:ddSetSelectedValue(btn.value)
+	main.barFrame:Hide()
+	main.barFrame.drag:setShowHandler(btn.value)
+	main.lineColor.updateLineColor()
+	main:hidingBarUpdate()
+end
+
+showHandlerCombobox:ddSetInitFunc(function(self)
+	local info = {}
+	for i = 0, #self.texts do
+		info.text = self.texts[i]
+		info.value = i
+		info.func = updateShowHandler
+		self:ddAddButton(info)
+	end
+end)
+
+-- DELAY TO SHOW
+local delayToShowText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+delayToShowText:SetPoint("LEFT", showHandlerCombobox, "RIGHT", 10, 0)
+delayToShowText:SetText(L["Delay to show"])
+
+local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
+delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
+delayToShowEditBox:SetScript("OnTextChanged", function(editBox, userInput)
+	if userInput then
+		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
+		if int == "" and dec ~= "" then int = "0" end
+		local decimalText = int..dec
+		editBox:SetNumber(decimalText)
+		main.bConfig.showDelay = tonumber(decimalText) or 0
+	end
+end)
+delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
+	editBox:SetNumber(main.bConfig.showDelay)
+	editBox:HighlightText(0, 0)
+end)
+
 -- FADE
 main.fade = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-main.fade:SetPoint("TOPLEFT", hideHandlerText, "BOTTOMLEFT", 0, -15)
+main.fade:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -15)
 main.fade:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
@@ -996,7 +1000,7 @@ main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -- ALIGN
-alignText(orientationText, showHandlerText, hideHandlerText)
+alignText(orientationText, hideHandlerText, showHandlerText)
 
 -------------------------------------------
 -- BAR DISPLAY SETTINGS
@@ -1223,31 +1227,35 @@ lineTextureCombobox:ddSetInitFunc(function(self)
 end)
 
 -- LINE COLOR
-local lineColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
-lineColor:SetPoint("LEFT", lineTextureCombobox, "RIGHT", 3, 2)
+main.lineColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
+main.lineColor:SetPoint("LEFT", lineTextureCombobox, "RIGHT", 3, 2)
 
-lineColor.updateLineColor = function()
+main.lineColor.updateLineColor = function()
 	local hexColor = toHex(main.bConfig.lineColor)
 	main.helpPlate.tooltipTitle = L["SETTINGS_DESCRIPTION"]:format(hexColor)
-	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+	if main.bConfig.showHandler == 3 then
+		main.fade.Text:SetText(L["Fade out bar"])
+	else
+		main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+	end
 	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 	main.lineBorderOffset.text:SetText(L["Line Border Offset"]:format(hexColor))
 	main.lineBorderSize.text:SetText(L["Line Border Size"]:format(hexColor))
 	main.gapSize.text:SetText(L["Distance from line to bar"]:format(hexColor))
-	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
-	main:hidingBarUpdate()
+	main.lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
 end
 
-lineColor:SetScript("OnClick", function()
+main.lineColor:SetScript("OnClick", function()
 	showColorPicker(main.bConfig.lineColor, function(...)
 		main.barFrame:setLineTexture(nil, ...)
-		lineColor.updateLineColor()
+		main.lineColor.updateLineColor()
+		main:hidingBarUpdate()
 	end)
 end)
 
 -- LINE WIDTH
 main.lineWidth = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.lineWidth:SetPoint("LEFT", lineColor, "RIGHT", 10, -2.5)
+main.lineWidth:SetPoint("LEFT", main.lineColor, "RIGHT", 10, -2.5)
 main.lineWidth:SetPoint("RIGHT", -35, 0)
 main.lineWidth:SetMinMaxValues(4, 20)
 main.lineWidth.edit:SetMaxLetters(2)
@@ -2161,8 +2169,8 @@ function main:setBar(bar)
 			tSizeY = 14,
 		}
 		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, lineFont)
-		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
-		lineColor.updateLineColor()
+		main.lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
+		main.lineColor.updateLineColor()
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
 		lineBorderCombobox:ddSetSelectedValue(self.bConfig.lineBorderEdge)
 		lineBorderCombobox:ddSetSelectedText(self.bConfig.lineBorderEdge or NONE)
