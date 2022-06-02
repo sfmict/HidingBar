@@ -1584,6 +1584,7 @@ local function updateBarTypePosition()
 	main.likeMB.check:SetShown(main.bConfig.barTypePosition == 2)
 	main.ombShowToCombobox:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombSize:SetEnabled(main.bConfig.barTypePosition == 2)
+	main.distanceFromButtonToBar:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.canGrabbed:SetEnabled(main.bConfig.barTypePosition == 2)
 end
 
@@ -1738,6 +1739,7 @@ main.likeMB:SetPoint("TOPLEFT", main.hideToCombobox, "BOTTOMLEFT", -23, -4)
 main.likeMB.Text:SetText(L["Bar like a minimap button"])
 main.likeMB:SetScript("OnClick", function()
 	main.barFrame:setBarTypePosition(2)
+	main.barFrame:setGapPosition()
 	main:applyLayout(.3)
 	if main.bConfig.omb.canGrabbed and not main.barFrame.omb.isGrabbed then
 		if hb:grabOwnButton(main.barFrame.omb) then
@@ -1793,9 +1795,27 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	end
 end)
 
+-- SLIDER DISTANCE FROM BUTTON TO BAR
+main.distanceFromButtonToBar = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
+main.distanceFromButtonToBar:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", 0, -12)
+main.distanceFromButtonToBar:SetPoint("RIGHT", -35, 0)
+main.distanceFromButtonToBar:SetMinMaxValues(-8, 32)
+main.distanceFromButtonToBar.text:SetText(L["Distance from button to bar"])
+main.distanceFromButtonToBar.edit:SetMaxLetters(2)
+main.distanceFromButtonToBar:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	slider:SetValue(value)
+	if main.bConfig.omb.distanceToBar ~= value then
+		main.bConfig.omb.distanceToBar = value
+		main.barFrame:setBarTypePosition()
+		main:hidingBarUpdate()
+	end
+end)
+
 -- THE BUTTON CAN BE CRABBED
 main.canGrabbed = CreateFrame("CheckButton", nil, main.positionBarPanel, "HidingBarAddonCheckButtonTemplate")
-main.canGrabbed:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", -2, -2)
+main.canGrabbed:SetPoint("TOPLEFT", main.distanceFromButtonToBar, "BOTTOMLEFT", -2, -2)
 main.canGrabbed.Text:SetText(L["The button can be grabbed"])
 main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
 main.canGrabbed:SetScript("OnClick", function(btn)
@@ -2195,14 +2215,15 @@ function main:setBar(bar)
 		self.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
 		self.ombShowToCombobox:ddSetSelectedText(self.ombShowToCombobox.texts[self.bConfig.omb.anchor])
 		self.ombSize:SetValue(self.bConfig.omb.size)
+		self.distanceFromButtonToBar:SetValue(self.bConfig.omb.distanceToBar)
 		self.canGrabbed:SetChecked(self.bConfig.omb.canGrabbed)
 
 		updateBarTypePosition()
-		self:updateCoords()
 	end
 
 	self.barFrame = hb.barByName[self.currentBar.name]
 	self.direction = self.barFrame.direction
+	self:updateCoords()
 
 	for _, btn in ipairs(self.mixedButtons) do
 		local show = btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault

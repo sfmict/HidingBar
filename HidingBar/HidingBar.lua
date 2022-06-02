@@ -452,6 +452,7 @@ function hb:checkProfile(profile)
 		end
 		bar.config.omb.anchor = bar.config.omb.anchor or "right"
 		bar.config.omb.size = bar.config.omb.size or 31
+		bar.config.omb.distanceToBar = bar.config.omb.distanceToBar or 0
 	end
 
 	-- FIX OLD QUEUE
@@ -1682,6 +1683,7 @@ function hidingBarMixin:setOMBAnchor(anchor)
 	self:setButtonDirection()
 	self:applyLayout()
 	self:setBarTypePosition()
+	self:setGapPosition()
 end
 
 
@@ -1922,18 +1924,39 @@ end
 function hidingBarMixin:setGapPosition(gapSize)
 	if gapSize then self.config.gapSize = gapSize end
 
-	if self.config.anchor == "left" then
-		self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
-		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
-	elseif self.config.anchor == "right" then
-		self.gap:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
-		self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
-	elseif self.config.anchor == "top" then
-		self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
-		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
+	self.gap:ClearAllPoints()
+	if self.config.barTypePosition == 2 then
+		if self.config.omb.anchor == "left" then
+			self.gap:SetPoint("TOPRIGHT", self, "TOPLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+			self.gap:SetPoint("LEFT", self.omb, "RIGHT")
+		elseif self.config.omb.anchor == "right" then
+			self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
+			self.gap:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT")
+			self.gap:SetPoint("RIGHT", self.omb, "LEFT")
+		elseif self.config.omb.anchor == "top" then
+			self.gap:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+			self.gap:SetPoint("TOP", self.omb, "BOTTOM")
+		else
+			self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+			self.gap:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
+			self.gap:SetPoint("BOTTOM", self.omb, "TOP")
+		end
 	else
-		self.gap:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
-		self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+		if self.config.anchor == "left" then
+			self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
+			self.gap:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
+		elseif self.config.anchor == "right" then
+			self.gap:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+		elseif self.config.anchor == "top" then
+			self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
+		else
+			self.gap:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+		end
 	end
 
 	self:updateDragBarPosition()
@@ -2293,16 +2316,16 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		end
 
 		if self.config.omb.anchor == "left" then
-			secondPosition = btnSize
+			secondPosition = btnSize + self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowright"
 		elseif self.config.omb.anchor == "right" then
-			secondPosition = -btnSize
+			secondPosition = -btnSize - self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowleft"
 		elseif self.config.omb.anchor == "top" then
-			secondPosition = -btnSize
+			secondPosition = -btnSize - self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowdown"
 		else
-			secondPosition = btnSize
+			secondPosition = btnSize + self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowlup"
 		end
 
@@ -2807,6 +2830,11 @@ setmetatable(hb.bars, {__index = function(self, key)
 	bar.gap:SetMouseMotionEnabled(true)
 	bar.gap:SetScript("OnEnter", gap_OnEnter)
 	bar.gap:SetScript("OnLeave", gap_OnLeave)
+
+	-- GAP DEBUG
+	-- bar.gap.bg = bar.gap:CreateTexture(nil, "BACKGROUND")
+	-- bar.gap.bg:SetAllPoints()
+	-- bar.gap.bg:SetColorTexture(0, 1, 0)
 
 	bar.id = key
 	self[key] = bar
