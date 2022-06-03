@@ -865,7 +865,7 @@ end)
 
 -- LOCK
 local lock = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -10)
+lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -13)
 lock.Text:SetText(L["Lock the bar's location"])
 lock:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
@@ -974,7 +974,7 @@ end)
 
 -- FADE
 main.fade = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-main.fade:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -15)
+main.fade:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -13)
 main.fade:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
@@ -1524,7 +1524,7 @@ end)
 
 -- INTERCEPT THE POSITION OF TOOLTIPS
 local interceptTooltip = CreateFrame("CheckButton", nil, main.buttonSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-interceptTooltip:SetPoint("TOPLEFT", mbtnPostionText, "BOTTOMLEFT", 0, -15)
+interceptTooltip:SetPoint("TOPLEFT", mbtnPostionText, "BOTTOMLEFT", 0, -13)
 interceptTooltip.Text:SetText(L["Intercept the position of tooltips"])
 interceptTooltip:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
@@ -1594,12 +1594,17 @@ main.attachedToSide:SetScript("OnClick", function()
 	main.barFrame:setBarCoords(nil, 0)
 	main.barFrame:setBarTypePosition(0)
 	main:applyLayout(.3)
-	if main.barFrame.omb and main.barFrame.omb.isGrabbed then
-		for i, btn in ipairs(main.mbuttons) do
-			if btn.rButton == main.barFrame.omb then
-				main:removeMButton(btn, i)
-				break
+	if main.barFrame.omb then
+		if main.barFrame.omb.isGrabbed then
+			for i, btn in ipairs(main.mbuttons) do
+				if btn.rButton == main.barFrame.omb then
+					main:removeMButton(btn, i)
+					break
+				end
 			end
+		end
+		if main.bConfig.omb.canGrabbed then
+			main:removeOmbGrabQueue(main.currentBar.name)
 		end
 	end
 	hb:updateBars()
@@ -1614,12 +1619,17 @@ main.freeMove.Text:SetText(L["Bar moves freely"])
 main.freeMove:SetScript("OnClick", function()
 	main.barFrame:setBarTypePosition(1)
 	main:applyLayout(.3)
-	if main.barFrame.omb and main.barFrame.omb.isGrabbed then
-		for i, btn in ipairs(main.mbuttons) do
-			if btn.rButton == main.barFrame.omb then
-				main:removeMButton(btn, i)
-				break
+	if main.barFrame.omb then
+		if main.barFrame.omb.isGrabbed then
+			for i, btn in ipairs(main.mbuttons) do
+				if btn.rButton == main.barFrame.omb then
+					main:removeMButton(btn, i)
+					break
+				end
 			end
+		end
+		if main.bConfig.omb.canGrabbed then
+			main:removeOmbGrabQueue(main.currentBar.name)
 		end
 	end
 	hb:updateBars()
@@ -1740,6 +1750,7 @@ main.likeMB:SetScript("OnClick", function()
 	main.barFrame:setGapPosition()
 	main:applyLayout(.3)
 	if main.bConfig.omb.canGrabbed and not main.barFrame.omb.isGrabbed then
+		main:addOmbGrabQueue(main.currentBar.name)
 		if hb:grabOwnButton(main.barFrame.omb) then
 			hb:sort()
 			main.barFrame.omb:GetParent():setButtonSize()
@@ -1821,7 +1832,7 @@ main.canGrabbed:SetScript("OnClick", function(btn)
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then
-		main.pConfig.ombGrabQueue[#main.pConfig.ombGrabQueue + 1] = main.currentBar.name
+		main:addOmbGrabQueue(main.currentBar.name)
 		if hb:grabOwnButton(omb) then
 			hb:sort()
 			omb:GetParent():setButtonSize()
@@ -2236,12 +2247,26 @@ function main:setBar(bar)
 end
 
 
-function main:removeOmbGrabQueue(barName)
+function main:addOmbGrabQueue(barName)
 	for i = 1, #self.pConfig.ombGrabQueue do
 		if self.pConfig.ombGrabQueue[i] == barName then
-			tremove(self.pConfig.ombGrabQueue, i)
-			break
+			return
 		end
+	end
+	self.pConfig.ombGrabQueue[#self.pConfig.ombGrabQueue + 1] = barName
+end
+
+
+function main:removeOmbGrabQueue(barName)
+	local i = 1
+	local queue = self.pConfig.ombGrabQueue[i]
+	while queue do
+		if queue == barName then
+			tremove(self.pConfig.ombGrabQueue, i)
+		else
+			i = i + 1
+		end
+		queue = self.pConfig.ombGrabQueue[i]
 	end
 end
 
