@@ -937,10 +937,8 @@ showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], 
 
 local function updateShowHandler(btn)
 	showHandlerCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame:Hide()
 	main.barFrame.drag:setShowHandler(btn.value)
 	main.lineColor.updateLineColor()
-	main:hidingBarUpdate()
 end
 
 showHandlerCombobox:ddSetInitFunc(function(self)

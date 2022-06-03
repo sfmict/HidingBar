@@ -1971,11 +1971,17 @@ end
 
 function hidingBarMixin:setFade(fade)
 	self.config.fade = fade
-	local frame = self.config.showHandler == 3 and self or self.drag
-	if fade and frame:IsShown() then
-		frameFade(frame, 1.5, self.config.fadeOpacity)
+	if self.config.showHandler == 3 then
+		if fade then
+			frameFade(self, 1.5, self.config.fadeOpacity)
+		else
+			frameFadeStop(self, 1)
+		end
+	end
+	if fade and self.drag:IsShown() then
+		frameFade(self.drag, 1.5, self.config.fadeOpacity)
 	else
-		frameFadeStop(frame, 1)
+		frameFadeStop(self.drag, 1)
 	end
 end
 
@@ -2571,22 +2577,30 @@ function hidingBarMixin:refreshShown()
 		self.drag:Hide()
 	elseif self.config.barTypePosition == 2 then
 		self.drag:Hide()
-		frameFadeStop(self, 1)
 		if self.config.showHandler == 3 then
 			self:enter(true)
 			self:leave()
-		elseif self:IsShown() and not self.isMouse then
-			self:leave()
+		elseif self:IsShown() then
+			frameFadeStop(self, 1)
+			self:GetScript("OnShow")(self)
+			if not self.isMouse then
+				self:leave()
+			end
 		end
 	elseif self.config.showHandler == 3 then
 		self.drag:SetShown(not self.config.lock)
-		self:enter(true)
+		if self:IsShown() then
+			self:SetScript("OnUpdate", nil)
+		else
+			self:enter(true)
+		end
 		self:leave()
 	else
-		frameFadeStop(self, 1)
-		frameFadeStop(self.drag, 1)
 		self.drag:Show()
 		if self:IsShown() then
+			frameFadeStop(self.drag, 1)
+			frameFadeStop(self, 1)
+			self:GetScript("OnShow")(self)
 			if not self.isMouse then
 				self:leave()
 			end
