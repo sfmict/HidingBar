@@ -185,7 +185,7 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 		self:GetParent():Hide()
 	end,
 	OnShow = function(self)
-		self.editBox:SetText(L["Bar"].." "..(#main.currentProfile.bars + 1))
+		self.editBox:SetText(L["Bar"].." "..(#main.pBars + 1))
 		self.editBox:HighlightText()
 	end,
 }
@@ -462,7 +462,7 @@ barCombobox:ddSetInitFunc(function(self)
 	if not main.currentBar.isDefault then
 		info.text = L["Set as default"]
 		info.func = function()
-			for _, bar in ipairs(main.currentProfile.bars) do
+			for _, bar in ipairs(main.pBars) do
 				bar.isDefault = nil
 			end
 			main.currentBar.isDefault = true
@@ -1604,7 +1604,7 @@ main.attachedToSide:SetScript("OnClick", function()
 			end
 		end
 		if main.bConfig.omb.canGrabbed then
-			main:removeOmbGrabQueue(main.currentBar.name)
+			main:removeOmbGrabQueue(main.barFrame.id)
 		end
 	end
 	hb:updateBars()
@@ -1629,7 +1629,7 @@ main.freeMove:SetScript("OnClick", function()
 			end
 		end
 		if main.bConfig.omb.canGrabbed then
-			main:removeOmbGrabQueue(main.currentBar.name)
+			main:removeOmbGrabQueue(main.barFrame.id)
 		end
 	end
 	hb:updateBars()
@@ -1750,7 +1750,7 @@ main.likeMB:SetScript("OnClick", function()
 	main.barFrame:setGapPosition()
 	main:applyLayout(.3)
 	if main.bConfig.omb.canGrabbed and not main.barFrame.omb.isGrabbed then
-		main:addOmbGrabQueue(main.currentBar.name)
+		main:addOmbGrabQueue(main.barFrame.id)
 		if hb:grabOwnButton(main.barFrame.omb) then
 			hb:sort()
 			main.barFrame.omb:GetParent():setButtonSize()
@@ -1832,13 +1832,13 @@ main.canGrabbed:SetScript("OnClick", function(btn)
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then
-		main:addOmbGrabQueue(main.currentBar.name)
+		main:addOmbGrabQueue(main.barFrame.id)
 		if hb:grabOwnButton(omb) then
 			hb:sort()
 			omb:GetParent():setButtonSize()
 		end
 	else
-		main:removeOmbGrabQueue(main.currentBar.name)
+		main:removeOmbGrabQueue(main.barFrame.id)
 		for i, btn in ipairs(main.mbuttons) do
 			if btn.rButton == omb then
 				main:removeMButton(btn, i)
@@ -1923,7 +1923,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 			main:setBar(main.currentBar)
 		end
 
-		for i, bar in ipairs(main.currentProfile.bars) do
+		for i, bar in ipairs(main.pBars) do
 			if bar ~= main.currentBar
 			and not (btn.name:match(hb.matchName)
 				and hb:isBarParent(btn.rButton, hb.barByName[bar.name]))
@@ -2092,7 +2092,7 @@ function main:createBar()
 	local dialog = StaticPopup_Show(self.addonName.."NEW_BAR", nil, nil, function(popup)
 		local text = popup.editBox:GetText()
 		if text and text ~= "" then
-			for _, bar in ipairs(self.currentProfile.bars) do
+			for _, bar in ipairs(self.pBars) do
 				if bar.name == text then
 					self.lastBarName = text
 					StaticPopup_Show(self.addonName.."BAR_EXISTS")
@@ -2100,12 +2100,14 @@ function main:createBar()
 				end
 			end
 			local bar = {name = text}
-			tinsert(self.currentProfile.bars, bar)
+			tinsert(self.pBars, bar)
+			self:updateBarsObjects(function()
+				sort(self.pBars, function(a, b) return a.name < b.name end)
+			end)
 			hb:checkProfile(self.currentProfile)
 			self:removeAllOMB()
 			hb:updateBars()
 			self:setBar(self.currentBar)
-			sort(self.currentProfile.bars, function(a, b) return a.name < b.name end)
 		end
 	end)
 	if dialog and self.lastBarName then
@@ -2118,11 +2120,14 @@ end
 
 function main:removeBar(barName)
 	StaticPopup_Show(self.addonName.."DELETE_BAR", NORMAL_FONT_COLOR:WrapTextInColorCode(barName), nil, function()
-		for i, bar in ipairs(self.currentProfile.bars) do
+		for i, bar in ipairs(self.pBars) do
 			if bar.name == barName then
-				tremove(self.currentProfile.bars, i)
+				self:removeOmbGrabQueue(i)
+				self:updateBarsObjects(function()
+					tremove(self.pBars, i)
+				end)
 				if bar.isDefault then
-					self.currentProfile.bars[1].isDefault = true
+					self.pBars[1].isDefault = true
 				end
 				break
 			end
@@ -2137,7 +2142,6 @@ function main:removeBar(barName)
 				settings[3] = nil
 			end
 		end
-		self:removeOmbGrabQueue(barName)
 		self:removeAllOMB()
 		hb:updateBars()
 		if self.currentBar.name == barName then
@@ -2247,26 +2251,48 @@ function main:setBar(bar)
 end
 
 
-function main:addOmbGrabQueue(barName)
+function main:updateBarsObjects(callback)
+	local curQueue = {}
 	for i = 1, #self.pConfig.ombGrabQueue do
-		if self.pConfig.ombGrabQueue[i] == barName then
-			return
-		end
+		curQueue[self.pBars[self.pConfig.ombGrabQueue[i]].name] =  i
 	end
-	self.pConfig.ombGrabQueue[#self.pConfig.ombGrabQueue + 1] = barName
+	local btnSettings = {}
+	for i = 1, #self.pBars do
+		local ombName = "LibDBIcon10_"..addon..i
+		btnSettings[self.pBars[i].name] = rawget(self.pConfig.mbtnSettings, ombName)
+		self.pConfig.mbtnSettings[ombName] = nil
+	end
+	callback()
+	for i = 1, #self.pBars do
+		local queue = curQueue[self.pBars[i].name]
+		if queue then
+			self.pConfig.ombGrabQueue[queue] = i
+		end
+		self.pConfig.mbtnSettings["LibDBIcon10_"..addon..i] = btnSettings[self.pBars[i].name]
+	end
 end
 
 
-function main:removeOmbGrabQueue(barName)
+function main:addOmbGrabQueue(id)
+	for i = 1, #self.pConfig.ombGrabQueue do
+		if self.pConfig.ombGrabQueue[i] == id then
+			return
+		end
+	end
+	self.pConfig.ombGrabQueue[#self.pConfig.ombGrabQueue + 1] = id
+end
+
+
+function main:removeOmbGrabQueue(id)
 	local i = 1
-	local queue = self.pConfig.ombGrabQueue[i]
-	while queue do
-		if queue == barName then
+	local barID = self.pConfig.ombGrabQueue[i]
+	while barID do
+		if barID == id then
 			tremove(self.pConfig.ombGrabQueue, i)
 		else
 			i = i + 1
 		end
-		queue = self.pConfig.ombGrabQueue[i]
+		barID = self.pConfig.ombGrabQueue[i]
 	end
 end
 
@@ -2422,7 +2448,7 @@ end
 
 
 function main:hidingBarUpdate()
-	for i = 1, #self.currentProfile.bars do
+	for i = 1, #self.pBars do
 		local bar = hb.bars[i]
 		bar:enter()
 		bar:leave(math.max(1.5, bar.config.hideDelay))

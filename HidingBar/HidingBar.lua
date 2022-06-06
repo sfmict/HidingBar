@@ -455,11 +455,14 @@ function hb:checkProfile(profile)
 		bar.config.omb.distanceToBar = bar.config.omb.distanceToBar or 0
 	end
 
-	-- FIX OLD QUEUE
-	for i = 1, #profile.config.ombGrabQueue do
-		local queue = profile.config.ombGrabQueue[i]
-		if type(queue) == "number" then
-			profile.config.ombGrabQueue[i] = profile.bars[queue].name
+	local ombGrabQueue =  profile.config.ombGrabQueue
+	for i = 1, #ombGrabQueue do
+		if type(ombGrabQueue[i]) ~= "number" then
+			for j = 1, #profile.bars do
+				if ombGrabQueue[i] == profile.bars[j].name then
+					ombGrabQueue[i] = j
+				end
+			end
 		end
 	end
 end
@@ -659,7 +662,7 @@ function hb:updateBars()
 
 	self.queueEmpty = nil
 	for i = 1, #self.pConfig.ombGrabQueue do
-		local omb = self.barByName[self.pConfig.ombGrabQueue[i]].omb
+		local omb = self.bars[self.pConfig.ombGrabQueue[i]].omb
 		if omb and not omb.isGrabbed then self:grabOwnButton(omb) end
 	end
 
@@ -1671,7 +1674,7 @@ function hidingBarMixin:initOwnMinimapButton()
 	end
 
 	if self.config.omb.canGrabbed and (hb.queueEmpty or not next(hb.pConfig.ombGrabQueue)) then
-		hb.pConfig.ombGrabQueue[#hb.pConfig.ombGrabQueue + 1] = self.name
+		hb.pConfig.ombGrabQueue[#hb.pConfig.ombGrabQueue + 1] = self.id
 		hb.queueEmpty = true
 	end
 end
