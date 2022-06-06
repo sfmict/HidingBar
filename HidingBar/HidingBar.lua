@@ -2848,11 +2848,6 @@ setmetatable(hb.bars, {__index = function(self, key)
 	bar.gap:SetScript("OnEnter", gap_OnEnter)
 	bar.gap:SetScript("OnLeave", gap_OnLeave)
 
-	-- GAP DEBUG
-	-- bar.gap.bg = bar.gap:CreateTexture(nil, "BACKGROUND")
-	-- bar.gap.bg:SetAllPoints()
-	-- bar.gap.bg:SetColorTexture(0, 1, 0)
-
 	bar.id = key
 	self[key] = bar
 	return bar

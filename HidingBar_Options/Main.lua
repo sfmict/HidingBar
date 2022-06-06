@@ -1824,7 +1824,7 @@ end)
 
 -- THE BUTTON CAN BE CRABBED
 main.canGrabbed = CreateFrame("CheckButton", nil, main.positionBarPanel, "HidingBarAddonCheckButtonTemplate")
-main.canGrabbed:SetPoint("TOPLEFT", main.distanceFromButtonToBar, "BOTTOMLEFT", -2, -2)
+main.canGrabbed:SetPoint("TOPLEFT", main.distanceFromButtonToBar, "BOTTOMLEFT", -2, -8)
 main.canGrabbed.Text:SetText(L["The button can be grabbed"])
 main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
 main.canGrabbed:SetScript("OnClick", function(btn)
