@@ -179,6 +179,7 @@
 
 	<Slider name="HidingBarAddonSliderTemplate" inherits="HorizontalSliderTemplate" virtual="true">
 		<Size x="500" y="17"/>
+		<HitRectInsets left="0" right="0" top="-4" bottom="-4"/>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString parentKey="text" inherits="GameFontNormalSmall">

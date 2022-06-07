@@ -185,7 +185,7 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 		self:GetParent():Hide()
 	end,
 	OnShow = function(self)
-		self.editBox:SetText(L["Bar"].." "..(#main.currentProfile.bars + 1))
+		self.editBox:SetText(L["Bar"].." "..(#main.pBars + 1))
 		self.editBox:HighlightText()
 	end,
 }
@@ -462,7 +462,7 @@ barCombobox:ddSetInitFunc(function(self)
 	if not main.currentBar.isDefault then
 		info.text = L["Set as default"]
 		info.func = function()
-			for _, bar in ipairs(main.currentProfile.bars) do
+			for _, bar in ipairs(main.pBars) do
 				bar.isDefault = nil
 			end
 			main.currentBar.isDefault = true
@@ -865,7 +865,7 @@ end)
 
 -- LOCK
 local lock = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -10)
+lock:SetPoint("TOPLEFT", orientationText, "BOTTOMLEFT", 0, -13)
 lock.Text:SetText(L["Lock the bar's location"])
 lock:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
@@ -878,55 +878,9 @@ hb:on("LOCK_UPDATED", function(_, isLocked, bar)
 	end
 end)
 
--- SHOW HANDLER TEXT
-local showHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-showHandlerText:SetPoint("TOPLEFT", lock, "BOTTOMLEFT", 0, -10)
-showHandlerText:SetText(L["Show on"])
-
--- SHOW HANDLER
-local showHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
-showHandlerCombobox:SetPoint("LEFT", showHandlerText, "RIGHT", 3, 0)
-showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], L["Allways"]}
-
-local function updateShowHandler(btn)
-	showHandlerCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame.drag:setShowHandler(btn.value)
-end
-
-showHandlerCombobox:ddSetInitFunc(function(self)
-	local info = {}
-	for i = 0, #self.texts do
-		info.text = self.texts[i]
-		info.value = i
-		info.func = updateShowHandler
-		self:ddAddButton(info)
-	end
-end)
-
--- DELAY TO SHOW
-local delayToShowText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-delayToShowText:SetPoint("LEFT", showHandlerCombobox, "RIGHT", 10, 0)
-delayToShowText:SetText(L["Delay to show"])
-
-local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
-delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
-delayToShowEditBox:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		main.bConfig.showDelay = tonumber(decimalText) or 0
-	end
-end)
-delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
-	editBox:SetNumber(main.bConfig.showDelay)
-	editBox:HighlightText(0, 0)
-end)
-
 -- HIDE HANDLER TEXT
 local hideHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-hideHandlerText:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -margin)
+hideHandlerText:SetPoint("TOPLEFT", lock, "BOTTOMLEFT", 0, -10)
 hideHandlerText:SetText(L["Hide by"])
 
 -- HIDE HANDLER
@@ -937,6 +891,7 @@ hideHandlerCombobox.texts = {[0] = L["Timer"], L["Clicking on a free place"], L[
 local function updatehideHandler(btn)
 	hideHandlerCombobox:ddSetSelectedValue(btn.value)
 	main.bConfig.hideHandler = btn.value
+	main:hidingBarUpdate()
 end
 
 hideHandlerCombobox:ddSetInitFunc(function(self)
@@ -970,9 +925,56 @@ delayToHideEditBox:SetScript("OnEditFocusLost", function(editBox)
 	editBox:HighlightText(0, 0)
 end)
 
+-- SHOW HANDLER TEXT
+local showHandlerText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+showHandlerText:SetPoint("TOPLEFT", hideHandlerText, "BOTTOMLEFT", 0, -margin)
+showHandlerText:SetText(L["Show on"])
+
+-- SHOW HANDLER
+local showHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+showHandlerCombobox:SetPoint("LEFT", showHandlerText, "RIGHT", 3, 0)
+showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], L["Allways"]}
+
+local function updateShowHandler(btn)
+	showHandlerCombobox:ddSetSelectedValue(btn.value)
+	main.barFrame.drag:setShowHandler(btn.value)
+	main.lineColor.updateLineColor()
+end
+
+showHandlerCombobox:ddSetInitFunc(function(self)
+	local info = {}
+	for i = 0, #self.texts do
+		info.text = self.texts[i]
+		info.value = i
+		info.func = updateShowHandler
+		self:ddAddButton(info)
+	end
+end)
+
+-- DELAY TO SHOW
+local delayToShowText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+delayToShowText:SetPoint("LEFT", showHandlerCombobox, "RIGHT", 10, 0)
+delayToShowText:SetText(L["Delay to show"])
+
+local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
+delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
+delayToShowEditBox:SetScript("OnTextChanged", function(editBox, userInput)
+	if userInput then
+		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
+		if int == "" and dec ~= "" then int = "0" end
+		local decimalText = int..dec
+		editBox:SetNumber(decimalText)
+		main.bConfig.showDelay = tonumber(decimalText) or 0
+	end
+end)
+delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
+	editBox:SetNumber(main.bConfig.showDelay)
+	editBox:HighlightText(0, 0)
+end)
+
 -- FADE
 main.fade = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-main.fade:SetPoint("TOPLEFT", hideHandlerText, "BOTTOMLEFT", 0, -15)
+main.fade:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -13)
 main.fade:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
@@ -996,7 +998,7 @@ main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -- ALIGN
-alignText(orientationText, showHandlerText, hideHandlerText)
+alignText(orientationText, hideHandlerText, showHandlerText)
 
 -------------------------------------------
 -- BAR DISPLAY SETTINGS
@@ -1223,31 +1225,35 @@ lineTextureCombobox:ddSetInitFunc(function(self)
 end)
 
 -- LINE COLOR
-local lineColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
-lineColor:SetPoint("LEFT", lineTextureCombobox, "RIGHT", 3, 2)
+main.lineColor = CreateFrame("BUTTON", nil, main.displayPanel, "HidingBarAddonColorButton")
+main.lineColor:SetPoint("LEFT", lineTextureCombobox, "RIGHT", 3, 2)
 
-lineColor.updateLineColor = function()
+main.lineColor.updateLineColor = function()
 	local hexColor = toHex(main.bConfig.lineColor)
 	main.helpPlate.tooltipTitle = L["SETTINGS_DESCRIPTION"]:format(hexColor)
-	main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+	if main.bConfig.showHandler == 3 then
+		main.fade.Text:SetText(L["Fade out bar"])
+	else
+		main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
+	end
 	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
 	main.lineBorderOffset.text:SetText(L["Line Border Offset"]:format(hexColor))
 	main.lineBorderSize.text:SetText(L["Line Border Size"]:format(hexColor))
 	main.gapSize.text:SetText(L["Distance from line to bar"]:format(hexColor))
-	lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
-	main:hidingBarUpdate()
+	main.lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
 end
 
-lineColor:SetScript("OnClick", function()
+main.lineColor:SetScript("OnClick", function()
 	showColorPicker(main.bConfig.lineColor, function(...)
 		main.barFrame:setLineTexture(nil, ...)
-		lineColor.updateLineColor()
+		main.lineColor.updateLineColor()
+		main:hidingBarUpdate()
 	end)
 end)
 
 -- LINE WIDTH
 main.lineWidth = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.lineWidth:SetPoint("LEFT", lineColor, "RIGHT", 10, -2.5)
+main.lineWidth:SetPoint("LEFT", main.lineColor, "RIGHT", 10, -2.5)
 main.lineWidth:SetPoint("RIGHT", -35, 0)
 main.lineWidth:SetMinMaxValues(4, 20)
 main.lineWidth.edit:SetMaxLetters(2)
@@ -1518,7 +1524,7 @@ end)
 
 -- INTERCEPT THE POSITION OF TOOLTIPS
 local interceptTooltip = CreateFrame("CheckButton", nil, main.buttonSettingsPanel, "HidingBarAddonCheckButtonTemplate")
-interceptTooltip:SetPoint("TOPLEFT", mbtnPostionText, "BOTTOMLEFT", 0, -15)
+interceptTooltip:SetPoint("TOPLEFT", mbtnPostionText, "BOTTOMLEFT", 0, -13)
 interceptTooltip.Text:SetText(L["Intercept the position of tooltips"])
 interceptTooltip:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
@@ -1576,6 +1582,7 @@ local function updateBarTypePosition()
 	main.likeMB.check:SetShown(main.bConfig.barTypePosition == 2)
 	main.ombShowToCombobox:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombSize:SetEnabled(main.bConfig.barTypePosition == 2)
+	main.distanceFromButtonToBar:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.canGrabbed:SetEnabled(main.bConfig.barTypePosition == 2)
 end
 
@@ -1587,12 +1594,17 @@ main.attachedToSide:SetScript("OnClick", function()
 	main.barFrame:setBarCoords(nil, 0)
 	main.barFrame:setBarTypePosition(0)
 	main:applyLayout(.3)
-	if main.barFrame.omb and main.barFrame.omb.isGrabbed then
-		for i, btn in ipairs(main.mbuttons) do
-			if btn.rButton == main.barFrame.omb then
-				main:removeMButton(btn, i)
-				break
+	if main.barFrame.omb then
+		if main.barFrame.omb.isGrabbed then
+			for i, btn in ipairs(main.mbuttons) do
+				if btn.rButton == main.barFrame.omb then
+					main:removeMButton(btn, i)
+					break
+				end
 			end
+		end
+		if main.bConfig.omb.canGrabbed then
+			main:removeOmbGrabQueue(main.barFrame.id)
 		end
 	end
 	hb:updateBars()
@@ -1607,12 +1619,17 @@ main.freeMove.Text:SetText(L["Bar moves freely"])
 main.freeMove:SetScript("OnClick", function()
 	main.barFrame:setBarTypePosition(1)
 	main:applyLayout(.3)
-	if main.barFrame.omb and main.barFrame.omb.isGrabbed then
-		for i, btn in ipairs(main.mbuttons) do
-			if btn.rButton == main.barFrame.omb then
-				main:removeMButton(btn, i)
-				break
+	if main.barFrame.omb then
+		if main.barFrame.omb.isGrabbed then
+			for i, btn in ipairs(main.mbuttons) do
+				if btn.rButton == main.barFrame.omb then
+					main:removeMButton(btn, i)
+					break
+				end
 			end
+		end
+		if main.bConfig.omb.canGrabbed then
+			main:removeOmbGrabQueue(main.barFrame.id)
 		end
 	end
 	hb:updateBars()
@@ -1730,8 +1747,10 @@ main.likeMB:SetPoint("TOPLEFT", main.hideToCombobox, "BOTTOMLEFT", -23, -4)
 main.likeMB.Text:SetText(L["Bar like a minimap button"])
 main.likeMB:SetScript("OnClick", function()
 	main.barFrame:setBarTypePosition(2)
+	main.barFrame:setGapPosition()
 	main:applyLayout(.3)
 	if main.bConfig.omb.canGrabbed and not main.barFrame.omb.isGrabbed then
+		main:addOmbGrabQueue(main.barFrame.id)
 		if hb:grabOwnButton(main.barFrame.omb) then
 			hb:sort()
 			main.barFrame.omb:GetParent():setButtonSize()
@@ -1785,17 +1804,35 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 	end
 end)
 
+-- SLIDER DISTANCE FROM BUTTON TO BAR
+main.distanceFromButtonToBar = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
+main.distanceFromButtonToBar:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", 0, -12)
+main.distanceFromButtonToBar:SetPoint("RIGHT", -35, 0)
+main.distanceFromButtonToBar:SetMinMaxValues(-8, 32)
+main.distanceFromButtonToBar.text:SetText(L["Distance from button to bar"])
+main.distanceFromButtonToBar.edit:SetMaxLetters(2)
+main.distanceFromButtonToBar:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	slider:SetValue(value)
+	if main.bConfig.omb.distanceToBar ~= value then
+		main.bConfig.omb.distanceToBar = value
+		main.barFrame:setBarTypePosition()
+		main:hidingBarUpdate()
+	end
+end)
+
 -- THE BUTTON CAN BE CRABBED
 main.canGrabbed = CreateFrame("CheckButton", nil, main.positionBarPanel, "HidingBarAddonCheckButtonTemplate")
-main.canGrabbed:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", -2, -2)
+main.canGrabbed:SetPoint("TOPLEFT", main.distanceFromButtonToBar, "BOTTOMLEFT", -2, -8)
 main.canGrabbed.Text:SetText(L["The button can be grabbed"])
 main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
 main.canGrabbed:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	local omb = main.barFrame.omb
-	main.bConfig.omb.canGrabbed = btn:GetChecked()
+	main.bConfig.omb.canGrabbed = checked
 	if checked then
-		main.pConfig.ombGrabQueue[#main.pConfig.ombGrabQueue + 1] = main.barFrame.id
+		main:addOmbGrabQueue(main.barFrame.id)
 		if hb:grabOwnButton(omb) then
 			hb:sort()
 			omb:GetParent():setButtonSize()
@@ -1886,7 +1923,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 			main:setBar(main.currentBar)
 		end
 
-		for i, bar in ipairs(main.currentProfile.bars) do
+		for i, bar in ipairs(main.pBars) do
 			if bar ~= main.currentBar
 			and not (btn.name:match(hb.matchName)
 				and hb:isBarParent(btn.rButton, hb.barByName[bar.name]))
@@ -2055,7 +2092,7 @@ function main:createBar()
 	local dialog = StaticPopup_Show(self.addonName.."NEW_BAR", nil, nil, function(popup)
 		local text = popup.editBox:GetText()
 		if text and text ~= "" then
-			for _, bar in ipairs(self.currentProfile.bars) do
+			for _, bar in ipairs(self.pBars) do
 				if bar.name == text then
 					self.lastBarName = text
 					StaticPopup_Show(self.addonName.."BAR_EXISTS")
@@ -2063,10 +2100,14 @@ function main:createBar()
 				end
 			end
 			local bar = {name = text}
-			tinsert(self.currentProfile.bars, bar)
+			tinsert(self.pBars, bar)
+			self:updateBarsObjects(function()
+				sort(self.pBars, function(a, b) return a.name < b.name end)
+			end)
 			hb:checkProfile(self.currentProfile)
+			self:removeAllOMB()
 			hb:updateBars()
-			sort(self.currentProfile.bars, function(a, b) return a.name < b.name end)
+			self:setBar(self.currentBar)
 		end
 	end)
 	if dialog and self.lastBarName then
@@ -2079,13 +2120,14 @@ end
 
 function main:removeBar(barName)
 	StaticPopup_Show(self.addonName.."DELETE_BAR", NORMAL_FONT_COLOR:WrapTextInColorCode(barName), nil, function()
-		local barID
-		for i, bar in ipairs(self.currentProfile.bars) do
+		for i, bar in ipairs(self.pBars) do
 			if bar.name == barName then
-				barID = i
-				tremove(self.currentProfile.bars, i)
+				self:removeOmbGrabQueue(i)
+				self:updateBarsObjects(function()
+					tremove(self.pBars, i)
+				end)
 				if bar.isDefault then
-					self.currentProfile.bars[1].isDefault = true
+					self.pBars[1].isDefault = true
 				end
 				break
 			end
@@ -2100,12 +2142,7 @@ function main:removeBar(barName)
 				settings[3] = nil
 			end
 		end
-		self:removeOmbGrabQueue(barID)
-		for i, btn in ipairs(self.mbuttons) do
-			if btn.name:match(hb.matchName) then
-				self:removeMButton(btn, i)
-			end
-		end
+		self:removeAllOMB()
 		hb:updateBars()
 		if self.currentBar.name == barName then
 			self:setBar()
@@ -2129,8 +2166,6 @@ function main:setBar(bar)
 	if self.currentBar ~= bar then
 		self.currentBar = bar
 		self.bConfig = self.currentBar.config
-		self.barFrame = hb.barByName[self.currentBar.name]
-		self.direction = self.barFrame.direction
 		barCombobox:ddSetSelectedText(self.currentBar.name)
 
 		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture), true)
@@ -2167,8 +2202,8 @@ function main:setBar(bar)
 			tSizeY = 14,
 		}
 		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, lineFont)
-		lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
-		lineColor.updateLineColor()
+		main.lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
+		main.lineColor.updateLineColor()
 		self.lineWidth:SetValue(self.bConfig.lineWidth)
 		lineBorderCombobox:ddSetSelectedValue(self.bConfig.lineBorderEdge)
 		lineBorderCombobox:ddSetSelectedText(self.bConfig.lineBorderEdge or NONE)
@@ -2193,11 +2228,15 @@ function main:setBar(bar)
 		self.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
 		self.ombShowToCombobox:ddSetSelectedText(self.ombShowToCombobox.texts[self.bConfig.omb.anchor])
 		self.ombSize:SetValue(self.bConfig.omb.size)
+		self.distanceFromButtonToBar:SetValue(self.bConfig.omb.distanceToBar)
 		self.canGrabbed:SetChecked(self.bConfig.omb.canGrabbed)
 
 		updateBarTypePosition()
-		self:updateCoords()
 	end
+
+	self.barFrame = hb.barByName[self.currentBar.name]
+	self.direction = self.barFrame.direction
+	self:updateCoords()
 
 	for _, btn in ipairs(self.mixedButtons) do
 		local show = btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault
@@ -2212,12 +2251,48 @@ function main:setBar(bar)
 end
 
 
-function main:removeOmbGrabQueue(id)
+function main:updateBarsObjects(callback)
+	local curQueue = {}
+	for i = 1, #self.pConfig.ombGrabQueue do
+		curQueue[self.pBars[self.pConfig.ombGrabQueue[i]].name] =  i
+	end
+	local btnSettings = {}
+	for i = 1, #self.pBars do
+		local ombName = hb.ldbiPrefix..addon..i
+		btnSettings[self.pBars[i].name] = rawget(self.pConfig.mbtnSettings, ombName)
+		self.pConfig.mbtnSettings[ombName] = nil
+	end
+	callback()
+	for i = 1, #self.pBars do
+		local queue = curQueue[self.pBars[i].name]
+		if queue then
+			self.pConfig.ombGrabQueue[queue] = i
+		end
+		self.pConfig.mbtnSettings[hb.ldbiPrefix..addon..i] = btnSettings[self.pBars[i].name]
+	end
+end
+
+
+function main:addOmbGrabQueue(id)
 	for i = 1, #self.pConfig.ombGrabQueue do
 		if self.pConfig.ombGrabQueue[i] == id then
-			tremove(self.pConfig.ombGrabQueue, i)
-			break
+			return
 		end
+	end
+	self.pConfig.ombGrabQueue[#self.pConfig.ombGrabQueue + 1] = id
+end
+
+
+function main:removeOmbGrabQueue(id)
+	local i = 1
+	local barID = self.pConfig.ombGrabQueue[i]
+	while barID do
+		if barID == id then
+			tremove(self.pConfig.ombGrabQueue, i)
+		else
+			i = i + 1
+		end
+		barID = self.pConfig.ombGrabQueue[i]
 	end
 end
 
@@ -2238,6 +2313,20 @@ hb:on("COORDS_UPDATED", function(_, bar)
 		main:updateCoords()
 	end
 end)
+
+
+function main:removeAllOMB()
+	local i = 1
+	local btn = self.mbuttons[i]
+	while btn do
+		if btn.name:match(hb.matchName) and btn.rButton.isGrabbed then
+			self:removeMButton(btn, i)
+		else
+			i = i + 1
+		end
+		btn = self.mbuttons[i]
+	end
+end
 
 
 function main:removeMButtonByName(name, update)
@@ -2359,7 +2448,7 @@ end
 
 
 function main:hidingBarUpdate()
-	for i = 1, #self.currentProfile.bars do
+	for i = 1, #self.pBars do
 		local bar = hb.bars[i]
 		bar:enter()
 		bar:leave(math.max(1.5, bar.config.hideDelay))
@@ -2572,7 +2661,7 @@ do
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.rButton = button
 		btn.name = name
-		btn.title = name:gsub("LibDBIcon10_", "")
+		btn.title = name:gsub(hb.ldbiPrefix, "")
 		local atlas = icon:GetAtlas()
 		if atlas then
 			btn.icon:SetAtlas(atlas)
