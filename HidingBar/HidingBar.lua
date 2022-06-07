@@ -10,7 +10,8 @@ local btnSettingsMeta = {__index = function(self, key)
 end}
 local createdButtonsByName, btnSettings, btnParams = {}, {}, {}
 local noGMEFrames = {}
-hb.matchName = "LibDBIcon10_"..addon.."%d+$"
+hb.ldbiPrefix = "LibDBIcon10_"
+hb.matchName = hb.ldbiPrefix..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
 hb.manuallyButtons = {}
 hb.bars, hb.barByName = {}, {}
@@ -452,6 +453,18 @@ function hb:checkProfile(profile)
 		end
 		bar.config.omb.anchor = bar.config.omb.anchor or "right"
 		bar.config.omb.size = bar.config.omb.size or 31
+		bar.config.omb.distanceToBar = bar.config.omb.distanceToBar or 0
+	end
+
+	local ombGrabQueue =  profile.config.ombGrabQueue
+	for i = 1, #ombGrabQueue do
+		if type(ombGrabQueue[i]) ~= "number" then
+			for j = 1, #profile.bars do
+				if ombGrabQueue[i] == profile.bars[j].name then
+					ombGrabQueue[i] = j
+				end
+			end
+		end
 	end
 end
 
@@ -501,14 +514,12 @@ function hb:init()
 	end
 
 	if self.pConfig.grabMinimap then
-		if ldbi then
-			local ldbiTbl = ldbi:GetButtonList()
-			for i = 1, #ldbiTbl do
-				local button = ldbi:GetMinimapButton(ldbiTbl[i])
-				if self:ignoreCheck(self.GetName(button)) then
-					self.minimapButtons[button[0]] = button
-					self:setHooks(button)
-				end
+		local ldbiTbl = ldbi:GetButtonList()
+		for i = 1, #ldbiTbl do
+			local button = ldbi:GetMinimapButton(ldbiTbl[i])
+			if self:ignoreCheck(self.GetName(button)) then
+				self.minimapButtons[button[0]] = button
+				self:setHooks(button)
 			end
 		end
 
@@ -1563,6 +1574,35 @@ end
 
 
 -------------------------------------------
+-- FRAME FADE
+-------------------------------------------
+local function fade(self, elapsed)
+	self.timer = self.timer - elapsed
+	if self.timer <= 0 then
+		self:SetScript("OnUpdate", nil)
+		self:SetAlpha(self.endAlpha)
+	else
+		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer / self.delay)
+	end
+end
+
+
+function frameFade(self, delay, endAlpha)
+	self.timer = delay
+	self.delay = delay
+	self.endAlpha = endAlpha
+	self.deltaAlpha = endAlpha - self:GetAlpha()
+	self:SetScript("OnUpdate", fade)
+end
+
+
+function frameFadeStop(self, alpha)
+	self:SetScript("OnUpdate", nil)
+	self:SetAlpha(alpha)
+end
+
+
+-------------------------------------------
 -- HIDINGBAR MIXIN
 -------------------------------------------
 local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
@@ -1647,6 +1687,7 @@ function hidingBarMixin:setOMBAnchor(anchor)
 	self:setButtonDirection()
 	self:applyLayout()
 	self:setBarTypePosition()
+	self:setGapPosition()
 end
 
 
@@ -1887,18 +1928,39 @@ end
 function hidingBarMixin:setGapPosition(gapSize)
 	if gapSize then self.config.gapSize = gapSize end
 
-	if self.config.anchor == "left" then
-		self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
-		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
-	elseif self.config.anchor == "right" then
-		self.gap:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
-		self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
-	elseif self.config.anchor == "top" then
-		self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
-		self.gap:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
+	self.gap:ClearAllPoints()
+	if self.config.barTypePosition == 2 then
+		if self.config.omb.anchor == "left" then
+			self.gap:SetPoint("TOPRIGHT", self, "TOPLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+			self.gap:SetPoint("LEFT", self.omb, "RIGHT")
+		elseif self.config.omb.anchor == "right" then
+			self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
+			self.gap:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT")
+			self.gap:SetPoint("RIGHT", self.omb, "LEFT")
+		elseif self.config.omb.anchor == "top" then
+			self.gap:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+			self.gap:SetPoint("TOP", self.omb, "BOTTOM")
+		else
+			self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+			self.gap:SetPoint("TOPRIGHT", self, "BOTTOMRIGHT")
+			self.gap:SetPoint("BOTTOM", self.omb, "TOP")
+		end
 	else
-		self.gap:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
-		self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+		if self.config.anchor == "left" then
+			self.gap:SetPoint("TOPLEFT", self, "TOPRIGHT")
+			self.gap:SetPoint("BOTTOMRIGHT", self.drag, "BOTTOMLEFT")
+		elseif self.config.anchor == "right" then
+			self.gap:SetPoint("TOPLEFT", self.drag, "TOPRIGHT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT")
+		elseif self.config.anchor == "top" then
+			self.gap:SetPoint("TOPLEFT", self, "BOTTOMLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self.drag, "TOPRIGHT")
+		else
+			self.gap:SetPoint("TOPLEFT", self.drag, "BOTTOMLEFT")
+			self.gap:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT")
+		end
 	end
 
 	self:updateDragBarPosition()
@@ -1913,17 +1975,24 @@ end
 
 function hidingBarMixin:setFade(fade)
 	self.config.fade = fade
+	if self.config.showHandler == 3 then
+		if fade then
+			frameFade(self, 1.5, self.config.fadeOpacity)
+		else
+			frameFadeStop(self, 1)
+		end
+	end
 	if fade and self.drag:IsShown() then
-		self.drag:fade(1.5, self.config.fadeOpacity)
+		frameFade(self.drag, 1.5, self.config.fadeOpacity)
 	else
-		self.drag:stopFade(1)
+		frameFadeStop(self.drag, 1)
 	end
 end
 
 
 function hidingBarMixin:setFadeOpacity(opacity)
 	self.config.fadeOpacity = opacity
-	self.drag:stopFade(opacity)
+	frameFadeStop(self.config.showHandler == 3 and self or self.drag, opacity)
 end
 
 
@@ -2040,7 +2109,6 @@ function hidingBarMixin:applyLayout()
 				self:setPointBtn(btn, i, orientation)
 			end
 		end
-		self.shown = i ~= 0
 		maxButtons = i
 		line = math.ceil(i / self.config.size)
 	else
@@ -2059,14 +2127,13 @@ function hidingBarMixin:applyLayout()
 				self:setPointBtn(btn, j + orderDelta, orientation)
 			end
 		end
-		self.shown = i + j ~= 0
 		maxButtons = followed and i + j or i > j and i or j
 		line = math.ceil((j + orderDelta) / self.config.size)
 	end
 
-	self:refreshShown()
-
-	if maxButtons > self.config.size then maxButtons = self.config.size end
+	if maxButtons > self.config.size then maxButtons = self.config.size
+	elseif maxButtons < 1 then maxButtons = 1 end
+	if line < 1 then line = 1 end
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
 	local offset = self.barOffset * 2 - self.config.rangeBetweenBtns
 	local width = maxButtons * buttonSize + offset
@@ -2257,16 +2324,16 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		end
 
 		if self.config.omb.anchor == "left" then
-			secondPosition = btnSize
+			secondPosition = btnSize + self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowright"
 		elseif self.config.omb.anchor == "right" then
-			secondPosition = -btnSize
+			secondPosition = -btnSize - self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowleft"
 		elseif self.config.omb.anchor == "top" then
-			secondPosition = -btnSize
+			secondPosition = -btnSize - self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowdown"
 		else
-			secondPosition = btnSize
+			secondPosition = btnSize + self.config.omb.distanceToBar
 			self.ldb_icon.icon = "Interface/Icons/misc_arrowlup"
 		end
 
@@ -2286,6 +2353,7 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 	if typePosition then
 		self:setButtonDirection()
 		self:applyLayout()
+		self:refreshShown()
 	end
 	self:updateBarPosition()
 end
@@ -2459,12 +2527,19 @@ end
 
 
 function hidingBarMixin:enter(force)
-	if not self.isDrag and self.shown and (self.config.showHandler ~= 3 or force) then
-		self.drag:stopFade(1)
-		self:SetScript("OnUpdate", nil)
-		self:Show()
-		self:Raise()
-		self:updateDragBarPosition()
+	if not self.isDrag then
+		if self.config.showHandler ~= 3 or force then
+			frameFadeStop(self.drag, 1)
+			self:SetScript("OnUpdate", nil)
+			self:Show()
+			self:Raise()
+			self:updateDragBarPosition()
+		else
+			frameFadeStop(self, 1)
+			if self.drag:IsShown() then
+				frameFadeStop(self.drag, 1)
+			end
+		end
 	end
 end
 
@@ -2476,46 +2551,60 @@ function hidingBarMixin:hideBar(elapsed)
 		self:updateDragBarPosition()
 		self:SetScript("OnUpdate", nil)
 		if self.config.fade and self.drag:IsShown() then
-			self.drag:fade(1.5, self.config.fadeOpacity)
+			frameFade(self.drag, 1.5, self.config.fadeOpacity)
 		end
 	end
 end
 
 
 function hidingBarMixin:leave(timer)
-	if not self.isDrag and self:IsShown() and self.config.showHandler ~= 3 and self.config.hideHandler ~= 1 then
-		self.timer = timer or self.config.hideDelay
-		self:SetScript("OnUpdate", self.hideBar)
+	if not self.isDrag and self:IsShown() then
+		if self.config.showHandler == 3 then
+			if self.config.fade then
+				frameFade(self, 1.5, self.config.fadeOpacity)
+				if self.drag:IsShown() then
+					frameFade(self.drag, 1.5, self.config.fadeOpacity)
+				end
+			end
+		elseif self.config.hideHandler ~= 1 then
+			self.timer = timer or self.config.hideDelay
+			self:SetScript("OnUpdate", self.hideBar)
+		end
 	end
 end
 
 
 function hidingBarMixin:refreshShown()
-	if not self.shown then
-		self:Hide()
-		self.drag:Hide()
-	elseif self.config.barTypePosition == 2 then
+	if self.config.barTypePosition == 2 then
 		self.drag:Hide()
 		if self.config.showHandler == 3 then
 			self:enter(true)
-		elseif self:IsShown() and not self.isMouse then
 			self:leave()
-		end
-	elseif self.config.showHandler == 3 then
-		self:enter(true)
-		self.drag:SetShown(not self.config.lock)
-	else
-		if self:IsShown() then
+		elseif self:IsShown() then
+			frameFadeStop(self, 1)
+			self:GetScript("OnShow")(self)
 			if not self.isMouse then
 				self:leave()
 			end
+		end
+	elseif self.config.showHandler == 3 then
+		self.drag:SetShown(not self.config.lock)
+		if self:IsShown() then
+			self:SetScript("OnUpdate", nil)
 		else
-			self:updateDragBarPosition()
-			if self.config.fade then
-				self.drag:fade(1.5, self.config.fadeOpacity)
+			self:enter(true)
+		end
+		self:leave()
+	else
+		self.drag:Show()
+		if self:IsShown() then
+			frameFadeStop(self.drag, 1)
+			frameFadeStop(self, 1)
+			self:GetScript("OnShow")(self)
+			if not self.isMouse then
+				self:leave()
 			end
 		end
-		self.drag:Show()
 	end
 end
 
@@ -2526,38 +2615,12 @@ end
 local hidingBarDragMixin = {}
 
 
-local function fade(self, elapsed)
-	self.timer = self.timer - elapsed
-	if self.timer <= 0 then
-		self:SetScript("OnUpdate", nil)
-		self:SetAlpha(self.endAlpha)
-	else
-		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer / self.delay)
-	end
-end
-
-
-function hidingBarDragMixin:fade(delay, endAlpha)
-	self.timer = delay
-	self.delay = delay
-	self.endAlpha = endAlpha
-	self.deltaAlpha = endAlpha - self:GetAlpha()
-	self:SetScript("OnUpdate", fade)
-end
-
-
-function hidingBarDragMixin:stopFade(alpha)
-	self:SetScript("OnUpdate", nil)
-	self:SetAlpha(alpha)
-end
-
-
 function hidingBarDragMixin:hoverWithClick()
 	local bar = self.bar
 	if bar:IsShown() then
 		bar:enter()
 	elseif self:IsShown() and bar.config.fade then
-		self:fade(bar.config.showDelay, 1)
+		frameFade(self, bar.config.showDelay, 1)
 	end
 end
 
@@ -2582,7 +2645,7 @@ do
 			bar:enter()
 		else
 			if self:IsShown() and bar.config.fade then
-				self:fade(bar.config.showDelay, 1)
+				frameFade(self, bar.config.showDelay, 1)
 			end
 			hb.tBar = bar
 			hb.timer = bar.config.showDelay
@@ -2653,7 +2716,7 @@ local function bar_OnEvent(self, event, button)
 		self:updateDragBarPosition()
 		self:SetScript("OnUpdate", nil)
 		if self.config.fade and self.drag:IsShown() then
-			self.drag:fade(1.5, self.config.fadeOpacity)
+			frameFade(self.drag, 1.5, self.config.fadeOpacity)
 		end
 	end
 end
@@ -2726,20 +2789,18 @@ local function drag_OnLeave(self)
 	hb:SetScript("OnUpdate", nil)
 	local bar = self.bar
 	if bar.config.fade and not bar:IsShown() and self:IsShown() then
-		self:fade(bar.config.showDelay, bar.config.fadeOpacity)
+		frameFade(self, bar.config.showDelay, bar.config.fadeOpacity)
 	end
 	bar:leave()
 end
 
 
 local function gap_OnEnter(self)
-	self.bar.isMouse = true
 	self.bar:enter()
 end
 
 
 local function gap_OnLeave(self)
-	self.bar.isMouse = false
 	self.bar:leave()
 end
 
@@ -2773,6 +2834,7 @@ setmetatable(hb.bars, {__index = function(self, key)
 
 	bar.gap = CreateFrame("FRAME", nil, bar)
 	bar.gap.bar = bar
+	bar.gap:SetFrameLevel(bar:GetFrameLevel())
 	bar.gap:SetMouseMotionEnabled(true)
 	bar.gap:SetScript("OnEnter", gap_OnEnter)
 	bar.gap:SetScript("OnLeave", gap_OnLeave)
