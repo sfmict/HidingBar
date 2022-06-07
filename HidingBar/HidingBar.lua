@@ -10,7 +10,8 @@ local btnSettingsMeta = {__index = function(self, key)
 end}
 local createdButtonsByName, btnSettings, btnParams = {}, {}, {}
 local noGMEFrames = {}
-hb.matchName = "LibDBIcon10_"..addon.."%d+$"
+hb.ldbiPrefix = "LibDBIcon10_"
+hb.matchName = hb.ldbiPrefix..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
 hb.manuallyButtons = {}
 hb.bars, hb.barByName = {}, {}
@@ -2108,7 +2109,6 @@ function hidingBarMixin:applyLayout()
 				self:setPointBtn(btn, i, orientation)
 			end
 		end
-		self.shown = i ~= 0
 		maxButtons = i
 		line = math.ceil(i / self.config.size)
 	else
@@ -2127,14 +2127,13 @@ function hidingBarMixin:applyLayout()
 				self:setPointBtn(btn, j + orderDelta, orientation)
 			end
 		end
-		self.shown = i + j ~= 0
 		maxButtons = followed and i + j or i > j and i or j
 		line = math.ceil((j + orderDelta) / self.config.size)
 	end
 
-	self:refreshShown()
-
-	if maxButtons > self.config.size then maxButtons = self.config.size end
+	if maxButtons > self.config.size then maxButtons = self.config.size
+	elseif maxButtons < 1 then maxButtons = 1 end
+	if line < 1 then line = 1 end
 	local buttonSize = self.config.buttonSize + self.config.rangeBetweenBtns
 	local offset = self.barOffset * 2 - self.config.rangeBetweenBtns
 	local width = maxButtons * buttonSize + offset
@@ -2354,6 +2353,7 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 	if typePosition then
 		self:setButtonDirection()
 		self:applyLayout()
+		self:refreshShown()
 	end
 	self:updateBarPosition()
 end
@@ -2527,7 +2527,7 @@ end
 
 
 function hidingBarMixin:enter(force)
-	if not self.isDrag and self.shown then
+	if not self.isDrag then
 		if self.config.showHandler ~= 3 or force then
 			frameFadeStop(self.drag, 1)
 			self:SetScript("OnUpdate", nil)
@@ -2575,10 +2575,7 @@ end
 
 
 function hidingBarMixin:refreshShown()
-	if not self.shown then
-		self:Hide()
-		self.drag:Hide()
-	elseif self.config.barTypePosition == 2 then
+	if self.config.barTypePosition == 2 then
 		self.drag:Hide()
 		if self.config.showHandler == 3 then
 			self:enter(true)
@@ -2606,11 +2603,6 @@ function hidingBarMixin:refreshShown()
 			self:GetScript("OnShow")(self)
 			if not self.isMouse then
 				self:leave()
-			end
-		else
-			self:updateDragBarPosition()
-			if self.config.fade then
-				frameFade(self.drag, 1.5, self.config.fadeOpacity)
 			end
 		end
 	end
@@ -2804,13 +2796,11 @@ end
 
 
 local function gap_OnEnter(self)
-	self.bar.isMouse = true
 	self.bar:enter()
 end
 
 
 local function gap_OnLeave(self)
-	self.bar.isMouse = false
 	self.bar:leave()
 end
 
@@ -2844,6 +2834,7 @@ setmetatable(hb.bars, {__index = function(self, key)
 
 	bar.gap = CreateFrame("FRAME", nil, bar)
 	bar.gap.bar = bar
+	bar.gap:SetFrameLevel(bar:GetFrameLevel())
 	bar.gap:SetMouseMotionEnabled(true)
 	bar.gap:SetScript("OnEnter", gap_OnEnter)
 	bar.gap:SetScript("OnLeave", gap_OnLeave)

@@ -2258,7 +2258,7 @@ function main:updateBarsObjects(callback)
 	end
 	local btnSettings = {}
 	for i = 1, #self.pBars do
-		local ombName = "LibDBIcon10_"..addon..i
+		local ombName = hb.ldbiPrefix..addon..i
 		btnSettings[self.pBars[i].name] = rawget(self.pConfig.mbtnSettings, ombName)
 		self.pConfig.mbtnSettings[ombName] = nil
 	end
@@ -2268,7 +2268,7 @@ function main:updateBarsObjects(callback)
 		if queue then
 			self.pConfig.ombGrabQueue[queue] = i
 		end
-		self.pConfig.mbtnSettings["LibDBIcon10_"..addon..i] = btnSettings[self.pBars[i].name]
+		self.pConfig.mbtnSettings[hb.ldbiPrefix..addon..i] = btnSettings[self.pBars[i].name]
 	end
 end
 
@@ -2661,7 +2661,7 @@ do
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigMButtonTemplate")
 		btn.rButton = button
 		btn.name = name
-		btn.title = name:gsub("LibDBIcon10_", "")
+		btn.title = name:gsub(hb.ldbiPrefix, "")
 		local atlas = icon:GetAtlas()
 		if atlas then
 			btn.icon:SetAtlas(atlas)
