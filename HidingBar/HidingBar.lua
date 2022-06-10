@@ -454,6 +454,7 @@ function hb:checkProfile(profile)
 		bar.config.omb.anchor = bar.config.omb.anchor or "right"
 		bar.config.omb.size = bar.config.omb.size or 31
 		bar.config.omb.distanceToBar = bar.config.omb.distanceToBar or 0
+		bar.config.omb.barDisplacement = bar.config.omb.barDisplacement or 0
 	end
 
 	local ombGrabQueue =  profile.config.ombGrabQueue
@@ -2339,7 +2340,7 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 
 		self.anchorObj = self.config.omb
 		self.rFrame = self.omb
-		self.position = position
+		self.position = position + self.config.omb.barDisplacement
 		self.secondPosition = secondPosition
 	else
 		self.config.omb.hide = true

@@ -1028,7 +1028,10 @@ backdropFrame:SetScript("OnHide", function(self)
 end)
 backdropFrame.setBackdrop = function(self, btn, backdrop)
 	if not btn.value then
-		if self.style then self.style:Show() end
+		if self.style then
+			self.style:Show()
+			self.style = nil
+		end
 		self:Hide()
 		return
 	end
@@ -1583,6 +1586,7 @@ local function updateBarTypePosition()
 	main.ombShowToCombobox:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombSize:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.distanceFromButtonToBar:SetEnabled(main.bConfig.barTypePosition == 2)
+	main.ombBarDisplacement:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.canGrabbed:SetEnabled(main.bConfig.barTypePosition == 2)
 end
 
@@ -1807,16 +1811,35 @@ end)
 -- SLIDER DISTANCE FROM BUTTON TO BAR
 main.distanceFromButtonToBar = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
 main.distanceFromButtonToBar:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", 0, -12)
-main.distanceFromButtonToBar:SetPoint("RIGHT", -35, 0)
-main.distanceFromButtonToBar:SetMinMaxValues(-8, 32)
+main.distanceFromButtonToBar:SetWidth(248)
+main.distanceFromButtonToBar:SetMinMaxValues(-32, 32)
 main.distanceFromButtonToBar.text:SetText(L["Distance from button to bar"])
-main.distanceFromButtonToBar.edit:SetMaxLetters(2)
+main.distanceFromButtonToBar.edit:SetMaxLetters(3)
+main.distanceFromButtonToBar.noLimit = true
 main.distanceFromButtonToBar:SetScript("OnValueChanged", function(slider, value, userInput)
 	if not userInput then return end
 	value = math.floor(value + .5)
 	slider:SetValue(value)
 	if main.bConfig.omb.distanceToBar ~= value then
 		main.bConfig.omb.distanceToBar = value
+		main.barFrame:setBarTypePosition()
+		main:hidingBarUpdate()
+	end
+end)
+
+main.ombBarDisplacement = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
+main.ombBarDisplacement:SetPoint("LEFT", main.distanceFromButtonToBar, "RIGHT", 38, 0)
+main.ombBarDisplacement:SetWidth(248)
+main.ombBarDisplacement:SetMinMaxValues(-32, 32)
+main.ombBarDisplacement.text:SetText(L["Bar offset relative to the button"])
+main.ombBarDisplacement.edit:SetMaxLetters(3)
+main.ombBarDisplacement.noLimit = true
+main.ombBarDisplacement:SetScript("OnValueChanged", function(slider, value, userInput)
+	if not userInput then return end
+	value = math.floor(value + .5)
+	slider:SetValue(value)
+	if main.bConfig.omb.barDisplacement ~= value then
+		main.bConfig.omb.barDisplacement = value
 		main.barFrame:setBarTypePosition()
 		main:hidingBarUpdate()
 	end
@@ -2229,6 +2252,7 @@ function main:setBar(bar)
 		self.ombShowToCombobox:ddSetSelectedText(self.ombShowToCombobox.texts[self.bConfig.omb.anchor])
 		self.ombSize:SetValue(self.bConfig.omb.size)
 		self.distanceFromButtonToBar:SetValue(self.bConfig.omb.distanceToBar)
+		self.ombBarDisplacement:SetValue(self.bConfig.omb.barDisplacement)
 		self.canGrabbed:SetChecked(self.bConfig.omb.canGrabbed)
 
 		updateBarTypePosition()
