@@ -886,7 +886,7 @@ hideHandlerText:SetText(L["Hide by"])
 -- HIDE HANDLER
 local hideHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
 hideHandlerCombobox:SetPoint("LEFT", hideHandlerText, "RIGHT", 3, 0)
-hideHandlerCombobox.texts = {[0] = L["Timer"], L["Clicking on a free place"], L["Timer or clicking on a free place"]}
+hideHandlerCombobox.texts = {[0] = L["Timer"], L["Clicking on a free place"], L["Timer or clicking on a free place"], L["Clicking on a line or button"]}
 
 local function updatehideHandler(btn)
 	hideHandlerCombobox:ddSetSelectedValue(btn.value)
@@ -937,8 +937,10 @@ showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], 
 
 local function updateShowHandler(btn)
 	showHandlerCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame.drag:setShowHandler(btn.value)
+	local bar = main.barFrame
+	bar.drag:setShowHandler(btn.value)
 	main.lineColor.updateLineColor()
+	bar:leave(math.max(1.5, bar.config.hideDelay))
 end
 
 showHandlerCombobox:ddSetInitFunc(function(self)
