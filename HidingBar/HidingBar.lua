@@ -2774,7 +2774,9 @@ local function drag_OnMouseDown(self, button)
 		end
 		if IsShiftKeyDown() then
 			config:openConfig()
-			config:setBar(bar.barSettings)
+			if config.setBar then
+				config:setBar(bar.barSettings)
+			end
 		end
 	end
 end
