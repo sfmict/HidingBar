@@ -452,6 +452,7 @@ function hb:checkProfile(profile)
 		bar.config.omb.anchor = bar.config.omb.anchor or "right"
 		bar.config.omb.size = bar.config.omb.size or 31
 		bar.config.omb.distanceToBar = bar.config.omb.distanceToBar or 0
+		bar.config.omb.barDisplacement = bar.config.omb.barDisplacement or 0
 	end
 
 	local ombGrabQueue =  profile.config.ombGrabQueue
@@ -628,6 +629,11 @@ function hb:updateBars()
 
 		if bar.barSettings.isDefault then
 			self.defaultBar = bar
+		end
+
+		bar:Hide()
+		if bar.config.fade then
+			bar.drag:SetAlpha(bar.config.fadeOpacity)
 		end
 	end
 
@@ -2201,7 +2207,7 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 
 		self.anchorObj = self.config.omb
 		self.rFrame = self.omb
-		self.position = position
+		self.position = position + self.config.omb.barDisplacement
 		self.secondPosition = secondPosition
 	else
 		self.config.omb.hide = true
@@ -2428,7 +2434,7 @@ function hidingBarMixin:leave(timer)
 					frameFade(self.drag, 1.5, self.config.fadeOpacity)
 				end
 			end
-		elseif self.config.hideHandler ~= 1 then
+		elseif self.config.hideHandler % 2 == 0 or timer then
 			self.timer = timer or self.config.hideDelay
 			self:SetScript("OnUpdate", self.hideBar)
 		end
@@ -2459,9 +2465,9 @@ function hidingBarMixin:refreshShown()
 		self:leave()
 	else
 		self.drag:Show()
+		frameFadeStop(self, 1)
 		if self:IsShown() then
 			frameFadeStop(self.drag, 1)
-			frameFadeStop(self, 1)
 			self:GetScript("OnShow")(self)
 			if not self.isMouse then
 				self:leave()
@@ -2487,8 +2493,20 @@ function hidingBarDragMixin:hoverWithClick()
 end
 
 
+function hidingBarDragMixin:hideOnClick()
+	local bar = self.bar
+	if bar:IsShown() and bar.config.hideHandler == 3 then
+		bar:Hide()
+		bar:updateDragBarPosition()
+		return true
+	end 
+end
+
+
 function hidingBarDragMixin:showOnClick()
-	self.bar:enter()
+	if not self:hideOnClick() then
+		self.bar:enter()
+	end
 end
 
 
@@ -2532,7 +2550,7 @@ function hidingBarDragMixin:setShowHandler(showHandler)
 		self:SetScript("OnClick", self.showOnClick)
 	else
 		self:SetScript("OnEnter", self.showOnHoverWithDelay)
-		self:SetScript("OnClick", nil)
+		self:SetScript("OnClick", self.hideOnClick)
 	end
 
 	bar:refreshShown()
@@ -2590,7 +2608,10 @@ local function bar_OnShow(self)
 	else
 		self:SetFrameLevel(100)
 	end
-	if self.config.showHandler == 3 or self.config.hideHandler == 0 then return end
+	if self.config.showHandler == 3
+	or self.config.hideHandler == 0
+	or self.config.hideHandler == 3
+	then return end
 	self:RegisterEvent("GLOBAL_MOUSE_DOWN")
 end
 
@@ -2615,7 +2636,9 @@ local function drag_OnMouseDown(self, button)
 		end
 		if IsShiftKeyDown() then
 			config:openConfig()
-			config:setBar(bar.barSettings)
+			if config.setBar then
+				config:setBar(bar.barSettings)
+			end
 		end
 	end
 end
@@ -2650,10 +2673,12 @@ end
 local function drag_OnLeave(self)
 	hb:SetScript("OnUpdate", nil)
 	local bar = self.bar
-	if bar.config.fade and not bar:IsShown() and self:IsShown() then
-		frameFade(self, bar.config.showDelay, bar.config.fadeOpacity)
+	if bar:IsShown() then
+		bar:leave()
+	elseif bar.config.fade and self:IsShown() then
+		local delay = bar.config.showDelay ~= 0 and bar.config.showDelay or 1.5
+		frameFade(self, delay, bar.config.fadeOpacity)
 	end
-	bar:leave()
 end
 
 

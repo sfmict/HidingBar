@@ -206,21 +206,24 @@
 							local int, dec = self:GetText():gsub(",", "."):match("(%-?%d*)(%.?%d*)")
 							if int == "" and dec ~= "" then int = "0" end
 							self:SetText(int..dec)
+						else
+							self.curValue = tonumber(self:GetText()) or 0
 						end
 					</OnTextChanged>
 					<OnEnterPressed>
 						local slider = self:GetParent()
 						local value = tonumber(self:GetText()) or 0
-						local min, max = slider:GetMinMaxValues()
-						if min > value then value = min
-						elseif value > max then value = max end
+						if not slider.noLimit then
+							local min, max = slider:GetMinMaxValues()
+							if min > value then value = min
+							elseif value > max then value = max end
+						end
+						self.curValue = value
 						slider:GetScript("OnValueChanged")(slider, value, true)
 						self:ClearFocus()
 					</OnEnterPressed>
 					<OnEditFocusLost>
-						local slider = self:GetParent()
-						local step = slider.step or 1
-						self:SetNumber(math.floor(slider:GetValue() * step + .5) / step)
+						self:SetNumber(self.curValue)
 					</OnEditFocusLost>
 				</Scripts>
 			</EditBox>
@@ -228,7 +231,7 @@
 		<Scripts>
 			<OnLoad inherit="prepend">
 				hooksecurefunc(self, "SetValue", function(self, value)
-					self.edit:SetText(value)
+					self.edit:SetNumber(value)
 				end)
 			</OnLoad>
 			<OnDisable>
