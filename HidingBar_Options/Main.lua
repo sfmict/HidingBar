@@ -1874,6 +1874,22 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		end
 		self:ddAddButton(info, level)
 
+		if btn.toIgnore or btn.manually then
+			info.disabled = hb.btnParams[btn.rButton].autoShowHideDisabled
+			info.text = L["Auto show/hide"]
+			info.checked = btn.settings[5]
+			info.func = function(_,_,_, checked)
+				btn.settings[5] = checked
+				main.barFrame:applyLayout()
+			end
+			info.OnTooltipShow = function(_, tooltip)
+				tooltip:AddLine(L["Allow the button to control its own visibility"], nil, nil, nil, true)
+			end
+			self:ddAddButton(info, level)
+
+			info.disabled = nil
+		end
+
 		info.notCheckable = true
 		info.keepShownOnClick = nil
 		info.OnTooltipShow = nil
@@ -2631,7 +2647,7 @@ do
 		if btn.isDrag then return end
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:SetText(btn.title)
-		GameTooltip:AddLine(L["Source:"]..btn.source, .3, .5, .7)
+		GameTooltip:AddLine(L["Source:"].." "..GRAY_FONT_COLOR:WrapTextInColorCode(btn.manually and L["Manually added"] or "Minimap"), .3, .5, .7)
 		GameTooltip:AddLine(L["BUTTON_TOOLTIP"], 1, 1, 1)
 		GameTooltip:Show()
 	end
@@ -2661,9 +2677,9 @@ do
 		btn:SetScript("OnDragStop", btnDragStop)
 		btn:SetScript("OnEnter", btnEnter)
 		contextmenu:ddSetNoGlobalMouseEvent(true, btn)
-		btn.toIgnore = not (hb.manuallyButtons[button] or name:match(hb.matchName))
-		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(hb.manuallyButtons[button] and L["Manually added"] or "Minimap")
+		btn.manually = hb.manuallyButtons[button]
 		hb.manuallyButtons[button] = nil
+		btn.toIgnore = not (btn.manually or name:match(hb.matchName))
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
@@ -2704,7 +2720,7 @@ function main:initMButtons(update)
 			          or button.Texture
 			          or button.background
 			          or button.Background
-			if not icon or not icon.GetTexture then
+			if not icon or not icon.GetTexture or not icon:GetTexture() then
 				icon = self.noIcon
 			end
 			self:createMButton(button, name, icon, update)

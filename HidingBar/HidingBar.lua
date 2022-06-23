@@ -8,12 +8,11 @@ local btnSettingsMeta = {__index = function(self, key)
 	self[key] = {tstmp = 0}
 	return self[key]
 end}
-local createdButtonsByName, btnSettings, btnParams = {}, {}, {}
-local noGMEFrames = {}
+local createdButtonsByName, btnSettings, noGMEFrames = {}, {}, {}
 hb.ldbiPrefix = "LibDBIcon10_"
 hb.matchName = hb.ldbiPrefix..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
-hb.manuallyButtons = {}
+hb.btnParams, hb.manuallyButtons = {}, {}
 hb.bars, hb.barByName = {}, {}
 local LibStub = LibStub
 hb.cb = LibStub("CallbackHandler-1.0"):New(hb, "on", "off")
@@ -399,6 +398,13 @@ function hb:checkProfile(profile)
 	profile.config.ombGrabQueue = profile.config.ombGrabQueue or {}
 	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, btnSettingsMeta)
 	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, btnSettingsMeta)
+	--[[ BTN SETTINGS OBJECT
+	[1] - is disabled
+	[2] - order
+	[3] - parent bar name
+	[4] - is cliped button
+	[5] - auto show/hide
+	]]
 
 	profile.bars = profile.bars or {
 		{name = L["Bar"].." 1", isDefault = true},
@@ -828,7 +834,7 @@ end
 
 function hb:grabDefButtons()
 	-- CALENDAR BUTTON
-	if self:ignoreCheck("GameTimeFrame") and not btnParams[GameTimeFrame] then
+	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		local GameTimeFrame = GameTimeFrame
 		local text = GameTimeFrame:GetFontString()
 		text:SetPoint("CENTER", 0, -1)
@@ -841,6 +847,7 @@ function hb:grabDefButtons()
 			GameTimeCalendarInvitesGlow.Show = nil
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
 		end)
+		p.tooltipFrame = GameTooltip
 		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
 		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
 			local bar = GameTimeFrame:GetParent()
@@ -867,7 +874,7 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	if self:ignoreCheck("MiniMapTracking") and not btnParams[MiniMapTracking] then
+	if self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
 		local MiniMapTracking = MiniMapTracking
 		local MiniMapTrackingButton = MiniMapTrackingButton
 		local icon = MiniMapTrackingIcon
@@ -918,28 +925,11 @@ function hb:grabDefButtons()
 	end
 
 	-- GARRISON BUTTON
-	if self:ignoreCheck("GarrisonLandingPageMinimapButton") and not btnParams[GarrisonLandingPageMinimapButton] then
+	if self:ignoreCheck("GarrisonLandingPageMinimapButton") and not self.btnParams[GarrisonLandingPageMinimapButton] then
 		local garrison = GarrisonLandingPageMinimapButton
-		garrison.show = garrison:IsShown()
 		self:setHooks(garrison)
-		garrison.Show = function(garrison)
-			if not garrison.show then
-				garrison.show = true
-				garrison:GetParent():applyLayout()
-			end
-		end
-		garrison.Hide = function(garrison)
-			if garrison.show then
-				garrison.show = false
-				garrison:GetParent():applyLayout()
-			end
-		end
-		garrison.IsShown = function(garrison)
-			local show = garrison.show and not btnSettings[garrison][1]
-			self.SetShown(garrison, show)
-			return show
-		end
-		self:setParams(garrison)
+		self:setParams(garrison).autoShowHideDisabled = true
+		self.pConfig.mbtnSettings["GarrisonLandingPageMinimapButton"][5] = true
 
 		if MSQ and not self.MSQ_Garrison then
 			self.MSQ_Garrison = MSQ:Group(addon, GARRISON_FOLLOWERS, "GarrisonLandingPageMinimapButton")
@@ -959,32 +949,11 @@ function hb:grabDefButtons()
 	end
 
 	-- QUEUE STATUS
-	if self:ignoreCheck("QueueStatusMinimapButton") and not btnParams[QueueStatusMinimapButton] then
+	if self:ignoreCheck("QueueStatusMinimapButton") and not self.btnParams[QueueStatusMinimapButton] then
 		local queue = QueueStatusMinimapButton
 		QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
-		queue.show = queue:IsShown()
 		queue.icon = queue.Eye.texture
 		self:setHooks(queue)
-		queue.Show = function(queue)
-			if not queue.show then
-				queue.show = true
-				queue:GetParent():applyLayout()
-			end
-		end
-		queue.Hide = function(queue)
-			if queue.show then
-				queue.show = false
-				if QueueStatusMinimapButtonDropDown == UIDROPDOWNMENU_OPEN_MENU then
-					CloseDropDownMenus()
-				end
-				queue:GetParent():applyLayout()
-			end
-		end
-		queue.IsShown = function(queue)
-			local show = queue.show and not btnSettings[queue][1]
-			self.SetShown(queue, show)
-			return show
-		end
 		local p = self:setParams(queue, function(p, queue)
 			QueueStatusFrame:ClearAllPoints()
 			for i = 1, #p.statusFramePoints do
@@ -997,25 +966,19 @@ function hb:grabDefButtons()
 			p.statusFramePoints[i] = {QueueStatusFrame:GetPoint(i)}
 		end
 
+		p.tooltipFrame = QueueStatusFrame
 		self.HookScript(queue, "OnEnter", function(queue)
-			local bar, point, rPoint, rFrame = self.GetParent(queue)
-			QueueStatusFrame:ClearAllPoints()
-
-			if bar.config.interceptTooltip then
-				if bar:GetTop() + QueueStatusFrame:GetHeight() + 10 < UIParent:GetHeight() then
-					point = "BOTTOMLEFT"
-					rPoint = "TOPLEFT"
-				else
-					point = "TOPLEFT"
-					rPoint = "BOTTOMLEFT"
-				end
-				QueueStatusFrame:SetPoint(point, bar, rPoint)
-			else
+			local bar = self.GetParent(queue)
+			if not bar.config.interceptTooltip then
+				QueueStatusFrame:ClearAllPoints()
 				for i = 1, #p.statusFramePoints do
 					QueueStatusFrame:SetPoint(unpack(p.statusFramePoints[i]))
 				end
 			end
 		end)
+
+		local btnData = self.pConfig.mbtnSettings["QueueStatusMinimapButton"]
+		if btnData[5] == nil then btnData[5] = true end
 
 		if not queue.HidingBarSound then
 			queue.EyeHighlightAnim:SetScript("OnLoop", nil)
@@ -1056,7 +1019,7 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL
-	if self:ignoreCheck("MiniMapMailFrame") and not btnParams[MiniMapMailFrame] then
+	if self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[MiniMapMailFrame] then
 		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
 		if btnData then
 			self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
@@ -1065,27 +1028,11 @@ function hb:grabDefButtons()
 
 		local mail = MiniMapMailFrame
 		mail.icon = MiniMapMailIcon
-		mail.show = mail:IsShown()
 		self:setHooks(mail)
 		self:setParams(mail)
 
-		mail.Show = function(mail)
-			if not mail.show then
-				mail.show = true
-				mail:GetParent():applyLayout()
-			end
-		end
-		mail.Hide = function(mail)
-			if mail.show then
-				mail.show = false
-				mail:GetParent():applyLayout()
-			end
-		end
-		mail.IsShown = function(mail)
-			local show = mail.show and not btnSettings[mail][1]
-			self.SetShown(mail, show)
-			return show
-		end
+		local btnData = self.pConfig.mbtnSettings["MiniMapMailFrame"]
+		if btnData[5] == nil then btnData[5] = true end
 
 		if self.MSQ_MButton and not mail.__MSQ_Addon then
 			self:setMButtonRegions(mail)
@@ -1098,7 +1045,7 @@ function hb:grabDefButtons()
 	-- ZOOM IN & ZOOM OUT
 	for _, zoom in ipairs({MinimapZoomIn, MinimapZoomOut}) do
 		local name = zoom:GetName()
-		if self:ignoreCheck(name) and not btnParams[zoom] then
+		if self:ignoreCheck(name) and not self.btnParams[zoom] then
 			self:setHooks(zoom)
 			local normal = zoom:GetNormalTexture()
 
@@ -1129,7 +1076,7 @@ function hb:grabDefButtons()
 				zoom:Disable()
 			end
 
-			self:setParams(zoom, function()
+			local p = self:setParams(zoom, function()
 				zoom.Enable = nil
 				zoom.Disable = nil
 				if not zoom:GetScript("OnClick") then
@@ -1140,6 +1087,7 @@ function hb:grabDefButtons()
 				end
 				zoom:SetScript("OnClick", zoom.click)
 			end)
+			p.tooltipFrame = GameTooltip
 
 			tinsert(self.minimapButtons, zoom)
 			tinsert(self.mixedButtons, zoom)
@@ -1147,7 +1095,7 @@ function hb:grabDefButtons()
 	end
 
 	-- WORLD MAP BUTTON
-	if self:ignoreCheck("MiniMapWorldMapButton") and not btnParams[MiniMapWorldMapButton] then
+	if self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
 		local mapButton = MiniMapWorldMapButton
 		self:setHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
@@ -1253,7 +1201,7 @@ end
 
 function hb:addCustomGrabButton(name)
 	local button = _G[name]
-	if type(button) ~= "table" or type(button[0]) ~= "userdata" or btnParams[button] or self.IsProtected(button) then return end
+	if type(button) ~= "table" or type(button[0]) ~= "userdata" or self.btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
 	if oType ~= "Button" and oType ~= "Frame" and oType ~= "CheckButton" then return end
 	if name:match(self.matchName) then
@@ -1378,9 +1326,6 @@ do
 		"ClearAllPoints",
 		"StartMoving",
 		"SetParent",
-		"Show",
-		"Hide",
-		"SetShown",
 		"SetPoint",
 		"SetAlpha",
 		"SetIgnoreParentScale",
@@ -1394,9 +1339,33 @@ do
 	}
 
 
+	local function SetShown(btn, show)
+		if hb.btnParams[btn].isShown == show then return end
+		hb.btnParams[btn].isShown = show
+		local btnData = btnSettings[btn]
+		-- [1] - is disabled
+		-- [5] - auto show/hide
+		if btnData and btnData[5] and not btnData[1] then
+			btn:GetParent():applyLayout()
+		end
+	end
+
+
+	local function Show(btn)
+		btn:SetShown(true)
+	end
+
+
+	local function Hide(btn)
+		btn:SetShown(false)
+	end
+
+
 	local function IsShown(btn)
 		local btnData = btnSettings[btn]
-		local show = not (btnData and btnData[1])
+		 -- [1] - is disabled
+		 -- [5] - auto show/hide
+		local show = not (btnData and (btnData[1] or btnData[5] and not hb.btnParams[btn].isShown))
 		hb.SetShown(btn, show)
 		return show
 	end
@@ -1438,6 +1407,9 @@ do
 		for i = 1, #voidFunctions do
 			btn[voidFunctions[i]] = void
 		end
+		btn.SetShown = SetShown
+		btn.Show = Show
+		btn.Hide = Hide
 		btn.IsShown = IsShown
 		btn.SetScript = SetScript
 	end
@@ -1458,12 +1430,13 @@ end
 
 
 function hb:setParams(btn, cb)
-	btnParams[btn] = {
+	self.btnParams[btn] = {
 		points = {},
 		frames = {},
 	}
-	local p = btnParams[btn]
+	local p = self.btnParams[btn]
 	p.callback = cb
+	p.isShown = self.IsShown(btn)
 	p.parent = self.GetParent(btn)
 	p.alpha = self.GetAlpha(btn)
 	p.ignoreParentScale = self.IsIgnoringParentScale(btn)
@@ -1517,8 +1490,9 @@ end
 
 
 function hb:restoreParams(btn)
-	local p = btnParams[btn]
+	local p = self.btnParams[btn]
 	if not p then return end
+	self.SetShown(btn, p.isShown)
 	self.SetParent(btn, p.parent)
 	self.SetAlpha(btn, p.alpha)
 	self.SetIgnoreParentScale(btn, p.ignoreParentScale)
@@ -1543,7 +1517,7 @@ function hb:restoreParams(btn)
 
 	if p.callback then p:callback(btn) end
 
-	btnParams[btn] = nil
+	self.btnParams[btn] = nil
 end
 
 
@@ -1757,22 +1731,29 @@ end
 
 
 function hidingBarMixin:updateTooltipPosition(eventFrame)
-	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
+	local p = hb.btnParams[eventFrame]
+	local tooltip = p and p.tooltipFrame
 
-	if not tooltip or tooltip:GetUnit() then
-		if not eventFrame then return end
-		local lqtip = LibStub("LibQTip-1.0", true)
-		if not lqtip then return end
-		tooltip = nil
-		for k, t in lqtip:IterateTooltips() do
-			if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
-				t:SetClampedToScreen(true)
-				tooltip = t
-				break
+	if not tooltip then
+		tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
+
+		if not tooltip or tooltip:IsObjectType("GameTooltip") and tooltip:IsOwned(UIParent) then
+			if not eventFrame then return end
+			local lqtip = LibStub("LibQTip-1.0", true)
+			if not lqtip then return end
+			tooltip = nil
+			for k, t in lqtip:IterateTooltips() do
+				if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
+					t:SetClampedToScreen(true)
+					tooltip = t
+					break
+				end
 			end
+			if not tooltip then return end
 		end
-		if not tooltip then return end
-	else
+	end
+
+	if tooltip:IsObjectType("GameTooltip") then
 		tooltip:SetAnchorType("ANCHOR_NONE")
 	end
 
@@ -2637,7 +2618,7 @@ function hidingBarDragMixin:hideOnClick()
 		bar:Hide()
 		bar:updateDragBarPosition()
 		return true
-	end 
+	end
 end
 
 
