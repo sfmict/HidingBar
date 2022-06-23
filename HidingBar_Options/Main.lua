@@ -1881,6 +1881,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 			info.func = function(_,_,_, checked)
 				btn.settings[5] = checked
 				main.barFrame:applyLayout()
+				main:hidingBarUpdate()
 			end
 			info.OnTooltipShow = function(_, tooltip)
 				tooltip:AddLine(L["Allow the button to control its own visibility"], nil, nil, nil, true)
