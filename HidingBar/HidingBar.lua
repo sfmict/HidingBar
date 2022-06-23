@@ -8,12 +8,11 @@ local btnSettingsMeta = {__index = function(self, key)
 	self[key] = {tstmp = 0}
 	return self[key]
 end}
-local createdButtonsByName, btnSettings, btnParams = {}, {}, {}
-local noGMEFrames = {}
+local createdButtonsByName, btnSettings, noGMEFrames = {}, {}, {}
 hb.ldbiPrefix = "LibDBIcon10_"
 hb.matchName = hb.ldbiPrefix..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
-hb.manuallyButtons = {}
+hb.btnParams, hb.manuallyButtons = {}, {}
 hb.bars, hb.barByName = {}, {}
 local LibStub = LibStub
 hb.cb = LibStub("CallbackHandler-1.0"):New(hb, "on", "off")
@@ -397,6 +396,13 @@ function hb:checkProfile(profile)
 	profile.config.ombGrabQueue = profile.config.ombGrabQueue or {}
 	profile.config.btnSettings = setmetatable(profile.config.btnSettings or {}, btnSettingsMeta)
 	profile.config.mbtnSettings = setmetatable(profile.config.mbtnSettings or {}, btnSettingsMeta)
+	--[[ BTN SETTINGS OBJECT
+	[1] - is disabled
+	[2] - order
+	[3] - parent bar name
+	[4] - is cliped button
+	[5] - auto show/hide
+	]]
 
 	profile.bars = profile.bars or {
 		{name = L["Bar"].." 1", isDefault = true},
@@ -826,7 +832,7 @@ end
 
 function hb:grabDefButtons()
 	-- TRACKING BUTTON
-	if self:ignoreCheck("MiniMapTrackingFrame") and not btnParams[MiniMapTrackingFrame] then
+	if self:ignoreCheck("MiniMapTrackingFrame") and not self.btnParams[MiniMapTrackingFrame] then
 		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonTracking")
 		if btnData then
 			self.pConfig.mbtnSettings["MiniMapTrackingFrame"] = btnData
@@ -841,23 +847,8 @@ function hb:grabDefButtons()
 		self:setHooks(tracking)
 		self:setParams(tracking)
 
-		tracking.Show = function()
-			if not tracking.show then
-				tracking.show = true
-				tracking:GetParent():applyLayout()
-			end
-		end
-		tracking.Hide = function()
-			if tracking.show then
-				tracking.show = false
-				tracking:GetParent():applyLayout()
-			end
-		end
-		tracking.IsShown = function(tracking)
-			local show = tracking.show and not btnSettings[tracking][1]
-			self.SetShown(tracking, show)
-			return show
-		end
+		local btnData = self.pConfig.mbtnSettings["MiniMapTrackingFrame"]
+		if btnData[5] == nil then btnData[5] = true end
 
 		if self.MSQ_MButton and not tracking.__MSQ_Addon then
 			self:setMButtonRegions(tracking)
@@ -868,31 +859,15 @@ function hb:grabDefButtons()
 	end
 
 	-- MINIMAP LFG FRAME
-	if self:ignoreCheck("MiniMapLFGFrame") and not btnParams[MiniMapLFGFrame] then
+	if self:ignoreCheck("MiniMapLFGFrame") and not self.btnParams[MiniMapLFGFrame] then
 		local LFGFrame = MiniMapLFGFrame
-		self:setHooks(LFGFrame)
 		LFGFrame.icon = MiniMapLFGFrameIconTexture
 		LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
-
-		LFGFrame.Show = function(LFGFrame)
-			if not LFGFrame.show then
-				LFGFrame.show = true
-				LFGFrame:GetParent():applyLayout()
-			end
-		end
-		LFGFrame.Hide = function(LFGFrame)
-			if LFGFrame.show then
-				LFGFrame.show = false
-				LFGFrame:GetParent():applyLayout()
-			end
-		end
-		LFGFrame.IsShown = function(LFGFrame)
-			local show = LFGFrame.show and not btnSettings[LFGFrame][1]
-			self.SetShown(LFGFrame, show)
-			return show
-		end
-
+		self:setHooks(LFGFrame)
 		self:setParams(LFGFrame)
+
+		local btnData = self.pConfig.mbtnSettings["MiniMapLFGFrame"]
+		if btnData[5] == nil then btnData[5] = true end
 
 		if self.MSQ_MButton and not LFGFrame.__MSQ_Addon then
 			self:setMButtonRegions(LFGFrame)
@@ -903,31 +878,15 @@ function hb:grabDefButtons()
 	end
 
 	-- BATTLEFIELD FRAME
-	if self:ignoreCheck("MiniMapBattlefieldFrame") and not btnParams[MiniMapBattlefieldFrame] then
+	if self:ignoreCheck("MiniMapBattlefieldFrame") and not self.btnParams[MiniMapBattlefieldFrame] then
 		local battlefield = MiniMapBattlefieldFrame
 		battlefield.icon = MiniMapBattlefieldIcon
 		battlefield.show = battlefield:IsShown()
 		self:setHooks(battlefield)
-
-		battlefield.Show = function(battlefield)
-			if not battlefield.show then
-				battlefield.show = true
-				battlefield:GetParent():applyLayout()
-			end
-		end
-		battlefield.Hide = function(battlefield)
-			if battlefield.show then
-				battlefield.show = false
-				battlefield:GetParent():applyLayout()
-			end
-		end
-		battlefield.IsShown = function(battlefield)
-			local show = battlefield.show and not btnSettings[battlefield][1]
-			self.SetShown(battlefield, show)
-			return show
-		end
-
 		self:setParams(battlefield)
+
+		local btnData = self.pConfig.mbtnSettings["MiniMapBattlefieldFrame"]
+		if btnData[5] == nil then btnData[5] = true end
 
 		if self.MSQ_MButton and not battlefield.__MSQ_Addon then
 			self:setMButtonRegions(battlefield)
@@ -938,7 +897,7 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL
-	if self:ignoreCheck("MiniMapMailFrame") and not btnParams[MiniMapMailFrame] then
+	if self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[MiniMapMailFrame] then
 		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
 		if btnData then
 			self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
@@ -947,27 +906,11 @@ function hb:grabDefButtons()
 
 		local mail = MiniMapMailFrame
 		mail.icon = MiniMapMailIcon
-		mail.show = mail:IsShown()
 		self:setHooks(mail)
 		self:setParams(mail)
 
-		mail.Show = function(mail)
-			if not mail.show then
-				mail.show = true
-				mail:GetParent():applyLayout()
-			end
-		end
-		mail.Hide = function(mail)
-			if mail.show then
-				mail.show = false
-				mail:GetParent():applyLayout()
-			end
-		end
-		mail.IsShown = function(mail)
-			local show = mail.show and not btnSettings[mail][1]
-			self.SetShown(mail, show)
-			return show
-		end
+		local btnData = self.pConfig.mbtnSettings["MiniMapMailFrame"]
+		if btnData[5] == nil then btnData[5] = true end
 
 		if self.MSQ_MButton and not mail.__MSQ_Addon then
 			self:setMButtonRegions(mail)
@@ -980,7 +923,7 @@ function hb:grabDefButtons()
 	-- ZOOM IN & ZOOM OUT
 	for _, zoom in ipairs({MinimapZoomIn, MinimapZoomOut}) do
 		local name = zoom:GetName()
-		if self:ignoreCheck(name) and not btnParams[zoom] then
+		if self:ignoreCheck(name) and not self.btnParams[zoom] then
 			self:setHooks(zoom)
 			local normal = zoom:GetNormalTexture()
 
@@ -1011,7 +954,7 @@ function hb:grabDefButtons()
 				zoom:Disable()
 			end
 
-			self:setParams(zoom, function()
+			local p = self:setParams(zoom, function()
 				zoom.Enable = nil
 				zoom.Disable = nil
 				if not zoom:GetScript("OnClick") then
@@ -1022,6 +965,7 @@ function hb:grabDefButtons()
 				end
 				zoom:SetScript("OnClick", zoom.click)
 			end)
+			p.tooltipFrame = GameTooltip
 
 			tinsert(self.minimapButtons, zoom)
 			tinsert(self.mixedButtons, zoom)
@@ -1029,7 +973,7 @@ function hb:grabDefButtons()
 	end
 
 	-- WORLD MAP BUTTON
-	if self:ignoreCheck("MiniMapWorldMapButton") and not btnParams[MiniMapWorldMapButton] then
+	if self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
 		local mapButton = MiniMapWorldMapButton
 		self:setHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
@@ -1115,7 +1059,7 @@ end
 
 function hb:addCustomGrabButton(name)
 	local button = _G[name]
-	if type(button) ~= "table" or type(button[0]) ~= "userdata" or btnParams[button] or self.IsProtected(button) then return end
+	if type(button) ~= "table" or type(button[0]) ~= "userdata" or self.btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
 	if oType ~= "Button" and oType ~= "Frame" and oType ~= "CheckButton" then return end
 	if name:match(self.matchName) then
@@ -1240,9 +1184,6 @@ do
 		"ClearAllPoints",
 		"StartMoving",
 		"SetParent",
-		"Show",
-		"Hide",
-		"SetShown",
 		"SetPoint",
 		"SetAlpha",
 		"SetIgnoreParentScale",
@@ -1256,9 +1197,33 @@ do
 	}
 
 
+	local function SetShown(btn, show)
+		if hb.btnParams[btn].isShown == show then return end
+		hb.btnParams[btn].isShown = show
+		local btnData = btnSettings[btn]
+		-- [1] - is disabled
+		-- [5] - auto show/hide
+		if btnData and btnData[5] and not btnData[1] then
+			btn:GetParent():applyLayout()
+		end
+	end
+
+
+	local function Show(btn)
+		btn:SetShown(true)
+	end
+
+
+	local function Hide(btn)
+		btn:SetShown(false)
+	end
+
+
 	local function IsShown(btn)
 		local btnData = btnSettings[btn]
-		local show = not (btnData and btnData[1])
+		 -- [1] - is disabled
+		 -- [5] - auto show/hide
+		local show = not (btnData and (btnData[1] or btnData[5] and not hb.btnParams[btn].isShown))
 		hb.SetShown(btn, show)
 		return show
 	end
@@ -1300,6 +1265,9 @@ do
 		for i = 1, #voidFunctions do
 			btn[voidFunctions[i]] = void
 		end
+		btn.SetShown = SetShown
+		btn.Show = Show
+		btn.Hide = Hide
 		btn.IsShown = IsShown
 		btn.SetScript = SetScript
 	end
@@ -1320,12 +1288,13 @@ end
 
 
 function hb:setParams(btn, cb)
-	btnParams[btn] = {
+	self.btnParams[btn] = {
 		points = {},
 		frames = {},
 	}
-	local p = btnParams[btn]
+	local p = self.btnParams[btn]
 	p.callback = cb
+	p.isShown = self.IsShown(btn)
 	p.parent = self.GetParent(btn)
 	p.alpha = self.GetAlpha(btn)
 	p.ignoreParentScale = self.IsIgnoringParentScale(btn)
@@ -1379,8 +1348,9 @@ end
 
 
 function hb:restoreParams(btn)
-	local p = btnParams[btn]
+	local p = self.btnParams[btn]
 	if not p then return end
+	self.SetShown(btn, p.isShown)
 	self.SetParent(btn, p.parent)
 	self.SetAlpha(btn, p.alpha)
 	self.SetIgnoreParentScale(btn, p.ignoreParentScale)
@@ -1405,7 +1375,7 @@ function hb:restoreParams(btn)
 
 	if p.callback then p:callback(btn) end
 
-	btnParams[btn] = nil
+	self.btnParams[btn] = nil
 end
 
 
@@ -1619,22 +1589,29 @@ end
 
 
 function hidingBarMixin:updateTooltipPosition(eventFrame)
-	local tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
+	local p = hb.btnParams[eventFrame]
+	local tooltip = p and p.tooltipFrame
 
-	if not tooltip or tooltip:GetUnit() then
-		if not eventFrame then return end
-		local lqtip = LibStub("LibQTip-1.0", true)
-		if not lqtip then return end
-		tooltip = nil
-		for k, t in lqtip:IterateTooltips() do
-			if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
-				t:SetClampedToScreen(true)
-				tooltip = t
-				break
+	if not tooltip then
+		tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
+
+		if not tooltip or tooltip:IsObjectType("GameTooltip") and tooltip:IsOwned(UIParent) then
+			if not eventFrame then return end
+			local lqtip = LibStub("LibQTip-1.0", true)
+			if not lqtip then return end
+			tooltip = nil
+			for k, t in lqtip:IterateTooltips() do
+				if t:IsShown() and (not t.autoHideTimerFrame or t.autoHideTimerFrame.alternateFrame == eventFrame) then
+					t:SetClampedToScreen(true)
+					tooltip = t
+					break
+				end
 			end
+			if not tooltip then return end
 		end
-		if not tooltip then return end
-	else
+	end
+
+	if tooltip:IsObjectType("GameTooltip") then
 		tooltip:SetAnchorType("ANCHOR_NONE")
 	end
 
@@ -2499,7 +2476,7 @@ function hidingBarDragMixin:hideOnClick()
 		bar:Hide()
 		bar:updateDragBarPosition()
 		return true
-	end 
+	end
 end
 
 
