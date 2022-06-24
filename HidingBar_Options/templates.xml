@@ -322,16 +322,69 @@
 		</Scripts>
 	</EditBox>
 
-	<EditBox name="HidingBarAddonNumberTextBox" inherits="HidingBarAddonEditBoxTemplate" numeric="true" letters="1" virtual="true">
+	<EditBox name="HidingBarAddonDecimalScriptTeplate" inherits="HidingBarAddonEditBoxTemplate" virtual="true">
+		<Scripts>
+			<OnLoad inherit="prepend">
+				self.setOnChanged = function(self, func)
+					self.onValueChanged = func
+				end
+			</OnLoad>
+			<OnTextChanged>
+				if userInput then
+					self.isEdit = true
+					local int, dec = self:GetText():gsub(",", "."):match(self.mask or "(%-?%d*)(%.?%d*)")
+					if int == "" and dec and dec ~= "" then int = "0" end
+					self:SetText((int or "")..(dec or ""))
+				elseif not self.isEdit then
+					self.curValue = tonumber(self:GetText()) or 0
+				else
+					self.isEdit = nil
+				end
+			</OnTextChanged>
+			<OnEnterPressed>
+				self.step = nil
+				self:onValueChanged(tonumber(self:GetText()) or 0)
+				self.curValue = tonumber(self:GetText()) or 0
+				self:ClearFocus()
+			</OnEnterPressed>
+			<OnEditFocusLost>
+				self:SetNumber(self.curValue)
+			</OnEditFocusLost>
+			<OnMouseWheel>
+				if not self.step then
+					local step = (""..self.curValue):match("%d+(%.?%d*)%d")
+					self.step = tonumber(step and step:gsub("%d", "0").."1") or 1
+				end
+				local value = self.curValue + self.step * delta
+				if self.min and self.min > value then value = self.min
+				elseif self.max and value > self.max then value = self.max end
+				self.curValue = value
+				self:SetNumber(value)
+				self:onValueChanged(value)
+			</OnMouseWheel>
+		</Scripts>
+	</EditBox>
+
+	<EditBox name="HidingBarAddonNumberTextBox" inherits="HidingBarAddonDecimalScriptTeplate" numeric="true" letters="1" virtual="true">
 		<Size x="15" y="18"/>
+		<KeyValues>
+			<KeyValue key="max" value="9" type="number"/>
+		</KeyValues>
 	</EditBox>
 
-	<EditBox name="HidingBarAddonDecimalTextBox" inherits="HidingBarAddonEditBoxTemplate" letters="4" virtual="true">
+	<EditBox name="HidingBarAddonDelayTextBox" inherits="HidingBarAddonDecimalScriptTeplate" letters="4" virtual="true">
 		<Size x="32" y="18"/>
+		<KeyValues>
+			<KeyValue key="mask" value="%-?(%d*)(%.?%d*)" type="string"/>
+			<KeyValue key="min" value="0" type="number"/>
+		</KeyValues>
 	</EditBox>
 
-	<EditBox name="HidingBarAddonCoordTextBox" inherits="HidingBarAddonEditBoxTemplate" letters="5" virtual="true">
+	<EditBox name="HidingBarAddonCoordTextBox" inherits="HidingBarAddonDecimalScriptTeplate" letters="5" virtual="true">
 		<Size x="40" y="18"/>
+		<KeyValues>
+			<KeyValue key="mask" value="%-?%d*" type="string"/>
+		</KeyValues>
 	</EditBox>
 
 	<Button name="HidingBarAddonTabTemplate" virtual="true">

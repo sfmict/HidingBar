@@ -610,14 +610,10 @@ end)
 
 main.afterNumber = CreateFrame("EditBox", nil, addBtnOptionsScroll.child, "HidingBarAddonNumberTextBox")
 main.afterNumber:SetPoint("LEFT", main.grabAfter.Text, "RIGHT", 3, 0)
-main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local n = tonumber(editBox:GetText()) or 1
-		if n < 1 then n = 1 end
-		editBox:SetText(n)
-		main.pConfig.grabMinimapAfterN = n
-		editBox:HighlightText()
-	end
+main.afterNumber:setOnChanged(function(editBox, n)
+	if n < 1 then n = 1 end
+	editBox:SetNumber(n)
+	main.pConfig.grabMinimapAfterN = n
 end)
 
 main.grabAfterTextSec = addBtnOptionsScroll.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
@@ -909,20 +905,10 @@ local delayToHideText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "
 delayToHideText:SetPoint("LEFT", hideHandlerCombobox, "RIGHT", 10, 0)
 delayToHideText:SetText(L["Delay to hide"])
 
-local delayToHideEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
+local delayToHideEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDelayTextBox")
 delayToHideEditBox:SetPoint("LEFT", delayToHideText, "RIGHT", 2, 0)
-delayToHideEditBox:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		main.bConfig.hideDelay = tonumber(decimalText) or 0
-	end
-end)
-delayToHideEditBox:SetScript("OnEditFocusLost", function(editBox)
-	editBox:SetNumber(main.bConfig.hideDelay)
-	editBox:HighlightText(0, 0)
+delayToHideEditBox:setOnChanged(function(editBox, value)
+	main.bConfig.hideDelay = value
 end)
 
 -- SHOW HANDLER TEXT
@@ -958,20 +944,10 @@ local delayToShowText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "
 delayToShowText:SetPoint("LEFT", showHandlerCombobox, "RIGHT", 10, 0)
 delayToShowText:SetText(L["Delay to show"])
 
-local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
+local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDelayTextBox")
 delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
-delayToShowEditBox:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		main.bConfig.showDelay = tonumber(decimalText) or 0
-	end
-end)
-delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
-	editBox:SetNumber(main.bConfig.showDelay)
-	editBox:HighlightText(0, 0)
+delayToShowEditBox:setOnChanged(function(editBox, value)
+	main.bConfig.showDelay = value
 end)
 
 -- FADE
@@ -1651,32 +1627,13 @@ main.coordXText:SetText("X")
 
 main.coordX = CreateFrame("EditBox", nil, main.positionBarPanel, "HidingBarAddonCoordTextBox")
 main.coordX:SetPoint("LEFT", main.coordXText, "RIGHT", 1, 0)
-main.coordX:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		editBox:SetNumber(editBox:GetText():match("%-?%d*"))
-	end
-end)
-main.coordX.setX = function(editBox, x)
+main.coordX:setOnChanged(function(editBox, x)
 	if main.bConfig.anchor == "left" or main.bConfig.anchor == "right" then
 		main.barFrame:setBarCoords(nil, x)
 	else
 		main.barFrame:setBarCoords(x)
 	end
 	main.barFrame:updateBarPosition()
-end
-main.coordX:SetScript("OnEnterPressed", function(editBox)
-	editBox:setX(tonumber(editBox:GetText():match("%-?%d*")) or 0)
-	editBox:ClearFocus()
-end)
-main.coordX:SetScript("OnEditFocusLost", function(editBox)
-	main:updateCoords()
-	editBox:HighlightText(0, 0)
-end)
-main.coordX:SetScript("OnMouseWheel", function(editBox, delta)
-	if editBox:IsEnabled() then
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		editBox:setX(int + (delta > 0 and 1 or -1))
-	end
 end)
 
 -- COORD Y
@@ -1686,32 +1643,13 @@ main.coordYText:SetText("Y")
 
 main.coordY = CreateFrame("EditBox", nil, main.positionBarPanel, "HidingBarAddonCoordTextBox")
 main.coordY:SetPoint("LEFT", main.coordYText, "RIGHT", 1, 0)
-main.coordY:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		editBox:SetNumber(editBox:GetText():match("%-?%d*"))
-	end
-end)
-main.coordY.setY = function(editBox, y)
+main.coordY:setOnChanged(function(editBox, y)
 	if main.bConfig.anchor == "left" or main.bConfig.anchor == "right" then
 		main.barFrame:setBarCoords(y)
 	else
 		main.barFrame:setBarCoords(nil, y)
 	end
 	main.barFrame:updateBarPosition()
-end
-main.coordY:SetScript("OnEnterPressed", function(editBox)
-	editBox:setY(tonumber(editBox:GetText():match("%-?%d*")) or 0)
-	editBox:ClearFocus()
-end)
-main.coordY:SetScript("OnEditFocusLost", function(editBox)
-	main:updateCoords()
-	editBox:HighlightText(0, 0)
-end)
-main.coordY:SetScript("OnMouseWheel", function(editBox, delta)
-	if editBox:IsEnabled() then
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		editBox:setY(int + (delta > 0 and 1 or -1))
-	end
 end)
 
 -- BAR LIKE MINIMAP BUTTON
