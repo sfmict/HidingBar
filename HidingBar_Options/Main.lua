@@ -610,14 +610,10 @@ end)
 
 main.afterNumber = CreateFrame("EditBox", nil, addBtnOptionsScroll.child, "HidingBarAddonNumberTextBox")
 main.afterNumber:SetPoint("LEFT", main.grabAfter.Text, "RIGHT", 3, 0)
-main.afterNumber:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local n = tonumber(editBox:GetText()) or 1
-		if n < 1 then n = 1 end
-		editBox:SetText(n)
-		main.pConfig.grabMinimapAfterN = n
-		editBox:HighlightText()
-	end
+main.afterNumber:setOnChanged(function(editBox, n)
+	if n < 1 then n = 1 end
+	editBox:SetNumber(n)
+	main.pConfig.grabMinimapAfterN = n
 end)
 
 main.grabAfterTextSec = addBtnOptionsScroll.child:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
@@ -909,20 +905,10 @@ local delayToHideText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "
 delayToHideText:SetPoint("LEFT", hideHandlerCombobox, "RIGHT", 10, 0)
 delayToHideText:SetText(L["Delay to hide"])
 
-local delayToHideEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
+local delayToHideEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDelayTextBox")
 delayToHideEditBox:SetPoint("LEFT", delayToHideText, "RIGHT", 2, 0)
-delayToHideEditBox:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		main.bConfig.hideDelay = tonumber(decimalText) or 0
-	end
-end)
-delayToHideEditBox:SetScript("OnEditFocusLost", function(editBox)
-	editBox:SetNumber(main.bConfig.hideDelay)
-	editBox:HighlightText(0, 0)
+delayToHideEditBox:setOnChanged(function(editBox, value)
+	main.bConfig.hideDelay = value
 end)
 
 -- SHOW HANDLER TEXT
@@ -958,20 +944,10 @@ local delayToShowText = main.barSettingsPanel:CreateFontString(nil, "ARTWORK", "
 delayToShowText:SetPoint("LEFT", showHandlerCombobox, "RIGHT", 10, 0)
 delayToShowText:SetText(L["Delay to show"])
 
-local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDecimalTextBox")
+local delayToShowEditBox = CreateFrame("EditBox", nil, main.barSettingsPanel, "HidingBarAddonDelayTextBox")
 delayToShowEditBox:SetPoint("LEFT", delayToShowText, "RIGHT", 2, 0)
-delayToShowEditBox:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		local int, dec = editBox:GetText():gsub(",", "."):match("(%d*)(%.?%d*)")
-		if int == "" and dec ~= "" then int = "0" end
-		local decimalText = int..dec
-		editBox:SetNumber(decimalText)
-		main.bConfig.showDelay = tonumber(decimalText) or 0
-	end
-end)
-delayToShowEditBox:SetScript("OnEditFocusLost", function(editBox)
-	editBox:SetNumber(main.bConfig.showDelay)
-	editBox:HighlightText(0, 0)
+delayToShowEditBox:setOnChanged(function(editBox, value)
+	main.bConfig.showDelay = value
 end)
 
 -- FADE
@@ -980,23 +956,20 @@ main.fade:SetPoint("TOPLEFT", showHandlerText, "BOTTOMLEFT", 0, -13)
 main.fade:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-	main.fadeOpacity:SetEnabled(checked)
+	main.fadeOpacity:setEnabled(checked)
 	main.barFrame:setFade(checked)
 end)
 
 -- FADE OPACITY
-main.fadeOpacity = CreateFrame("SLIDER", nil, main.barSettingsPanel, "HidingBarAddonSliderTemplate")
-main.fadeOpacity:SetPoint("LEFT", main.fade.Text, "RIGHT", 20, 0)
-main.fadeOpacity:SetPoint("RIGHT", -49, 0)
-main.fadeOpacity:SetMinMaxValues(0, .95)
-main.fadeOpacity.step = 1 / .05
-main.fadeOpacity.text:SetText(L["Opacity"])
-main.fadeOpacity.edit:SetMaxLetters(4)
-main.fadeOpacity:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value * slider.step + .5) / slider.step
+main.fadeOpacity = CreateFrame("FRAME", nil, main.barSettingsPanel, "HidingBarAddonSliderFrameTemplate")
+main.fadeOpacity:SetPoint("LEFT", main.fade.Text, "RIGHT", 20, 5)
+main.fadeOpacity:SetPoint("RIGHT", -10, 0)
+main.fadeOpacity:setMinMax(0, .95)
+main.fadeOpacity:setStep(.05)
+main.fadeOpacity:setText(L["Opacity"])
+main.fadeOpacity:setMaxLetters(4)
+main.fadeOpacity:setOnChanged(function(frame, value)
 	main.barFrame:setFadeOpacity(value)
-	slider:SetValue(value)
 end)
 
 -- ALIGN
@@ -1163,33 +1136,27 @@ borderColor:SetScript("OnClick", function()
 end)
 
 -- BORDER OFFSET
-local borderOffset = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-borderOffset:SetPoint("LEFT", borderColor, "RIGHT", 10, -2.5)
-borderOffset:SetPoint("RIGHT", -35, 0)
-borderOffset:SetMinMaxValues(0, 32)
-borderOffset.text:SetText(L["Border Offset"])
-borderOffset.edit:SetMaxLetters(2)
-borderOffset:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
+local borderOffset = CreateFrame("FRAME", nil, main.displayPanel, "HidingBarAddonSliderFrameTemplate")
+borderOffset:SetPoint("LEFT", borderColor, "RIGHT", 10, 2.5)
+borderOffset:SetPoint("RIGHT", -10, 0)
+borderOffset:setMinMax(0, 32)
+borderOffset:setText(L["Border Offset"])
+borderOffset:setMaxLetters(2)
+borderOffset:setOnChanged(function(frame, value)
 	main.barFrame:setBorderOffset(value)
 	main.barFrame:applyLayout()
-	slider:SetValue(value)
 	main:hidingBarUpdate()
 end)
 
 -- BORDER SIZE
-local borderSize = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-borderSize:SetPoint("TOPLEFT", borderText, "BOTTOMLEFT", 0, -margin)
-borderSize:SetPoint("RIGHT", -35, 0)
-borderSize:SetMinMaxValues(1, 64)
-borderSize.text:SetText(L["Border Size"])
-borderSize.edit:SetMaxLetters(2)
-borderSize:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
+local borderSize = CreateFrame("FRAME", nil, main.displayPanel, "HidingBarAddonSliderFrameTemplate")
+borderSize:SetPoint("TOPLEFT", borderText, "BOTTOMLEFT", 0, 12 - margin)
+borderSize:SetPoint("RIGHT", -10, 0)
+borderSize:setMinMax(1, 64)
+borderSize:setText(L["Border Size"])
+borderSize:setMaxLetters(2)
+borderSize:setOnChanged(function(frame, value)
 	main.barFrame:setBorder(nil, value)
-	slider:SetValue(value)
 	main:hidingBarUpdate()
 end)
 
@@ -1241,10 +1208,10 @@ main.lineColor.updateLineColor = function()
 	else
 		main.fade.Text:SetText(L["Fade out line"]:format(hexColor))
 	end
-	main.lineWidth.text:SetText(L["Line width"]:format(hexColor))
-	main.lineBorderOffset.text:SetText(L["Line Border Offset"]:format(hexColor))
-	main.lineBorderSize.text:SetText(L["Line Border Size"]:format(hexColor))
-	main.gapSize.text:SetText(L["Distance from line to bar"]:format(hexColor))
+	main.lineWidth:setText(L["Line width"]:format(hexColor))
+	main.lineBorderOffset:setText(L["Line Border Offset"]:format(hexColor))
+	main.lineBorderSize:setText(L["Line Border Size"]:format(hexColor))
+	main.gapSize:setText(L["Distance from line to bar"]:format(hexColor))
 	main.lineColor.color:SetColorTexture(unpack(main.bConfig.lineColor))
 end
 
@@ -1257,16 +1224,13 @@ main.lineColor:SetScript("OnClick", function()
 end)
 
 -- LINE WIDTH
-main.lineWidth = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.lineWidth:SetPoint("LEFT", main.lineColor, "RIGHT", 10, -2.5)
-main.lineWidth:SetPoint("RIGHT", -35, 0)
-main.lineWidth:SetMinMaxValues(4, 20)
-main.lineWidth.edit:SetMaxLetters(2)
-main.lineWidth:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
+main.lineWidth = CreateFrame("FRAME", nil, main.displayPanel, "HidingBarAddonSliderFrameTemplate")
+main.lineWidth:SetPoint("LEFT", main.lineColor, "RIGHT", 10, 2.5)
+main.lineWidth:SetPoint("RIGHT", -10, 0)
+main.lineWidth:setMinMax(4, 20)
+main.lineWidth:setMaxLetters(2)
+main.lineWidth:setOnChanged(function(frame, value)
 	main.barFrame:setLineWidth(value)
-	slider:SetValue(value)
 end)
 
 -- LINE BORDER TEXT
@@ -1320,44 +1284,35 @@ lineBorderColor:SetScript("OnClick", function()
 end)
 
 -- LINE BORDER OFFSET
-main.lineBorderOffset = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.lineBorderOffset:SetPoint("LEFT", lineBorderColor, "RIGHT", 10, -2.5)
-main.lineBorderOffset:SetPoint("RIGHT", -35, 0)
-main.lineBorderOffset:SetMinMaxValues(0, 32)
-main.lineBorderOffset.edit:SetMaxLetters(2)
-main.lineBorderOffset:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
+main.lineBorderOffset = CreateFrame("FRAME", nil, main.displayPanel, "HidingBarAddonSliderFrameTemplate")
+main.lineBorderOffset:SetPoint("LEFT", lineBorderColor, "RIGHT", 10, 2.5)
+main.lineBorderOffset:SetPoint("RIGHT", -10, 0)
+main.lineBorderOffset:setMinMax(0, 32)
+main.lineBorderOffset:setMaxLetters(2)
+main.lineBorderOffset:setOnChanged(function(frame, value)
 	main.barFrame:setLineBorderOffset(value)
-	slider:SetValue(value)
 	main:hidingBarUpdate()
 end)
 
 -- BORDER SIZE
-main.lineBorderSize = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.lineBorderSize:SetPoint("TOPLEFT", lineBorderText, "BOTTOMLEFT", 0, -margin)
-main.lineBorderSize:SetPoint("RIGHT", -35, 0)
-main.lineBorderSize:SetMinMaxValues(1, 64)
-main.lineBorderSize.edit:SetMaxLetters(2)
-main.lineBorderSize:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
+main.lineBorderSize = CreateFrame("FRAME", nil, main.displayPanel, "HidingBarAddonSliderFrameTemplate")
+main.lineBorderSize:SetPoint("TOPLEFT", lineBorderText, "BOTTOMLEFT", 0, 12 - margin)
+main.lineBorderSize:SetPoint("RIGHT", -10, 0)
+main.lineBorderSize:setMinMax(1, 64)
+main.lineBorderSize:setMaxLetters(2)
+main.lineBorderSize:setOnChanged(function(frame, value)
 	main.barFrame:setLineBorder(nil, value)
-	slider:SetValue(value)
 	main:hidingBarUpdate()
 end)
 
 -- DISTANCE FROM LINE TO BAR
-main.gapSize = CreateFrame("SLIDER", nil, main.displayPanel, "HidingBarAddonSliderTemplate")
-main.gapSize:SetPoint("TOPLEFT", main.lineBorderSize, "BOTTOMLEFT", 0, -margin)
-main.gapSize:SetPoint("RIGHT", -35, 0)
-main.gapSize:SetMinMaxValues(-8, 64)
-main.gapSize.edit:SetMaxLetters(2)
-main.gapSize:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
+main.gapSize = CreateFrame("FRAME", nil, main.displayPanel, "HidingBarAddonSliderFrameTemplate")
+main.gapSize:SetPoint("TOPLEFT", main.lineBorderSize, "BOTTOMLEFT", 0, 18 - margin)
+main.gapSize:SetPoint("RIGHT", -10, 0)
+main.gapSize:setMinMax(-8, 64)
+main.gapSize:setMaxLetters(2)
+main.gapSize:setOnChanged(function(frame, value)
 	main.barFrame:setGapPosition(value)
-	slider:SetValue(value)
 	main:hidingBarUpdate()
 end)
 
@@ -1370,16 +1325,13 @@ alignText(borderText, bgText, lineText, lineBorderText)
 main.buttonSettingsPanel =  createTabPanel(barSettingsTabs, L["Button settings"])
 
 -- SLIDER NUMBER BUTTONS IN ROW
-local buttonNumber = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-buttonNumber:SetPoint("TOPLEFT", 8, -20)
-buttonNumber:SetPoint("RIGHT", -35, 0)
-buttonNumber:SetMinMaxValues(1, 30)
-buttonNumber.text:SetText(L["Number of buttons"])
-buttonNumber.edit:SetMaxLetters(2)
-buttonNumber:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	slider:SetValue(value)
+local buttonNumber = CreateFrame("FRAME", nil, main.buttonSettingsPanel, "HidingBarAddonSliderFrameTemplate")
+buttonNumber:SetPoint("TOPLEFT", 8, -8)
+buttonNumber:SetPoint("RIGHT", -10, 0)
+buttonNumber:setMinMax(1, 30)
+buttonNumber:setText(L["Number of buttons"])
+buttonNumber:setMaxLetters(2)
+buttonNumber:setOnChanged(function(slider, value)
 	if main.bConfig.size ~= value then
 		main.barFrame:setMaxButtons(value)
 		main:applyLayout(.3)
@@ -1388,16 +1340,13 @@ buttonNumber:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -- SLIDER BUTTONS SIZE
-local buttonSize = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, -margin)
-buttonSize:SetPoint("RIGHT", -35, 0)
-buttonSize:SetMinMaxValues(16, 64)
-buttonSize.text:SetText(L["Buttons Size"])
-buttonSize.edit:SetMaxLetters(2)
-buttonSize:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	slider:SetValue(value)
+local buttonSize = CreateFrame("FRAME", nil, main.buttonSettingsPanel, "HidingBarAddonSliderFrameTemplate")
+buttonSize:SetPoint("TOPLEFT", buttonNumber, "BOTTOMLEFT", 0, 18 - margin)
+buttonSize:SetPoint("RIGHT", -10, 0)
+buttonSize:setMinMax(16, 64)
+buttonSize:setText(L["Buttons Size"])
+buttonSize:setMaxLetters(2)
+buttonSize:setOnChanged(function(frame, value)
 	if main.bConfig.buttonSize ~= value then
 		main.barFrame:setButtonSize(value)
 		main:setButtonSize()
@@ -1407,16 +1356,13 @@ buttonSize:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -- SLIDER DISTANCE TO BAR BORDER
-local barOffset =  CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-barOffset:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, -margin)
-barOffset:SetPoint("RIGHT", -35, 0)
-barOffset:SetMinMaxValues(0, 20)
-barOffset.text:SetText(L["Distance to bar border"])
-barOffset.edit:SetMaxLetters(2)
-barOffset:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	slider:SetValue(value)
+local barOffset =  CreateFrame("FRAME", nil, main.buttonSettingsPanel, "HidingBarAddonSliderFrameTemplate")
+barOffset:SetPoint("TOPLEFT", buttonSize, "BOTTOMLEFT", 0, 18 - margin)
+barOffset:SetPoint("RIGHT", -10, 0)
+barOffset:setMinMax(0, 20)
+barOffset:setText(L["Distance to bar border"])
+barOffset:setMaxLetters(2)
+barOffset:setOnChanged(function(frame, value)
 	if main.bConfig.barOffset ~= value then
 		main.barFrame:setBarOffset(value)
 		main:applyLayout()
@@ -1425,16 +1371,13 @@ barOffset:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -- SLIDER DISTANCE BETWEEN BUTTONS
-local rangeBetweenBtns = CreateFrame("SLIDER", nil, main.buttonSettingsPanel, "HidingBarAddonSliderTemplate")
-rangeBetweenBtns:SetPoint("TOPLEFT", barOffset, "BOTTOMLEFT", 0, -margin)
-rangeBetweenBtns:SetPoint("RIGHT", -35, 0)
-rangeBetweenBtns:SetMinMaxValues(-5, 30)
-rangeBetweenBtns.text:SetText(L["Distance between buttons"])
-rangeBetweenBtns.edit:SetMaxLetters(2)
-rangeBetweenBtns:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	slider:SetValue(value)
+local rangeBetweenBtns = CreateFrame("FRAME", nil, main.buttonSettingsPanel, "HidingBarAddonSliderFrameTemplate")
+rangeBetweenBtns:SetPoint("TOPLEFT", barOffset, "BOTTOMLEFT", 0, 18 - margin)
+rangeBetweenBtns:SetPoint("RIGHT", -10, 0)
+rangeBetweenBtns:setMinMax(-5, 30)
+rangeBetweenBtns:setText(L["Distance between buttons"])
+rangeBetweenBtns:setMaxLetters(2)
+rangeBetweenBtns:setOnChanged(function(frame, value)
 	if main.bConfig.rangeBetweenBtns ~= value then
 		main.barFrame:setRangeBetweenBtns(value)
 		main:applyLayout()
@@ -1586,9 +1529,9 @@ local function updateBarTypePosition()
 	main.coordY:SetEnabled(main.bConfig.barTypePosition == 1)
 	main.likeMB.check:SetShown(main.bConfig.barTypePosition == 2)
 	main.ombShowToCombobox:SetEnabled(main.bConfig.barTypePosition == 2)
-	main.ombSize:SetEnabled(main.bConfig.barTypePosition == 2)
-	main.distanceFromButtonToBar:SetEnabled(main.bConfig.barTypePosition == 2)
-	main.ombBarDisplacement:SetEnabled(main.bConfig.barTypePosition == 2)
+	main.ombSize:setEnabled(main.bConfig.barTypePosition == 2)
+	main.distanceFromButtonToBar:setEnabled(main.bConfig.barTypePosition == 2)
+	main.ombBarDisplacement:setEnabled(main.bConfig.barTypePosition == 2)
 	main.canGrabbed:SetEnabled(main.bConfig.barTypePosition == 2)
 end
 
@@ -1684,32 +1627,13 @@ main.coordXText:SetText("X")
 
 main.coordX = CreateFrame("EditBox", nil, main.positionBarPanel, "HidingBarAddonCoordTextBox")
 main.coordX:SetPoint("LEFT", main.coordXText, "RIGHT", 1, 0)
-main.coordX:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		editBox:SetNumber(editBox:GetText():match("%-?%d*"))
-	end
-end)
-main.coordX.setX = function(editBox, x)
+main.coordX:setOnChanged(function(editBox, x)
 	if main.bConfig.anchor == "left" or main.bConfig.anchor == "right" then
 		main.barFrame:setBarCoords(nil, x)
 	else
 		main.barFrame:setBarCoords(x)
 	end
 	main.barFrame:updateBarPosition()
-end
-main.coordX:SetScript("OnEnterPressed", function(editBox)
-	editBox:setX(tonumber(editBox:GetText():match("%-?%d*")) or 0)
-	editBox:ClearFocus()
-end)
-main.coordX:SetScript("OnEditFocusLost", function(editBox)
-	main:updateCoords()
-	editBox:HighlightText(0, 0)
-end)
-main.coordX:SetScript("OnMouseWheel", function(editBox, delta)
-	if editBox:IsEnabled() then
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		editBox:setX(int + (delta > 0 and 1 or -1))
-	end
 end)
 
 -- COORD Y
@@ -1719,32 +1643,13 @@ main.coordYText:SetText("Y")
 
 main.coordY = CreateFrame("EditBox", nil, main.positionBarPanel, "HidingBarAddonCoordTextBox")
 main.coordY:SetPoint("LEFT", main.coordYText, "RIGHT", 1, 0)
-main.coordY:SetScript("OnTextChanged", function(editBox, userInput)
-	if userInput then
-		editBox:SetNumber(editBox:GetText():match("%-?%d*"))
-	end
-end)
-main.coordY.setY = function(editBox, y)
+main.coordY:setOnChanged(function(editBox, y)
 	if main.bConfig.anchor == "left" or main.bConfig.anchor == "right" then
 		main.barFrame:setBarCoords(y)
 	else
 		main.barFrame:setBarCoords(nil, y)
 	end
 	main.barFrame:updateBarPosition()
-end
-main.coordY:SetScript("OnEnterPressed", function(editBox)
-	editBox:setY(tonumber(editBox:GetText():match("%-?%d*")) or 0)
-	editBox:ClearFocus()
-end)
-main.coordY:SetScript("OnEditFocusLost", function(editBox)
-	main:updateCoords()
-	editBox:HighlightText(0, 0)
-end)
-main.coordY:SetScript("OnMouseWheel", function(editBox, delta)
-	if editBox:IsEnabled() then
-		local int = tonumber(editBox:GetText():match("%-?%d*")) or 0
-		editBox:setY(int + (delta > 0 and 1 or -1))
-	end
 end)
 
 -- BAR LIKE MINIMAP BUTTON
@@ -1794,16 +1699,13 @@ main.ombShowToCombobox:ddSetInitFunc(function(self)
 end)
 
 -- SLIDER MINIMAP BUTTON SIZE
-main.ombSize = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
-main.ombSize:SetPoint("LEFT", main.ombShowToCombobox, "RIGHT", 10, 0)
-main.ombSize:SetPoint("RIGHT", -35, 0)
-main.ombSize:SetMinMaxValues(16, 64)
-main.ombSize.text:SetText(L["Button Size"])
-main.ombSize.edit:SetMaxLetters(2)
-main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	slider:SetValue(value)
+main.ombSize = CreateFrame("FRAME", nil, main.positionBarPanel, "HidingBarAddonSliderFrameTemplate")
+main.ombSize:SetPoint("LEFT", main.ombShowToCombobox, "RIGHT", 10, 5)
+main.ombSize:SetPoint("RIGHT", -10, 0)
+main.ombSize:setMinMax(16, 64)
+main.ombSize:setText(L["Button Size"])
+main.ombSize:setMaxLetters(2)
+main.ombSize:setOnChanged(function(frame, value)
 	if main.bConfig.omb.size ~= value then
 		main.barFrame:setOMBSize(value)
 		main.barFrame:setBarTypePosition()
@@ -1811,17 +1713,14 @@ main.ombSize:SetScript("OnValueChanged", function(slider, value, userInput)
 end)
 
 -- SLIDER DISTANCE FROM BUTTON TO BAR
-main.distanceFromButtonToBar = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
-main.distanceFromButtonToBar:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", 0, -12)
-main.distanceFromButtonToBar:SetWidth(248)
-main.distanceFromButtonToBar:SetMinMaxValues(-32, 32)
-main.distanceFromButtonToBar.text:SetText(L["Distance from button to bar"])
-main.distanceFromButtonToBar.edit:SetMaxLetters(3)
+main.distanceFromButtonToBar = CreateFrame("FRAME", nil, main.positionBarPanel, "HidingBarAddonSliderFrameTemplate")
+main.distanceFromButtonToBar:SetPoint("TOPLEFT", main.ombShowToCombobox, "BOTTOMLEFT", 0, 0)
+main.distanceFromButtonToBar:SetWidth(280)
+main.distanceFromButtonToBar:setMinMax(-32, 32)
+main.distanceFromButtonToBar:setText(L["Distance from button to bar"])
+main.distanceFromButtonToBar:setMaxLetters(3)
 main.distanceFromButtonToBar.noLimit = true
-main.distanceFromButtonToBar:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	slider:SetValue(value)
+main.distanceFromButtonToBar:setOnChanged(function(frame, value)
 	if main.bConfig.omb.distanceToBar ~= value then
 		main.bConfig.omb.distanceToBar = value
 		main.barFrame:setBarTypePosition()
@@ -1829,17 +1728,15 @@ main.distanceFromButtonToBar:SetScript("OnValueChanged", function(slider, value,
 	end
 end)
 
-main.ombBarDisplacement = CreateFrame("SLIDER", nil, main.positionBarPanel, "HidingBarAddonSliderTemplate")
-main.ombBarDisplacement:SetPoint("LEFT", main.distanceFromButtonToBar, "RIGHT", 38, 0)
-main.ombBarDisplacement:SetWidth(248)
-main.ombBarDisplacement:SetMinMaxValues(-32, 32)
-main.ombBarDisplacement.text:SetText(L["Bar offset relative to the button"])
-main.ombBarDisplacement.edit:SetMaxLetters(3)
+-- SLIDER MINIMAP BUTTON DISPLACEMENT
+main.ombBarDisplacement = CreateFrame("FRAME", nil, main.positionBarPanel, "HidingBarAddonSliderFrameTemplate")
+main.ombBarDisplacement:SetPoint("LEFT", main.distanceFromButtonToBar, "RIGHT", 6, 0)
+main.ombBarDisplacement:SetWidth(280)
+main.ombBarDisplacement:setMinMax(-32, 32)
+main.ombBarDisplacement:setText(L["Bar offset relative to the button"])
+main.ombBarDisplacement:setMaxLetters(3)
 main.ombBarDisplacement.noLimit = true
-main.ombBarDisplacement:SetScript("OnValueChanged", function(slider, value, userInput)
-	if not userInput then return end
-	value = math.floor(value + .5)
-	slider:SetValue(value)
+main.ombBarDisplacement:setOnChanged(function(frame, value)
 	if main.bConfig.omb.barDisplacement ~= value then
 		main.bConfig.omb.barDisplacement = value
 		main.barFrame:setBarTypePosition()
@@ -1914,6 +1811,23 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 			tooltip:AddLine(L["Prevents button elements from going over the edges."], nil, nil, nil, true)
 		end
 		self:ddAddButton(info, level)
+
+		if btn.toIgnore or btn.manually then
+			info.disabled = hb.btnParams[btn.rButton].autoShowHideDisabled
+			info.text = L["Auto show/hide"]
+			info.checked = btn.settings[5]
+			info.func = function(_,_,_, checked)
+				btn.settings[5] = checked
+				main.barFrame:applyLayout()
+				main:hidingBarUpdate()
+			end
+			info.OnTooltipShow = function(_, tooltip)
+				tooltip:AddLine(L["Allow the button to control its own visibility"], nil, nil, nil, true)
+			end
+			self:ddAddButton(info, level)
+
+			info.disabled = nil
+		end
 
 		info.notCheckable = true
 		info.keepShownOnClick = nil
@@ -2209,8 +2123,8 @@ function main:setBar(bar)
 		hideHandlerCombobox:ddSetSelectedText(hideHandlerCombobox.texts[self.bConfig.hideHandler])
 		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
 		self.fade:SetChecked(self.bConfig.fade)
-		self.fadeOpacity:SetValue(self.bConfig.fadeOpacity)
-		self.fadeOpacity:SetEnabled(self.bConfig.fade)
+		self.fadeOpacity:setValue(self.bConfig.fadeOpacity)
+		self.fadeOpacity:setEnabled(self.bConfig.fade)
 
 		bgCombobox:ddSetSelectedValue(self.bConfig.bgTexture)
 		bgCombobox:ddSetSelectedText(self.bConfig.bgTexture or NONE)
@@ -2218,8 +2132,8 @@ function main:setBar(bar)
 		borderCombobox:ddSetSelectedValue(self.bConfig.borderEdge)
 		borderCombobox:ddSetSelectedText(self.bConfig.borderEdge or NONE)
 		borderColor.color:SetColorTexture(unpack(self.bConfig.borderColor))
-		borderOffset:SetValue(self.bConfig.borderOffset)
-		borderSize:SetValue(self.bConfig.borderSize)
+		borderOffset:setValue(self.bConfig.borderOffset)
+		borderSize:setValue(self.bConfig.borderSize)
 		lineTextureCombobox:ddSetSelectedValue(self.bConfig.lineTexture)
 		local icon = media:Fetch("statusbar", self.bConfig.lineTexture, true)
 		local iconInfo = {
@@ -2229,18 +2143,18 @@ function main:setBar(bar)
 		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, lineFont)
 		main.lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
 		main.lineColor.updateLineColor()
-		self.lineWidth:SetValue(self.bConfig.lineWidth)
+		self.lineWidth:setValue(self.bConfig.lineWidth)
 		lineBorderCombobox:ddSetSelectedValue(self.bConfig.lineBorderEdge)
 		lineBorderCombobox:ddSetSelectedText(self.bConfig.lineBorderEdge or NONE)
 		lineBorderColor.color:SetColorTexture(unpack(self.bConfig.lineBorderColor))
-		self.lineBorderOffset:SetValue(self.bConfig.lineBorderOffset)
-		self.lineBorderSize:SetValue(self.bConfig.lineBorderSize)
-		self.gapSize:SetValue(self.bConfig.gapSize)
+		self.lineBorderOffset:setValue(self.bConfig.lineBorderOffset)
+		self.lineBorderSize:setValue(self.bConfig.lineBorderSize)
+		self.gapSize:setValue(self.bConfig.gapSize)
 
-		buttonNumber:SetValue(self.bConfig.size)
-		buttonSize:SetValue(self.bConfig.buttonSize)
-		barOffset:SetValue(self.bConfig.barOffset)
-		rangeBetweenBtns:SetValue(self.bConfig.rangeBetweenBtns)
+		buttonNumber:setValue(self.bConfig.size)
+		buttonSize:setValue(self.bConfig.buttonSize)
+		barOffset:setValue(self.bConfig.barOffset)
+		rangeBetweenBtns:setValue(self.bConfig.rangeBetweenBtns)
 		mbtnPostionCombobox:ddSetSelectedValue(self.bConfig.mbtnPosition)
 		mbtnPostionCombobox:ddSetSelectedText(mbtnPostionCombobox.texts[self.bConfig.mbtnPosition])
 		interceptTooltip:SetChecked(self.bConfig.interceptTooltip)
@@ -2252,9 +2166,9 @@ function main:setBar(bar)
 		self.hideToCombobox:ddSetSelectedText(self.hideToCombobox.texts[self.bConfig.anchor])
 		self.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
 		self.ombShowToCombobox:ddSetSelectedText(self.ombShowToCombobox.texts[self.bConfig.omb.anchor])
-		self.ombSize:SetValue(self.bConfig.omb.size)
-		self.distanceFromButtonToBar:SetValue(self.bConfig.omb.distanceToBar)
-		self.ombBarDisplacement:SetValue(self.bConfig.omb.barDisplacement)
+		self.ombSize:setValue(self.bConfig.omb.size)
+		self.distanceFromButtonToBar:setValue(self.bConfig.omb.distanceToBar)
+		self.ombBarDisplacement:setValue(self.bConfig.omb.barDisplacement)
 		self.canGrabbed:SetChecked(self.bConfig.omb.canGrabbed)
 
 		updateBarTypePosition()
@@ -2672,7 +2586,7 @@ do
 		if btn.isDrag then return end
 		GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
 		GameTooltip:SetText(btn.title)
-		GameTooltip:AddLine(L["Source:"]..btn.source, .3, .5, .7)
+		GameTooltip:AddLine(L["Source:"].." "..GRAY_FONT_COLOR:WrapTextInColorCode(btn.manually and L["Manually added"] or "Minimap"), .3, .5, .7)
 		GameTooltip:AddLine(L["BUTTON_TOOLTIP"], 1, 1, 1)
 		GameTooltip:Show()
 	end
@@ -2702,9 +2616,9 @@ do
 		btn:SetScript("OnDragStop", btnDragStop)
 		btn:SetScript("OnEnter", btnEnter)
 		contextmenu:ddSetNoGlobalMouseEvent(true, btn)
-		btn.toIgnore = not (hb.manuallyButtons[button] or name:match(hb.matchName))
-		btn.source = " "..GRAY_FONT_COLOR:WrapTextInColorCode(hb.manuallyButtons[button] and L["Manually added"] or "Minimap")
+		btn.manually = hb.manuallyButtons[button]
 		hb.manuallyButtons[button] = nil
+		btn.toIgnore = not (btn.manually or name:match(hb.matchName))
 		buttonsByName[name] = btn
 		tinsert(self.mbuttons, btn)
 		tinsert(self.mixedButtons, btn)
@@ -2745,7 +2659,7 @@ function main:initMButtons(update)
 			          or button.Texture
 			          or button.background
 			          or button.Background
-			if not icon or not icon.GetTexture then
+			if not icon or not icon.GetTexture or not icon:GetTexture() then
 				icon = self.noIcon
 			end
 			self:createMButton(button, name, icon, update)

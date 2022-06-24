@@ -177,73 +177,133 @@
 		</HighlightTexture>
 	</Button>
 
-	<Slider name="HidingBarAddonSliderTemplate" inherits="HorizontalSliderTemplate" virtual="true">
-		<Size x="500" y="17"/>
-		<HitRectInsets left="0" right="0" top="-4" bottom="-4"/>
-		<Layers>
-			<Layer level="ARTWORK">
-				<FontString parentKey="text" inherits="GameFontNormalSmall">
-					<Anchors>
-						<Anchor point="BOTTOM" relativePoint="TOP"/>
-					</Anchors>
-				</FontString>
-			</Layer>
-		</Layers>
+	<Frame name="HidingBarAddonSliderFrameTemplate" virtual="true">
+		<Size x="500" y="31"/>
 		<Frames>
-			<EditBox parentKey="edit" inherits="HidingBarAddonEditBoxTemplate">
-				<Size x="26" y="17"/>
+			<EditBox parentKey="edit" inherits="HidingBarAddonEditBoxTemplate" letters="3">
+				<Size x="28" y="17"/>
 				<Anchors>
-					<Anchor point="LEFT" relativePoint="RIGHT" x="3" y="1"/>
+					<Anchor point="RIGHT" x="-1" y="-4"/>
 				</Anchors>
 				<Scripts>
-					<OnLoad inherit="prepend">
-						hooksecurefunc(self, "SetMaxLetters", function(self, value)
-							self:SetWidth(value * 7 + 7)
-						end)
-					</OnLoad>
 					<OnTextChanged>
 						if userInput then
 							local int, dec = self:GetText():gsub(",", "."):match("(%-?%d*)(%.?%d*)")
 							if int == "" and dec ~= "" then int = "0" end
 							self:SetText(int..dec)
-						else
-							self.curValue = tonumber(self:GetText()) or 0
 						end
 					</OnTextChanged>
 					<OnEnterPressed>
-						local slider = self:GetParent()
+						local parent = self:GetParent()
+						local slider = parent.slider
 						local value = tonumber(self:GetText()) or 0
-						if not slider.noLimit then
+						if not parent.noLimit then
 							local min, max = slider:GetMinMaxValues()
 							if min > value then value = min
 							elseif value > max then value = max end
 						end
-						self.curValue = value
 						slider:GetScript("OnValueChanged")(slider, value, true)
 						self:ClearFocus()
 					</OnEnterPressed>
 					<OnEditFocusLost>
 						self:SetNumber(self.curValue)
 					</OnEditFocusLost>
+					<OnMouseWheel>
+						local parent = self:GetParent()
+						local slider = parent.slider
+						local value = (tonumber(self:GetText()) or 0) + parent.step * delta
+						if not parent.noLimit then
+							local min, max = slider:GetMinMaxValues()
+							if min > value then value = min
+							elseif value > max then value = max end
+						end
+						slider:GetScript("OnValueChanged")(slider, value, true)
+					</OnMouseWheel>
 				</Scripts>
 			</EditBox>
+			<Slider parentKey="slider" inherits="HorizontalSliderTemplate">
+				<Size y="17"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" x="0" y="2"/>
+					<Anchor point="RIGHT" relativeKey="$parent.edit" relativePoint="LEFT" x="-4"/>
+				</Anchors>
+				<HitRectInsets left="0" right="0" top="-4" bottom="-4"/>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="text" inherits="GameFontNormalSmall">
+							<Anchors>
+								<Anchor point="BOTTOM" relativePoint="TOP"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad inherit="prepend">
+						hooksecurefunc(self, "SetValue", function(self, value)
+							local edit = self:GetParent().edit
+							edit.curValue = value
+							edit:SetNumber(value)
+							edit:SetCursorPosition(0)
+						end)
+					</OnLoad>
+					<OnValueChanged>
+						if not userInput then return end
+						local parent = self:GetParent()
+						local step = 1 / parent.step
+						value = math.floor(value * step + .5) / step
+						self:SetValue(value)
+						parent:onValueChanged(value)
+					</OnValueChanged>
+					<OnMouseWheel>
+						local edit = self:GetParent().edit
+						edit:GetScript("OnMouseWheel")(edit, delta)
+					</OnMouseWheel>
+					<OnDisable>
+						self.text:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
+					</OnDisable>
+					<OnEnable>
+						self.text:SetVertexColor(NORMAL_FONT_COLOR:GetRGB())
+					</OnEnable>
+				</Scripts>
+			</Slider>
 		</Frames>
 		<Scripts>
-			<OnLoad inherit="prepend">
-				hooksecurefunc(self, "SetValue", function(self, value)
-					self.edit:SetNumber(value)
-				end)
+			<OnLoad>
+				self.setOnChanged = function(self, func)
+					self.onValueChanged = func
+				end
+				self.step = 1
+				self.setStep = function(self, step)
+					self.step = step
+				end
+				self.setMinMax = function(self, min, max)
+					self.slider:SetMinMaxValues(min, max)
+				end
+				self.setValue = function(self, value)
+					self.slider:SetValue(value)
+				end
+				self.setText = function(self, text)
+					self.slider.text:SetText(text)
+				end
+				self.setMaxLetters = function(self, value)
+					self.edit:SetWidth(value * 7 + 7)
+					self.edit:SetMaxLetters(value)
+				end
+				self.setEnabled = function(self, enabled)
+					self.edit:SetEnabled(enabled)
+					self.slider:SetEnabled(enabled)
+				end
+				self.disable = function(self)
+					self.edit:Disable()
+					self.slider:Disable()
+				end
+				self.enable = function(self)
+					self.edit:Enable()
+					self.slider:Enable()
+				end
 			</OnLoad>
-			<OnDisable>
-				self.edit:Disable()
-				self.text:SetVertexColor(GRAY_FONT_COLOR:GetRGB())
-			</OnDisable>
-			<OnEnable>
-				self.edit:Enable()
-				self.text:SetVertexColor(NORMAL_FONT_COLOR:GetRGB())
-			</OnEnable>
 		</Scripts>
-	</Slider>
+	</Frame>
 
 	<EditBox name="HidingBarAddonEditBoxTemplate" inherits="InputBoxScriptTemplate,BackdropTemplate" multiLine="false" autoFocus="false" virtual="true">
 		<FontString inherits="GameFontHighlightSmall" justifyH="CENTER"/>
@@ -262,16 +322,69 @@
 		</Scripts>
 	</EditBox>
 
-	<EditBox name="HidingBarAddonNumberTextBox" inherits="HidingBarAddonEditBoxTemplate" numeric="true" letters="1" virtual="true">
+	<EditBox name="HidingBarAddonDecimalScriptTeplate" inherits="HidingBarAddonEditBoxTemplate" virtual="true">
+		<Scripts>
+			<OnLoad inherit="prepend">
+				self.setOnChanged = function(self, func)
+					self.onValueChanged = func
+				end
+			</OnLoad>
+			<OnTextChanged>
+				if userInput then
+					self.isEdit = true
+					local int, dec = self:GetText():gsub(",", "."):match(self.mask or "(%-?%d*)(%.?%d*)")
+					if int == "" and dec and dec ~= "" then int = "0" end
+					self:SetText((int or "")..(dec or ""))
+				elseif not self.isEdit then
+					self.curValue = tonumber(self:GetText()) or 0
+				else
+					self.isEdit = nil
+				end
+			</OnTextChanged>
+			<OnEnterPressed>
+				self.step = nil
+				self:onValueChanged(tonumber(self:GetText()) or 0)
+				self.curValue = tonumber(self:GetText()) or 0
+				self:ClearFocus()
+			</OnEnterPressed>
+			<OnEditFocusLost>
+				self:SetNumber(self.curValue)
+			</OnEditFocusLost>
+			<OnMouseWheel>
+				if not self.step then
+					local step = (""..self.curValue):match("%d+(%.?%d*)%d")
+					self.step = tonumber(step and step:gsub("%d", "0").."1") or 1
+				end
+				local value = self.curValue + self.step * delta
+				if self.min and self.min > value then value = self.min
+				elseif self.max and value > self.max then value = self.max end
+				self.curValue = value
+				self:SetNumber(value)
+				self:onValueChanged(value)
+			</OnMouseWheel>
+		</Scripts>
+	</EditBox>
+
+	<EditBox name="HidingBarAddonNumberTextBox" inherits="HidingBarAddonDecimalScriptTeplate" numeric="true" letters="1" virtual="true">
 		<Size x="15" y="18"/>
+		<KeyValues>
+			<KeyValue key="max" value="9" type="number"/>
+		</KeyValues>
 	</EditBox>
 
-	<EditBox name="HidingBarAddonDecimalTextBox" inherits="HidingBarAddonEditBoxTemplate" letters="4" virtual="true">
+	<EditBox name="HidingBarAddonDelayTextBox" inherits="HidingBarAddonDecimalScriptTeplate" letters="4" virtual="true">
 		<Size x="32" y="18"/>
+		<KeyValues>
+			<KeyValue key="mask" value="%-?(%d*)(%.?%d*)" type="string"/>
+			<KeyValue key="min" value="0" type="number"/>
+		</KeyValues>
 	</EditBox>
 
-	<EditBox name="HidingBarAddonCoordTextBox" inherits="HidingBarAddonEditBoxTemplate" letters="5" virtual="true">
+	<EditBox name="HidingBarAddonCoordTextBox" inherits="HidingBarAddonDecimalScriptTeplate" letters="5" virtual="true">
 		<Size x="40" y="18"/>
+		<KeyValues>
+			<KeyValue key="mask" value="%-?%d*" type="string"/>
+		</KeyValues>
 	</EditBox>
 
 	<Button name="HidingBarAddonTabTemplate" virtual="true">
