@@ -1273,6 +1273,9 @@ do
 		for i = 1, #voidFunctions do
 			btn[voidFunctions[i]] = nil
 		end
+		btn.SetShown = nil
+		btn.Show = nil
+		btn.Hide = nil
 		btn.IsShown = nil
 		btn.SetScript = nil
 	end
