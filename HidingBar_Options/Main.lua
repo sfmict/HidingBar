@@ -1813,6 +1813,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		self:ddAddButton(info, level)
 
 		if btn.toIgnore or btn.manually then
+			info.tooltipWhileDisabled = true
 			info.disabled = hb.btnParams[btn.rButton].autoShowHideDisabled
 			info.text = L["Auto show/hide"]
 			info.checked = btn.settings[5]
@@ -1826,6 +1827,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 			end
 			self:ddAddButton(info, level)
 
+			info.tooltipWhileDisabled = nil
 			info.disabled = nil
 		end
 
