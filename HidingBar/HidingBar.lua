@@ -479,6 +479,8 @@ end
 function hb:UI_SCALE_CHANGED()
 	for _, bar in ipairs(self.bars) do
 		bar:setBarTypePosition()
+		bar:setBorder()
+		bar:setLineBorder()
 	end
 end
 
@@ -569,6 +571,7 @@ function hb:init()
 		self:grabDefButtons()
 	end
 
+	hooksecurefunc(UIParent, "SetScale", function() self:UI_SCALE_CHANGED() end)
 	self:RegisterEvent("UI_SCALE_CHANGED")
 end
 
