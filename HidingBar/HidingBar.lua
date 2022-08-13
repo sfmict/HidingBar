@@ -840,11 +840,48 @@ function hb:grabDefButtons()
 	-- TRACKING BUTTON
 	if self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
 		local MiniMapTracking = MiniMapTracking
+		local MiniMapTrackingButton = MiniMapTrackingButton
+		local icon = MiniMapTrackingIcon
+		MiniMapTracking.rButton = MiniMapTrackingButton
 		self:setHooks(MiniMapTracking)
-		self:setParams(MiniMapTracking)
+		local p = self:setParams(MiniMapTracking, function(p)
+			if MiniMapTrackingButton.__MSQ_Addon then return end
+			icon.SetPoint = nil
+			MiniMapTrackingButton:SetScript("OnMouseDown", p.OnMouseDown)
+			MiniMapTrackingButton:SetScript("OnMouseUp", p.OnMouseUp)
+		end)
 
-		if self.MSQ_MButton and not MiniMapTracking.__MSQ_Addon then
-			self:setMButtonRegions(MiniMapTracking)
+		if not MiniMapTracking.__MSQ_Addon then
+			icon:ClearAllPoints()
+			icon:SetPoint("CENTER")
+			hooksecurefunc(icon, "SetPoint", function(icon)
+				icon:ClearAllPoints()
+				self.SetPoint(icon, "CENTER")
+			end)
+			p.OnMouseDown = MiniMapTrackingButton:GetScript("OnMouseDown")
+			p.OnMouseUp = MiniMapTrackingButton:GetScript("OnMouseUp")
+			MiniMapTrackingButton:HookScript("OnMouseDown", function()
+				icon:SetScale(.9)
+			end)
+			MiniMapTrackingButton:HookScript("OnMouseUp", function()
+				icon:SetScale(1)
+			end)
+
+			if self.MSQ_MButton then
+				self.MSQ_Button_Data[MiniMapTrackingButton] = {
+					_Border = MiniMapTrackingButtonBorder,
+					_Background = MiniMapTrackingBackground,
+				}
+				self:setTexCurCoord(icon, icon:GetTexCoord())
+				icon.SetTexCoord = self.setTexCoord
+				local data = {
+					Icon = icon,
+					Highlight = MiniMapTrackingButton:GetHighlightTexture()
+				}
+				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
+				self:MSQ_Button_Update(MiniMapTrackingButton)
+				self:MSQ_CoordUpdate(MiniMapTrackingButton)
+			end
 		end
 
 		tinsert(self.minimapButtons, MiniMapTracking)
