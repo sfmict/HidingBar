@@ -196,20 +196,23 @@ if MSQ then
 						if texture then
 							local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
 							if skin.UseStates and texture == skin.Texture or texture == defTexture then
-								data._isMSQ = true
+								data._isMSQCoord = true
+								data._isMSQColor = true
 							else
 								data._Icon:SetTexture(texture)
 							end
 						end
 					end
 					data._Normal.SetTexCoord = function(_, ...)
-						if not data._isMSQ then
+						if data._isMSQCoord then
+							data._isMSQCoord = nil
+						else
 							data._Icon:SetTexCoord(...)
 						end
 					end
 					data._Normal.SetVertexColor = function(_, ...)
-						if data._isMSQ then
-							data._isMSQ = nil
+						if data._isMSQColor then
+							data._isMSQColor = nil
 						else
 							data._Icon:SetVertexColor(...)
 						end
@@ -477,6 +480,8 @@ end
 function hb:UI_SCALE_CHANGED()
 	for _, bar in ipairs(self.bars) do
 		bar:setBarTypePosition()
+		bar:setBorder()
+		bar:setLineBorder()
 	end
 end
 
@@ -573,6 +578,7 @@ function hb:init()
 		self:grabDefButtons()
 	end
 
+	hooksecurefunc(UIParent, "SetScale", function() self:UI_SCALE_CHANGED() end)
 	self:RegisterEvent("UI_SCALE_CHANGED")
 end
 
@@ -1452,16 +1458,15 @@ local function fade(self, elapsed)
 		self:SetScript("OnUpdate", nil)
 		self:SetAlpha(self.endAlpha)
 	else
-		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer / self.delay)
+		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer)
 	end
 end
 
 
 function frameFade(self, delay, endAlpha)
 	self.timer = delay
-	self.delay = delay
 	self.endAlpha = endAlpha
-	self.deltaAlpha = endAlpha - self:GetAlpha()
+	self.deltaAlpha = (endAlpha - self:GetAlpha()) / delay
 	self:SetScript("OnUpdate", fade)
 end
 
@@ -2731,9 +2736,9 @@ setmetatable(hb.bars, {__index = function(self, key)
 	bar.gap = CreateFrame("FRAME", nil, bar)
 	bar.gap.bar = bar
 	bar.gap:SetFrameLevel(bar:GetFrameLevel())
-	bar.gap:SetMouseMotionEnabled(true)
 	bar.gap:SetScript("OnEnter", gap_OnEnter)
 	bar.gap:SetScript("OnLeave", gap_OnLeave)
+	bar.gap:SetMouseClickEnabled(false)
 
 	bar.id = key
 	self[key] = bar
