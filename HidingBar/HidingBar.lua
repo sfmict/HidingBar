@@ -1519,8 +1519,8 @@ function hb:restoreParams(btn)
 
 	for frame, param in pairs(p.frames) do
 		self.SetHitRectInsets(frame, unpack(param.insets))
-		if param.OnEnter then self.SetScript(frame, "OnEnter", param.OnEnter) end
-		if param.OnLeave then self.SetScript(frame, "OnLeave", param.OnLeave) end
+		if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", param.OnEnter) end
+		if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", param.OnLeave) end
 		noGMEFrames[frame] = nil
 	end
 
