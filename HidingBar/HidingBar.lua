@@ -843,6 +843,46 @@ end
 
 
 function hb:grabDefButtons()
+	-- CALENDAR BUTTON
+	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
+		local GameTimeFrame = GameTimeFrame
+		local text = GameTimeFrame:GetFontString()
+		text:SetPoint("CENTER", 0, -1)
+		GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
+		GameTimeCalendarInvitesTexture:SetPoint("CENTER")
+		GameTimeCalendarInvitesGlow.Show = void
+		GameTimeCalendarInvitesGlow:Hide()
+		self:setHooks(GameTimeFrame)
+		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
+			GameTimeCalendarInvitesGlow.Show = nil
+			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
+		end)
+		p.tooltipFrame = GameTooltip
+		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
+		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
+			local bar = GameTimeFrame:GetParent()
+			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
+				bar:updateTooltipPosition()
+			end
+		end)
+
+		if not GameTimeFrame.__MSQ_Addon then
+			local normalTexture = GameTimeFrame:GetNormalTexture()
+			normalTexture:SetTexCoord(0, .375, 0, .75)
+			local pushedTexture = GameTimeFrame:GetPushedTexture()
+			pushedTexture:SetTexCoord(.5, .875, 0, .75)
+			local highlightTexture = GameTimeFrame:GetHighlightTexture()
+			highlightTexture:SetTexCoord(0, 1, 0, .9375)
+
+			if self.MSQ_MButton then
+				self:setMButtonRegions(GameTimeFrame, {.0859375, .296875, .156255, .59375})
+			end
+		end
+
+		tinsert(self.minimapButtons, GameTimeFrame)
+		tinsert(self.mixedButtons, GameTimeFrame)
+	end
+
 	-- TRACKING BUTTON
 	if self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
 		local MiniMapTracking = MiniMapTracking
