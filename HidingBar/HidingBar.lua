@@ -23,6 +23,7 @@ local MSQ = LibStub("Masque", true)
 
 
 local ignoreFrameList = {
+	["GameTimeFrame"] = true,
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
 	["MinimapZoomIn"] = true,
