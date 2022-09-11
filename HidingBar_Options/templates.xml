@@ -221,7 +221,7 @@
 					</OnMouseWheel>
 				</Scripts>
 			</EditBox>
-			<Slider parentKey="slider" inherits="HorizontalSliderTemplate">
+			<Slider parentKey="slider" inherits="MinimalSliderTemplate">
 				<Size y="17"/>
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" x="0" y="2"/>
@@ -232,7 +232,7 @@
 					<Layer level="ARTWORK">
 						<FontString parentKey="text" inherits="GameFontNormalSmall">
 							<Anchors>
-								<Anchor point="BOTTOM" relativePoint="TOP"/>
+								<Anchor point="BOTTOM" relativePoint="TOP" y="1"/>
 							</Anchors>
 						</FontString>
 					</Layer>

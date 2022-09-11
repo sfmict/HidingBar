@@ -253,7 +253,7 @@ StaticPopupDialogs[main.addonName.."REMOVE_CUSTOM_GRAB_BTN"] = {
 
 -- ADDON INFO
 local info = main:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-info:SetPoint("TOPRIGHT", -16, 16)
+info:SetPoint("TOPLEFT", -8, 28)
 info:SetTextColor(.5, .5, .5, 1)
 info:SetJustifyH("RIGHT")
 info:SetText(GetAddOnMetadata(addon, "Version"))

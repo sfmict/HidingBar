@@ -1,5 +1,5 @@
 local addon, L = ...
-local config = CreateFrame("FRAME", addon.."ConfigAddon", InterfaceOptionsFramePanelContainer)
+local config = CreateFrame("FRAME", addon.."ConfigAddon")
 config.name = addon
 config:Hide()
 config.L = L
@@ -18,7 +18,7 @@ config:SetScript("OnShow", function(self)
 	local loaded, reason = LoadAddOn(name)
 	if loaded then
 		self:SetScript("OnShow", nil)
-		InterfaceAddOnsList_Update()
+		SettingsPanel:GetCategoryList():CreateCategories()
 	else
 		print("Failed to load "..name..": "..tostring(reason))
 	end
@@ -26,18 +26,16 @@ end)
 
 
 -- ADD CATEGORY
-InterfaceOptions_AddCategory(config)
+local category, layout = Settings.RegisterCanvasLayoutCategory(config, addon)
+Settings.RegisterAddOnCategory(category)
 
 
 -- OPEN CONFIG
 function config:openConfig()
-	if InterfaceOptionsFrameAddOns:IsVisible() and self:IsVisible() then
-		InterfaceOptionsFrame:Hide()
+	if SettingsPanel:IsVisible() and self:IsVisible() then
+		HideUIPanel(SettingsPanel)
 	else
-		InterfaceOptionsFrame_OpenToCategory(addon)
-		if not InterfaceOptionsFrameAddOns:IsVisible() then
-			InterfaceOptionsFrame_OpenToCategory(addon)
-		end
+		Settings.OpenToCategory(addon, true)
 	end
 end
 

@@ -24,16 +24,17 @@ local MSQ = LibStub("Masque", true)
 
 local ignoreFrameList = {
 	["GameTimeFrame"] = true,
-	["QueueStatusMinimapButton"] = true,
-	["HelpOpenTicketButton"] = true,
+	-- ["QueueStatusMinimapButton"] = true,
+	-- ["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
-	["GarrisonLandingPageMinimapButton"] = true,
-	["MinimapZoomIn"] = true,
-	["MinimapZoomOut"] = true,
-	["MiniMapWorldMapButton"] = true,
-	["MiniMapMailFrame"] = true,
-	["MiniMapTracking"] = true,
+	-- ["GarrisonLandingPageMinimapButton"] = true,
+	-- ["MinimapZoomIn"] = true,
+	-- ["MinimapZoomOut"] = true,
+	-- ["MiniMapWorldMapButton"] = true,
+	-- ["MiniMapMailFrame"] = true,
+	-- ["MiniMapTracking"] = true,
+	["ExpansionLandingPageMinimapButton"] = true,
 }
 
 
@@ -697,7 +698,7 @@ function hb:setBtnSettings(btn)
 	local btnData = self.pConfig.btnSettings[btn.name]
 	btnData.tstmp = time()
 	btnSettings[btn] = btnData
-	btn:SetClipsChildren(btnData[4])
+	btn:SetClipsChildren(not not btnData[4])
 end
 
 
@@ -707,7 +708,7 @@ function hb:setMBtnSettings(btn)
 		local btnData = self.pConfig.mbtnSettings[name]
 		btnData.tstmp = time()
 		btnSettings[btn] = btnData
-		btn:SetClipsChildren(btnData[4])
+		btn:SetClipsChildren(not not btnData[4])
 	end
 end
 
@@ -840,322 +841,322 @@ end
 
 function hb:grabDefButtons()
 	-- CALENDAR BUTTON
-	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
-		local GameTimeFrame = GameTimeFrame
-		local text = GameTimeFrame:GetFontString()
-		text:SetPoint("CENTER", 0, -1)
-		GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
-		GameTimeCalendarInvitesTexture:SetPoint("CENTER")
-		GameTimeCalendarInvitesGlow.Show = void
-		GameTimeCalendarInvitesGlow:Hide()
-		self:setHooks(GameTimeFrame)
-		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
-			GameTimeCalendarInvitesGlow.Show = nil
-			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
-		end)
-		p.tooltipFrame = GameTooltip
-		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
-		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
-			local bar = GameTimeFrame:GetParent()
-			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
-				bar:updateTooltipPosition()
-			end
-		end)
+	-- if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
+	-- 	local GameTimeFrame = GameTimeFrame
+	-- 	local text = GameTimeFrame:GetFontString()
+	-- 	text:SetPoint("CENTER", 0, -1)
+	-- 	GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
+	-- 	GameTimeCalendarInvitesTexture:SetPoint("CENTER")
+	-- 	GameTimeCalendarInvitesGlow.Show = void
+	-- 	GameTimeCalendarInvitesGlow:Hide()
+	-- 	self:setHooks(GameTimeFrame)
+	-- 	local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
+	-- 		GameTimeCalendarInvitesGlow.Show = nil
+	-- 		GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
+	-- 	end)
+	-- 	p.tooltipFrame = GameTooltip
+	-- 	p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
+	-- 	self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
+	-- 		local bar = GameTimeFrame:GetParent()
+	-- 		if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
+	-- 			bar:updateTooltipPosition()
+	-- 		end
+	-- 	end)
 
-		if not GameTimeFrame.__MSQ_Addon then
-			local normalTexture = GameTimeFrame:GetNormalTexture()
-			normalTexture:SetTexCoord(0, .375, 0, .75)
-			local pushedTexture = GameTimeFrame:GetPushedTexture()
-			pushedTexture:SetTexCoord(.5, .875, 0, .75)
-			local highlightTexture = GameTimeFrame:GetHighlightTexture()
-			highlightTexture:SetTexCoord(0, 1, 0, .9375)
+	-- 	if not GameTimeFrame.__MSQ_Addon then
+	-- 		local normalTexture = GameTimeFrame:GetNormalTexture()
+	-- 		normalTexture:SetTexCoord(0, .375, 0, .75)
+	-- 		local pushedTexture = GameTimeFrame:GetPushedTexture()
+	-- 		pushedTexture:SetTexCoord(.5, .875, 0, .75)
+	-- 		local highlightTexture = GameTimeFrame:GetHighlightTexture()
+	-- 		highlightTexture:SetTexCoord(0, 1, 0, .9375)
 
-			if self.MSQ_MButton then
-				self:setMButtonRegions(GameTimeFrame, {.0859375, .296875, .156255, .59375})
-			end
-		end
+	-- 		if self.MSQ_MButton then
+	-- 			self:setMButtonRegions(GameTimeFrame, {.0859375, .296875, .156255, .59375})
+	-- 		end
+	-- 	end
 
-		tinsert(self.minimapButtons, GameTimeFrame)
-		tinsert(self.mixedButtons, GameTimeFrame)
-	end
+	-- 	tinsert(self.minimapButtons, GameTimeFrame)
+	-- 	tinsert(self.mixedButtons, GameTimeFrame)
+	-- end
 
 	-- TRACKING BUTTON
-	if self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
-		local MiniMapTracking = MiniMapTracking
-		local MiniMapTrackingButton = MiniMapTrackingButton
-		local icon = MiniMapTrackingIcon
-		MiniMapTracking.rButton = MiniMapTrackingButton
-		self:setHooks(MiniMapTracking)
-		local p = self:setParams(MiniMapTracking, function(p)
-			if MiniMapTrackingButton.__MSQ_Addon then return end
-			icon.SetPoint = nil
-			MiniMapTrackingButton:SetScript("OnMouseDown", p.OnMouseDown)
-			MiniMapTrackingButton:SetScript("OnMouseUp", p.OnMouseUp)
-		end)
+	-- if self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
+	-- 	local MiniMapTracking = MiniMapTracking
+	-- 	local MiniMapTrackingButton = MiniMapTrackingButton
+	-- 	local icon = MiniMapTrackingIcon
+	-- 	MiniMapTracking.rButton = MiniMapTrackingButton
+	-- 	self:setHooks(MiniMapTracking)
+	-- 	local p = self:setParams(MiniMapTracking, function(p)
+	-- 		if MiniMapTrackingButton.__MSQ_Addon then return end
+	-- 		icon.SetPoint = nil
+	-- 		MiniMapTrackingButton:SetScript("OnMouseDown", p.OnMouseDown)
+	-- 		MiniMapTrackingButton:SetScript("OnMouseUp", p.OnMouseUp)
+	-- 	end)
 
-		if not MiniMapTrackingButton.__MSQ_Addon then
-			icon:ClearAllPoints()
-			icon:SetPoint("CENTER")
-			hooksecurefunc(icon, "SetPoint", function(icon)
-				icon:ClearAllPoints()
-				self.SetPoint(icon, "CENTER")
-			end)
-			p.OnMouseDown = MiniMapTrackingButton:GetScript("OnMouseDown")
-			p.OnMouseUp = MiniMapTrackingButton:GetScript("OnMouseUp")
-			MiniMapTrackingButton:HookScript("OnMouseDown", function()
-				icon:SetScale(.9)
-			end)
-			MiniMapTrackingButton:HookScript("OnMouseUp", function()
-				icon:SetScale(1)
-			end)
+	-- 	if not MiniMapTrackingButton.__MSQ_Addon then
+	-- 		icon:ClearAllPoints()
+	-- 		icon:SetPoint("CENTER")
+	-- 		hooksecurefunc(icon, "SetPoint", function(icon)
+	-- 			icon:ClearAllPoints()
+	-- 			self.SetPoint(icon, "CENTER")
+	-- 		end)
+	-- 		p.OnMouseDown = MiniMapTrackingButton:GetScript("OnMouseDown")
+	-- 		p.OnMouseUp = MiniMapTrackingButton:GetScript("OnMouseUp")
+	-- 		MiniMapTrackingButton:HookScript("OnMouseDown", function()
+	-- 			icon:SetScale(.9)
+	-- 		end)
+	-- 		MiniMapTrackingButton:HookScript("OnMouseUp", function()
+	-- 			icon:SetScale(1)
+	-- 		end)
 
-			if self.MSQ_MButton then
-				self.MSQ_Button_Data[MiniMapTrackingButton] = {
-					_Border = MiniMapTrackingButtonBorder,
-					_Background = MiniMapTrackingBackground,
-				}
-				self:setTexCurCoord(icon, icon:GetTexCoord())
-				icon.SetTexCoord = self.setTexCoord
-				local data = {
-					Icon = icon,
-					Highlight = MiniMapTrackingButton:GetHighlightTexture(),
-				}
-				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
-				self:MSQ_Button_Update(MiniMapTrackingButton)
-				self:MSQ_CoordUpdate(MiniMapTrackingButton)
-			end
-		end
+	-- 		if self.MSQ_MButton then
+	-- 			self.MSQ_Button_Data[MiniMapTrackingButton] = {
+	-- 				_Border = MiniMapTrackingButtonBorder,
+	-- 				_Background = MiniMapTrackingBackground,
+	-- 			}
+	-- 			self:setTexCurCoord(icon, icon:GetTexCoord())
+	-- 			icon.SetTexCoord = self.setTexCoord
+	-- 			local data = {
+	-- 				Icon = icon,
+	-- 				Highlight = MiniMapTrackingButton:GetHighlightTexture(),
+	-- 			}
+	-- 			self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
+	-- 			self:MSQ_Button_Update(MiniMapTrackingButton)
+	-- 			self:MSQ_CoordUpdate(MiniMapTrackingButton)
+	-- 		end
+	-- 	end
 
-		tinsert(self.minimapButtons, MiniMapTracking)
-		tinsert(self.mixedButtons, MiniMapTracking)
-	end
+	-- 	tinsert(self.minimapButtons, MiniMapTracking)
+	-- 	tinsert(self.mixedButtons, MiniMapTracking)
+	-- end
 
 	-- GARRISON BUTTON
-	if self:ignoreCheck("GarrisonLandingPageMinimapButton") and not self.btnParams[GarrisonLandingPageMinimapButton] then
-		local garrison = GarrisonLandingPageMinimapButton
-		self:setHooks(garrison)
-		self:setParams(garrison).autoShowHideDisabled = true
-		self.pConfig.mbtnSettings["GarrisonLandingPageMinimapButton"][5] = true
+	if self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[ExpansionLandingPageMinimapButton] then
+		local expBtn = ExpansionLandingPageMinimapButton
+		self:setHooks(expBtn)
+		self:setParams(expBtn).autoShowHideDisabled = true
+		self.pConfig.mbtnSettings["ExpansionLandingPageMinimapButton"][5] = true
 
 		if MSQ and not self.MSQ_Garrison then
 			self.MSQ_Garrison = MSQ:Group(addon, GARRISON_FOLLOWERS, "GarrisonLandingPageMinimapButton")
 			self.MSQ_Garrison:SetCallback(function()
-				self:MSQ_Button_Update(garrison)
-				self:MSQ_CoordUpdate(garrison)
+				self:MSQ_Button_Update(expBtn)
+				self:MSQ_CoordUpdate(expBtn)
 				for _, bar in ipairs(self.bars) do
 					bar:enter()
 					bar:leave(math.max(1.5, bar.config.hideDelay))
 				end
 			end)
-			self:setMButtonRegions(garrison, nil, self.MSQ_Garrison)
+			self:setMButtonRegions(expBtn, nil, self.MSQ_Garrison)
 		end
 
-		tinsert(self.minimapButtons, garrison)
-		tinsert(self.mixedButtons, garrison)
+		tinsert(self.minimapButtons, expBtn)
+		tinsert(self.mixedButtons, expBtn)
 	end
 
 	-- QUEUE STATUS
-	if self:ignoreCheck("QueueStatusMinimapButton") and not self.btnParams[QueueStatusMinimapButton] then
-		local queue = QueueStatusMinimapButton
-		QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
-		queue.icon = queue.Eye.texture
-		self:setHooks(queue)
-		local p = self:setParams(queue, function(p, queue)
-			QueueStatusFrame:ClearAllPoints()
-			for i = 1, #p.statusFramePoints do
-				QueueStatusFrame:SetPoint(unpack(p.statusFramePoints[i]))
-			end
-		end)
+	-- if self:ignoreCheck("QueueStatusMinimapButton") and not self.btnParams[QueueStatusMinimapButton] then
+	-- 	local queue = QueueStatusMinimapButton
+	-- 	QueueStatusMinimapButtonDropDown:SetScript("OnHide", nil)
+	-- 	queue.icon = queue.Eye.texture
+	-- 	self:setHooks(queue)
+	-- 	local p = self:setParams(queue, function(p, queue)
+	-- 		QueueStatusFrame:ClearAllPoints()
+	-- 		for i = 1, #p.statusFramePoints do
+	-- 			QueueStatusFrame:SetPoint(unpack(p.statusFramePoints[i]))
+	-- 		end
+	-- 	end)
 
-		p.statusFramePoints = {}
-		for i = 1, QueueStatusFrame:GetNumPoints() do
-			p.statusFramePoints[i] = {QueueStatusFrame:GetPoint(i)}
-		end
+	-- 	p.statusFramePoints = {}
+	-- 	for i = 1, QueueStatusFrame:GetNumPoints() do
+	-- 		p.statusFramePoints[i] = {QueueStatusFrame:GetPoint(i)}
+	-- 	end
 
-		p.tooltipFrame = QueueStatusFrame
-		self.HookScript(queue, "OnEnter", function(queue)
-			local bar = self.GetParent(queue)
-			if not bar.config.interceptTooltip then
-				QueueStatusFrame:ClearAllPoints()
-				for i = 1, #p.statusFramePoints do
-					QueueStatusFrame:SetPoint(unpack(p.statusFramePoints[i]))
-				end
-			end
-		end)
+	-- 	p.tooltipFrame = QueueStatusFrame
+	-- 	self.HookScript(queue, "OnEnter", function(queue)
+	-- 		local bar = self.GetParent(queue)
+	-- 		if not bar.config.interceptTooltip then
+	-- 			QueueStatusFrame:ClearAllPoints()
+	-- 			for i = 1, #p.statusFramePoints do
+	-- 				QueueStatusFrame:SetPoint(unpack(p.statusFramePoints[i]))
+	-- 			end
+	-- 		end
+	-- 	end)
 
-		local btnData = self.pConfig.mbtnSettings["QueueStatusMinimapButton"]
-		if btnData[5] == nil then btnData[5] = true end
+	-- 	local btnData = self.pConfig.mbtnSettings["QueueStatusMinimapButton"]
+	-- 	if btnData[5] == nil then btnData[5] = true end
 
-		if not queue.HidingBarSound then
-			queue.EyeHighlightAnim:SetScript("OnLoop", nil)
-			local f = CreateFrame("FRAME")
-			queue.HidingBarSound = f
-			f.eyeAnim = f:CreateAnimationGroup()
-			f.eyeAnim:SetLooping(queue.EyeHighlightAnim:GetLooping())
-			f.timer = f.eyeAnim:CreateAnimation()
-			f.timer:SetDuration(1)
-			f.eyeAnim:SetScript("OnLoop", function()
-				if QueueStatusMinimapButton_OnGlowPulse(queue) then
-					PlaySound(SOUNDKIT.UI_GROUP_FINDER_RECEIVE_APPLICATION)
-				end
-			end)
-			hooksecurefunc(queue.EyeHighlightAnim, "Play", function() f.eyeAnim:Play() end)
-			hooksecurefunc(queue.EyeHighlightAnim, "Stop", function() f.eyeAnim:Stop() end)
-			f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
-		end
+	-- 	if not queue.HidingBarSound then
+	-- 		queue.EyeHighlightAnim:SetScript("OnLoop", nil)
+	-- 		local f = CreateFrame("FRAME")
+	-- 		queue.HidingBarSound = f
+	-- 		f.eyeAnim = f:CreateAnimationGroup()
+	-- 		f.eyeAnim:SetLooping(queue.EyeHighlightAnim:GetLooping())
+	-- 		f.timer = f.eyeAnim:CreateAnimation()
+	-- 		f.timer:SetDuration(1)
+	-- 		f.eyeAnim:SetScript("OnLoop", function()
+	-- 			if QueueStatusMinimapButton_OnGlowPulse(queue) then
+	-- 				PlaySound(SOUNDKIT.UI_GROUP_FINDER_RECEIVE_APPLICATION)
+	-- 			end
+	-- 		end)
+	-- 		hooksecurefunc(queue.EyeHighlightAnim, "Play", function() f.eyeAnim:Play() end)
+	-- 		hooksecurefunc(queue.EyeHighlightAnim, "Stop", function() f.eyeAnim:Stop() end)
+	-- 		f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
+	-- 	end
 
-		if self.MSQ_MButton and not queue.__MSQ_Addon then
-			self.MSQ_Button_Data[queue] = {
-				_Border = QueueStatusMinimapButtonBorder,
-			}
-			self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
-			queue.icon.SetTexCoord = self.setTexCoord
-			local data = {
-				Icon = queue.icon,
-				Highlight = queue:GetHighlightTexture(),
-			}
-			self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
-			self:MSQ_Button_Update(queue)
-			self:MSQ_CoordUpdate(queue)
-		end
+	-- 	if self.MSQ_MButton and not queue.__MSQ_Addon then
+	-- 		self.MSQ_Button_Data[queue] = {
+	-- 			_Border = QueueStatusMinimapButtonBorder,
+	-- 		}
+	-- 		self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
+	-- 		queue.icon.SetTexCoord = self.setTexCoord
+	-- 		local data = {
+	-- 			Icon = queue.icon,
+	-- 			Highlight = queue:GetHighlightTexture(),
+	-- 		}
+	-- 		self.MSQ_MButton:AddButton(queue, data, "Legacy", true)
+	-- 		self:MSQ_Button_Update(queue)
+	-- 		self:MSQ_CoordUpdate(queue)
+	-- 	end
 
-		queue.icon:SetTexCoord(0, .125, 0, .25)
-		tinsert(self.minimapButtons, queue)
-		tinsert(self.mixedButtons, queue)
-	end
+	-- 	queue.icon:SetTexCoord(0, .125, 0, .25)
+	-- 	tinsert(self.minimapButtons, queue)
+	-- 	tinsert(self.mixedButtons, queue)
+	-- end
 
 	-- MAIL
-	if self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[MiniMapMailFrame] then
-		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
-		if btnData then
-			self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
-			self.pConfig.mbtnSettings["HidingBarAddonMail"] = nil
-		end
+	-- if self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[MiniMapMailFrame] then
+	-- 	local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
+	-- 	if btnData then
+	-- 		self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
+	-- 		self.pConfig.mbtnSettings["HidingBarAddonMail"] = nil
+	-- 	end
 
-		local mail = MiniMapMailFrame
-		mail.icon = MiniMapMailIcon
-		self:setHooks(mail)
-		self:setParams(mail)
+	-- 	local mail = MiniMapMailFrame
+	-- 	mail.icon = MiniMapMailIcon
+	-- 	self:setHooks(mail)
+	-- 	self:setParams(mail)
 
-		local btnData = self.pConfig.mbtnSettings["MiniMapMailFrame"]
-		if btnData[5] == nil then btnData[5] = true end
+	-- 	local btnData = self.pConfig.mbtnSettings["MiniMapMailFrame"]
+	-- 	if btnData[5] == nil then btnData[5] = true end
 
-		if self.MSQ_MButton and not mail.__MSQ_Addon then
-			self:setMButtonRegions(mail)
-		end
+	-- 	if self.MSQ_MButton and not mail.__MSQ_Addon then
+	-- 		self:setMButtonRegions(mail)
+	-- 	end
 
-		tinsert(self.minimapButtons, mail)
-		tinsert(self.mixedButtons, mail)
-	end
+	-- 	tinsert(self.minimapButtons, mail)
+	-- 	tinsert(self.mixedButtons, mail)
+	-- end
 
 	-- ZOOM IN & ZOOM OUT
-	for _, zoom in ipairs({MinimapZoomIn, MinimapZoomOut}) do
-		local name = zoom:GetName()
-		if self:ignoreCheck(name) and not self.btnParams[zoom] then
-			self:setHooks(zoom)
-			local normal = zoom:GetNormalTexture()
+	-- for _, zoom in ipairs({MinimapZoomIn, MinimapZoomOut}) do
+	-- 	local name = zoom:GetName()
+	-- 	if self:ignoreCheck(name) and not self.btnParams[zoom] then
+	-- 		self:setHooks(zoom)
+	-- 		local normal = zoom:GetNormalTexture()
 
-			if self.MSQ_MButton and not zoom.__MSQ_Addon then
-				zoom.icon = zoom:CreateTexture(nil, "BACKGROUND")
-				zoom.icon:SetTexture(normal:GetTexture())
-				zoom:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
-				zoom:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
-				self:setMButtonRegions(zoom, {.24, .79, .21, .76})
-			end
-			if not zoom.icon then zoom.icon = normal end
+	-- 		if self.MSQ_MButton and not zoom.__MSQ_Addon then
+	-- 			zoom.icon = zoom:CreateTexture(nil, "BACKGROUND")
+	-- 			zoom.icon:SetTexture(normal:GetTexture())
+	-- 			zoom:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
+	-- 			zoom:SetScript("OnMouseUp", function(self) self.icon:SetScale(1) end)
+	-- 			self:setMButtonRegions(zoom, {.24, .79, .21, .76})
+	-- 		end
+	-- 		if not zoom.icon then zoom.icon = normal end
 
-			zoom.click = zoom:GetScript("OnClick")
-			zoom.Disable = function(zoom)
-				zoom:SetScript("OnClick", nil)
-				zoom.icon:SetDesaturated(true)
-				zoom:GetNormalTexture():SetDesaturated(true)
-				zoom:GetPushedTexture():SetDesaturated(true)
-			end
-			zoom.Enable = function(zoom)
-				zoom:SetScript("OnClick", zoom.click)
-				zoom.icon:SetDesaturated(false)
-				zoom:GetNormalTexture():SetDesaturated(false)
-				zoom:GetPushedTexture():SetDesaturated(false)
-			end
-			if not zoom:IsEnabled() then
-				getmetatable(zoom).__index.Enable(zoom)
-				zoom:Disable()
-			end
+	-- 		zoom.click = zoom:GetScript("OnClick")
+	-- 		zoom.Disable = function(zoom)
+	-- 			zoom:SetScript("OnClick", nil)
+	-- 			zoom.icon:SetDesaturated(true)
+	-- 			zoom:GetNormalTexture():SetDesaturated(true)
+	-- 			zoom:GetPushedTexture():SetDesaturated(true)
+	-- 		end
+	-- 		zoom.Enable = function(zoom)
+	-- 			zoom:SetScript("OnClick", zoom.click)
+	-- 			zoom.icon:SetDesaturated(false)
+	-- 			zoom:GetNormalTexture():SetDesaturated(false)
+	-- 			zoom:GetPushedTexture():SetDesaturated(false)
+	-- 		end
+	-- 		if not zoom:IsEnabled() then
+	-- 			getmetatable(zoom).__index.Enable(zoom)
+	-- 			zoom:Disable()
+	-- 		end
 
-			local p = self:setParams(zoom, function()
-				zoom.Enable = nil
-				zoom.Disable = nil
-				if not zoom:GetScript("OnClick") then
-					zoom.icon:SetDesaturated(false)
-					zoom:GetNormalTexture():SetDesaturated(false)
-					zoom:GetPushedTexture():SetDesaturated(false)
-					zoom:Disable()
-				end
-				zoom:SetScript("OnClick", zoom.click)
-			end)
-			p.tooltipFrame = GameTooltip
+	-- 		local p = self:setParams(zoom, function()
+	-- 			zoom.Enable = nil
+	-- 			zoom.Disable = nil
+	-- 			if not zoom:GetScript("OnClick") then
+	-- 				zoom.icon:SetDesaturated(false)
+	-- 				zoom:GetNormalTexture():SetDesaturated(false)
+	-- 				zoom:GetPushedTexture():SetDesaturated(false)
+	-- 				zoom:Disable()
+	-- 			end
+	-- 			zoom:SetScript("OnClick", zoom.click)
+	-- 		end)
+	-- 		p.tooltipFrame = GameTooltip
 
-			tinsert(self.minimapButtons, zoom)
-			tinsert(self.mixedButtons, zoom)
-		end
-	end
+	-- 		tinsert(self.minimapButtons, zoom)
+	-- 		tinsert(self.mixedButtons, zoom)
+	-- 	end
+	-- end
 
 	-- WORLD MAP BUTTON
-	if self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
-		local mapButton = MiniMapWorldMapButton
-		self:setHooks(mapButton)
-		local p = self:setParams(mapButton, function(p, mapButton)
-			if mapButton.__MSQ_Addon then return end
-			mapButton.normal:SetTexture(p.normalTexture)
-			mapButton.normal:SetTexCoord(unpack(p.normalCoords))
-			mapButton.normal:SetAllPoints()
-			mapButton.puched:SetTexture(p.pushedTexture)
-			mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
-			mapButton.puched:SetAllPoints()
-			mapButton.highlight:SetTexture(p.highlightTexture)
-			mapButton.highlight:SetTexCoord(unpack(p.highlightCoords))
-			mapButton.highlight:ClearAllPoints()
-			mapButton.highlight:SetPoint(unpack(p.highlightPoint))
-			mapButton.border:Hide()
-		end)
+	-- if self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
+	-- 	local mapButton = MiniMapWorldMapButton
+	-- 	self:setHooks(mapButton)
+	-- 	local p = self:setParams(mapButton, function(p, mapButton)
+	-- 		if mapButton.__MSQ_Addon then return end
+	-- 		mapButton.normal:SetTexture(p.normalTexture)
+	-- 		mapButton.normal:SetTexCoord(unpack(p.normalCoords))
+	-- 		mapButton.normal:SetAllPoints()
+	-- 		mapButton.puched:SetTexture(p.pushedTexture)
+	-- 		mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
+	-- 		mapButton.puched:SetAllPoints()
+	-- 		mapButton.highlight:SetTexture(p.highlightTexture)
+	-- 		mapButton.highlight:SetTexCoord(unpack(p.highlightCoords))
+	-- 		mapButton.highlight:ClearAllPoints()
+	-- 		mapButton.highlight:SetPoint(unpack(p.highlightPoint))
+	-- 		mapButton.border:Hide()
+	-- 	end)
 
-		if not mapButton.__MSQ_Addon then
-			mapButton.normal = mapButton:GetNormalTexture()
-			p.normalTexture = mapButton.normal:GetTexture()
-			p.normalCoords = {mapButton.normal:GetTexCoord()}
-			mapButton.normal:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.normal:SetTexCoord(.125, .875, 0, .5)
-			mapButton.normal:SetSize(27, 27)
-			mapButton.normal:ClearAllPoints()
-			mapButton.normal:SetPoint("CENTER")
-			mapButton.puched = mapButton:GetPushedTexture()
-			p.pushedTexture = mapButton.puched:GetTexture()
-			p.pushedCoords = {mapButton.puched:GetTexCoord()}
-			mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.puched:SetTexCoord(.125, .875, .5, 1)
-			mapButton.puched:SetSize(27, 27)
-			mapButton.puched:ClearAllPoints()
-			mapButton.puched:SetPoint("CENTER")
-			mapButton.highlight = mapButton:GetHighlightTexture()
-			p.highlightTexture = mapButton.highlight:GetTexture()
-			p.highlightCoords = {mapButton.highlight:GetTexCoord()}
-			p.highlightPoint = {mapButton.highlight:GetPoint()}
-			mapButton.highlight:SetTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
-			mapButton.highlight:SetAllPoints()
-			mapButton.border = mapButton.border or mapButton:CreateTexture(nil, "OVERLAY")
-			mapButton.border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
-			mapButton.border:SetSize(54, 54)
-			mapButton.border:SetPoint("TOPLEFT", 0, -1)
-			mapButton.border:Show()
+	-- 	if not mapButton.__MSQ_Addon then
+	-- 		mapButton.normal = mapButton:GetNormalTexture()
+	-- 		p.normalTexture = mapButton.normal:GetTexture()
+	-- 		p.normalCoords = {mapButton.normal:GetTexCoord()}
+	-- 		mapButton.normal:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+	-- 		mapButton.normal:SetTexCoord(.125, .875, 0, .5)
+	-- 		mapButton.normal:SetSize(27, 27)
+	-- 		mapButton.normal:ClearAllPoints()
+	-- 		mapButton.normal:SetPoint("CENTER")
+	-- 		mapButton.puched = mapButton:GetPushedTexture()
+	-- 		p.pushedTexture = mapButton.puched:GetTexture()
+	-- 		p.pushedCoords = {mapButton.puched:GetTexCoord()}
+	-- 		mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+	-- 		mapButton.puched:SetTexCoord(.125, .875, .5, 1)
+	-- 		mapButton.puched:SetSize(27, 27)
+	-- 		mapButton.puched:ClearAllPoints()
+	-- 		mapButton.puched:SetPoint("CENTER")
+	-- 		mapButton.highlight = mapButton:GetHighlightTexture()
+	-- 		p.highlightTexture = mapButton.highlight:GetTexture()
+	-- 		p.highlightCoords = {mapButton.highlight:GetTexCoord()}
+	-- 		p.highlightPoint = {mapButton.highlight:GetPoint()}
+	-- 		mapButton.highlight:SetTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
+	-- 		mapButton.highlight:SetAllPoints()
+	-- 		mapButton.border = mapButton.border or mapButton:CreateTexture(nil, "OVERLAY")
+	-- 		mapButton.border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
+	-- 		mapButton.border:SetSize(54, 54)
+	-- 		mapButton.border:SetPoint("TOPLEFT", 0, -1)
+	-- 		mapButton.border:Show()
 
-			if self.MSQ_MButton then
-				self:setMButtonRegions(mapButton)
-			end
-		end
+	-- 		if self.MSQ_MButton then
+	-- 			self:setMButtonRegions(mapButton)
+	-- 		end
+	-- 	end
 
-		tinsert(self.minimapButtons, mapButton)
-		tinsert(self.mixedButtons, mapButton)
-	end
+	-- 	tinsert(self.minimapButtons, mapButton)
+	-- 	tinsert(self.mixedButtons, mapButton)
+	-- end
 end
 
 
