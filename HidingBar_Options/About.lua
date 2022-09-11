@@ -1,7 +1,6 @@
 local addon, L = HidingBarConfigAddon.name, HidingBarConfigAddon.L
-local aboutConfig = CreateFrame("FRAME", addon.."ConfigAbout", InterfaceOptionsFramePanelContainer)
+local aboutConfig = CreateFrame("FRAME", addon.."ConfigAbout")
 aboutConfig:Hide()
-aboutConfig.parent = addon
 
 
 aboutConfig:SetScript("OnShow", function(self)

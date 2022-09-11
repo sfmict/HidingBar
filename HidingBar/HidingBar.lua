@@ -1557,7 +1557,7 @@ function hb:setClipButtons()
 	for _, btn in ipairs(self.mixedButtons) do
 		local btnData = btnSettings[btn]
 		if btnData then
-			btn:SetClipsChildren(btnData[4])
+			btn:SetClipsChildren(not not btnData[4])
 		end
 	end
 end
