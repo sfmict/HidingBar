@@ -127,7 +127,7 @@
 	</CheckButton>
 
 	<CheckButton name="HidingBarAddonCheckButtonTemplate" inherits="UICheckButtonArtTemplate" virtual="true">
-		<Size x="32" y="32"/>
+		<Size x="28" y="28"/>
 		<HitRectInsets left="0" right="-100" top="0" bottom="0"/>
 		<Layers>
 			<Layer level="ARTWORK">
