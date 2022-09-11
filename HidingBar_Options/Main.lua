@@ -1751,6 +1751,7 @@ main.canGrabbed.Text:SetText(L["The button can be grabbed"])
 main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
 main.canGrabbed:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
+	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then

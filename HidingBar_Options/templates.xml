@@ -126,7 +126,8 @@
 		</Scripts>
 	</CheckButton>
 
-	<CheckButton name="HidingBarAddonCheckButtonTemplate" inherits="OptionsBaseCheckButtonTemplate" virtual="true">
+	<CheckButton name="HidingBarAddonCheckButtonTemplate" inherits="UICheckButtonArtTemplate" virtual="true">
+		<Size x="32" y="32"/>
 		<HitRectInsets left="0" right="-100" top="0" bottom="0"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -140,6 +141,19 @@
 		<Scripts>
 			<OnEnable>self.Text:SetTextColor(1,1,1,1)</OnEnable>
 			<OnDisable>self.Text:SetTextColor(.5,.5,.5,1)</OnDisable>
+			<OnEnter>
+				if self.tooltipText then
+					GameTooltip:SetOwner(self, self.tooltipOwnerPoint or "ANCHOR_RIGHT")
+					GameTooltip:SetText(self.tooltipText, nil, nil, nil, nil, true)
+				end
+				if self.tooltipRequirement then
+					GameTooltip:AddLine(self.tooltipRequirement, 1, 1, 1, true)
+					GameTooltip:Show()
+				end
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide()
+			</OnLeave>
 		</Scripts>
 	</CheckButton>
 
