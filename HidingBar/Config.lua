@@ -27,6 +27,8 @@ end)
 
 -- ADD CATEGORY
 local category, layout = Settings.RegisterCanvasLayoutCategory(config, addon)
+layout:AddAnchorPoint("TOPLEFT", -12, 8)
+layout:AddAnchorPoint("BOTTOMRIGHT", 0, 0)
 Settings.RegisterAddOnCategory(category)
 
 
