@@ -126,14 +126,24 @@
 		</Scripts>
 	</CheckButton>
 
-	<CheckButton name="HidingBarAddonCheckButtonTemplate" inherits="UICheckButtonArtTemplate" virtual="true">
-		<Size x="28" y="28"/>
+	<CheckButton name="HidingBarAddonCheckButtonTemplate" virtual="true">
+		<Size x="27" y="26"/>
 		<HitRectInsets left="0" right="-100" top="0" bottom="0"/>
+		<NormalTexture atlas="checkbox-minimal" useAtlasSize="true"/>
+		<PushedTexture atlas="checkbox-minimal" useAtlasSize="true"/>
+		<HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD">
+			<Anchors>
+				<Anchor point="TOPLEFT" x="-3" y="6"/>
+				<Anchor point="BOTTOMRIGHT" x="3" y="-6"/>
+			</Anchors>
+		</HighlightTexture>
+		<CheckedTexture atlas="checkmark-minimal" useAtlasSize="true"/>
+		<DisabledCheckedTexture atlas="checkmark-minimal-disabled" useAtlasSize="true"/>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
 					<Anchors>
-						<Anchor point="LEFT" relativePoint="RIGHT" x="1"/>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="1" y="-1"/>
 					</Anchors>
 				</FontString>
 			</Layer>
