@@ -133,8 +133,8 @@
 		<PushedTexture atlas="checkbox-minimal" useAtlasSize="true"/>
 		<HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD">
 			<Anchors>
-				<Anchor point="TOPLEFT" x="-3" y="6"/>
-				<Anchor point="BOTTOMRIGHT" x="3" y="-6"/>
+				<Anchor point="TOPLEFT" x="-3" y="5"/>
+				<Anchor point="BOTTOMRIGHT" x="3" y="-7"/>
 			</Anchors>
 		</HighlightTexture>
 		<CheckedTexture atlas="checkmark-minimal" useAtlasSize="true"/>
