@@ -1577,7 +1577,7 @@ local function fade(self, elapsed)
 end
 
 
-function frameFade(self, delay, endAlpha)
+local function frameFade(self, delay, endAlpha)
 	self.timer = delay
 	self.endAlpha = endAlpha
 	self.deltaAlpha = (endAlpha - self:GetAlpha()) / delay
@@ -1585,7 +1585,7 @@ function frameFade(self, delay, endAlpha)
 end
 
 
-function frameFadeStop(self, alpha)
+local function frameFadeStop(self, alpha)
 	self:SetScript("OnUpdate", nil)
 	self:SetAlpha(alpha)
 end
