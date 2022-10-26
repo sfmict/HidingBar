@@ -1,14 +1,12 @@
 local addon, L = ...
-local config = CreateFrame("FRAME", addon.."ConfigAddon")
-config.name = addon
-config:Hide()
-config.L = L
-config.noIcon = config:CreateTexture()
 
 
--- MAIN
-config:SetScript("OnShow", function(self)
-	local function onShow(self) self:SetPoint("TOPLEFT", -12, 8) end
+local function onShow(self)
+	self:SetPoint("TOPLEFT", -12, 8)
+end
+
+
+local function loadOptions(self)
 	self:SetPoint("TOPLEFT", -12, 8)
 
 	local name = addon.."_Options"
@@ -26,7 +24,16 @@ config:SetScript("OnShow", function(self)
 	else
 		print("Failed to load "..name..": "..tostring(reason))
 	end
-end)
+end
+
+
+-- MAIN
+local config = CreateFrame("FRAME", addon.."ConfigAddon")
+config.name = addon
+config:Hide()
+config.L = L
+config.noIcon = config:CreateTexture()
+config:SetScript("OnShow", loadOptions)
 
 
 -- ADD CATEGORY
@@ -40,6 +47,7 @@ Settings.RegisterAddOnCategory(category)
 -- ABOUT
 local aboutConfig = CreateFrame("FRAME", addon.."ConfigAbout")
 aboutConfig:Hide()
+aboutConfig:SetScript("OnShow", loadOptions)
 
 
 -- ADD SUBCATEGORY
