@@ -253,7 +253,7 @@ StaticPopupDialogs[main.addonName.."REMOVE_CUSTOM_GRAB_BTN"] = {
 
 -- ADDON INFO
 local info = main:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-info:SetPoint("TOPRIGHT", -16, 16)
+info:SetPoint("TOPLEFT", 40, 20)
 info:SetTextColor(.5, .5, .5, 1)
 info:SetJustifyH("RIGHT")
 info:SetText(GetAddOnMetadata(addon, "Version"))
@@ -1751,6 +1751,7 @@ main.canGrabbed.Text:SetText(L["The button can be grabbed"])
 main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
 main.canGrabbed:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
+	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then
@@ -2126,7 +2127,7 @@ function main:setBar(bar)
 		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
 		self.fade:SetChecked(self.bConfig.fade)
 		self.fadeOpacity:setValue(self.bConfig.fadeOpacity)
-		self.fadeOpacity:setEnabled(self.bConfig.fade)
+		self.fadeOpacity:setEnabled(not not self.bConfig.fade)
 
 		bgCombobox:ddSetSelectedValue(self.bConfig.bgTexture)
 		bgCombobox:ddSetSelectedText(self.bConfig.bgTexture or NONE)
