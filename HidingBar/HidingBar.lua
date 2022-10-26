@@ -24,16 +24,8 @@ local MSQ = LibStub("Masque", true)
 
 local ignoreFrameList = {
 	["GameTimeFrame"] = true,
-	-- ["QueueStatusMinimapButton"] = true,
-	-- ["HelpOpenTicketButton"] = true,
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
-	-- ["GarrisonLandingPageMinimapButton"] = true,
-	-- ["MinimapZoomIn"] = true,
-	-- ["MinimapZoomOut"] = true,
-	-- ["MiniMapWorldMapButton"] = true,
-	-- ["MiniMapMailFrame"] = true,
-	-- ["MiniMapTracking"] = true,
 	["ExpansionLandingPageMinimapButton"] = true,
 }
 

@@ -1,10 +1,14 @@
 local addon, L = HidingBarConfigAddon.name, HidingBarConfigAddon.L
-local aboutConfig = CreateFrame("FRAME", addon.."ConfigAbout")
-aboutConfig:Hide()
+local aboutConfig = _G[addon.."ConfigAbout"]
+-- local aboutConfig = CreateFrame("FRAME", addon.."ConfigAbout")
+-- aboutConfig:Hide()
 
 
 aboutConfig:SetScript("OnShow", function(self)
-	self:SetScript("OnShow", nil)
+	self:SetScript("OnShow", function(self)
+		self:SetPoint("TOPLEFT", -12, 8)
+	end)
+	self:SetPoint("TOPLEFT", -12, 8)
 
 	-- ADDON NAME
 	local addonName = self:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -92,9 +96,9 @@ aboutConfig:SetScript("OnShow", function(self)
 end)
 
 
-local category = Settings.GetCategory(addon)
-local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, aboutConfig,  L["About"])
-subcategory.ID = L["About"]
-layout:AddAnchorPoint("TOPLEFT", -12, 8)
-layout:AddAnchorPoint("BOTTOMRIGHT", 0, 0)
-Settings.RegisterAddOnCategory(subcategory)
+-- local category = Settings.GetCategory(addon)
+-- local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, aboutConfig,  L["About"])
+-- subcategory.ID = L["About"]
+-- layout:AddAnchorPoint("TOPLEFT", -12, 8)
+-- layout:AddAnchorPoint("BOTTOMRIGHT", 0, 0)
+-- Settings.RegisterAddOnCategory(subcategory)
