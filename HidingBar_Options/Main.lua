@@ -684,13 +684,11 @@ coverGreen.bg = coverGreen:CreateTexture(nil, "BACKGROUND")
 coverGreen.bg:SetAllPoints()
 coverGreen.bg:SetColorTexture(.2, 1, .2, .7)
 coverGreen:Hide()
-coverGreen:SetScript("OnLeave", function(btn)
-	btn:Hide()
-end)
 coverGreen:SetScript("OnClick", function(btn)
 	main:addCustomGrabName(btn.name)
 	main.customGrabPointBtn:Click()
 end)
+coverGreen:SetMouseMotionEnabled(false)
 
 local ignoredNames = {
 	"StaticPopup.+",
@@ -721,7 +719,11 @@ main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
 			coverGreen.name = name
 			coverGreen:SetAllPoints(focus)
 			coverGreen:Show()
+		else
+			coverGreen:Hide()
 		end
+	else
+		coverGreen:Hide()
 	end
 end)
 main.customGrabPointBtn:SetScript("OnHide", function(btn)
@@ -731,6 +733,7 @@ main.customGrabPointBtn:SetScript("OnClick", function(btn)
 	if btn.isPoint then
 		btn.isPoint = nil
 		btn:SetText(L["Point to button"])
+		coverGreen:Hide()
 	else
 		btn.isPoint = true
 		btn:SetText(CANCEL)
