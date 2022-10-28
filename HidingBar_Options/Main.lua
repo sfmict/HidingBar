@@ -2317,7 +2317,7 @@ function main:restoreMbutton(rButton)
 
 	tinsert(self.mbuttons, btn)
 	tinsert(self.mixedButtons, btn)
-	btn.settings = self.pConfig.mbtnSettings[rButton:GetName()]
+	btn.settings = self.pConfig.mbtnSettings[hb:getBtnName(rButton)]
 	local bar = self.currentBar
 	btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
 	btn:SetChecked(btn.settings[1])
@@ -2329,12 +2329,12 @@ end
 
 
 function main:addIgnoreName(name)
-	name = name:gsub("[%(%)%.%%%+%-%*%?%[%^%$]", "%%%1")
+	local mName = name:gsub("[%(%)%.%%%+%-%*%?%[%^%$]", "%%%1")
 	for _, n in ipairs(self.pConfig.ignoreMBtn) do
-		if name == n then return end
+		if mName == n then return end
 	end
 	self:removeMButtonByName(name, true)
-	tinsert(self.pConfig.ignoreMBtn, name)
+	tinsert(self.pConfig.ignoreMBtn, mName)
 	sort(self.pConfig.ignoreMBtn)
 	self.ignoreScroll:update()
 end
@@ -2653,7 +2653,7 @@ end
 
 function main:initMButtons(update)
 	for _, button in ipairs(hb.minimapButtons) do
-		local name = button:GetName()
+		local name = hb:getBtnName(button)
 		if name then
 			local icon = button.icon
 			          or button.Icon
