@@ -192,8 +192,9 @@ if MSQ then
 				data._Normal:SetTexture()
 				if data._IsNormalIcon then
 					data._Normal.SetAtlas = function(_, atlas)
-						if atlas == defAtlas then
-							data_._isMSQColor = true
+						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
+						if atlas == skin.Atlas or atlas == defAtlas then
+							data._isMSQColor = true
 						else
 							data._Icon:SetAtlas(atlas)
 						end
