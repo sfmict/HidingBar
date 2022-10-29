@@ -87,7 +87,7 @@ if MSQ then
 	end)
 
 
-	local defTexture = MSQ:GetSkin("Default").Normal.Texture
+	local defAtlas = MSQ:GetSkin("Default").Normal.Atlas
 	hb.MSQ_Button_Data = {}
 	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
 	hb.MSQ_MButton:SetCallback(function()
@@ -192,12 +192,16 @@ if MSQ then
 				data._Normal:SetTexture()
 				if data._IsNormalIcon then
 					data._Normal.SetAtlas = function(_, atlas)
-						data._Icon:SetAtlas(atlas)
+						if atlas == defAtlas then
+							data_._isMSQColor = true
+						else
+							data._Icon:SetAtlas(atlas)
+						end
 					end
 					data._Normal.SetTexture = function(_, texture)
 						if texture then
 							local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
-							if skin.UseStates and texture == skin.Texture or texture == defTexture then
+							if texture == skin.Texture then
 								data._isMSQCoord = true
 								data._isMSQColor = true
 							else
@@ -398,7 +402,7 @@ function hb:checkProfile(profile)
 	if profile.config.grabMinimap == nil then
 		profile.config.grabMinimap = true
 	end
-	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
+	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin", "TTMinimapButton"}
 	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
 	profile.config.customGrabList = profile.config.customGrabList or {}
 	profile.config.ombGrabQueue = profile.config.ombGrabQueue or {}
@@ -1137,7 +1141,7 @@ function hb:grabDefButtons()
 			f.timer = f.eyeAnim:CreateAnimation()
 			f.timer:SetDuration(1)
 			f.eyeAnim:SetScript("OnLoop", function()
-				if QueueStatusButton:OnGlowPulse(queue) then
+				if QueueStatusButton:OnGlowPulse() then
 					PlaySound(SOUNDKIT.UI_GROUP_FINDER_RECEIVE_APPLICATION)
 				end
 			end)
