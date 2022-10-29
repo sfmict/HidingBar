@@ -86,7 +86,7 @@ if MSQ then
 	end)
 
 
-	local defTexture = MSQ:GetSkin("Default").Normal.Texture
+	local defTexture = MSQ:GetSkin("Default (Classic)").Normal.Texture
 	hb.MSQ_Button_Data = {}
 	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
 	hb.MSQ_MButton:SetCallback(function()
@@ -191,12 +191,17 @@ if MSQ then
 				data._Normal:SetTexture()
 				if data._IsNormalIcon then
 					data._Normal.SetAtlas = function(_, atlas)
-						data._Icon:SetAtlas(atlas)
+						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
+						if atlas == skin.Atlas then
+							data._isMSQColor = true
+						else
+							data._Icon:SetAtlas(atlas)
+						end
 					end
 					data._Normal.SetTexture = function(_, texture)
 						if texture then
 							local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
-							if skin.UseStates and texture == skin.Texture or texture == defTexture then
+							if texture == skin.Texture or texture == defTexture then
 								data._isMSQCoord = true
 								data._isMSQColor = true
 							else
