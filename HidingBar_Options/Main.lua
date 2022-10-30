@@ -573,13 +573,24 @@ main.addBtnFromDataBroker = CreateFrame("CheckButton", nil, addBtnOptionsScroll.
 main.addBtnFromDataBroker:SetPoint("TOPLEFT", 4, -2)
 main.addBtnFromDataBroker.Text:SetText(L["Add buttons from DataBroker"])
 main.addBtnFromDataBroker:SetScript("OnClick", function(btn)
-	main.pConfig.addFromDataBroker = btn:GetChecked()
+	local checked = btn:GetChecked()
+	main.pConfig.addFromDataBroker = checked
+	main.addAnyTypeFromDataBroker:SetEnabled(checked)
+	StaticPopup_Show(main.addonName.."GET_RELOAD")
+end)
+
+-- ADD ANY TYPE FROM DATA BROKER
+main.addAnyTypeFromDataBroker = CreateFrame("CheckButton", nil, addBtnOptionsScroll.child, "HidingBarAddonCheckButtonTemplate")
+main.addAnyTypeFromDataBroker:SetPoint("TOPLEFT", main.addBtnFromDataBroker, "BOTTOMLEFT", 20, 0)
+main.addAnyTypeFromDataBroker.Text:SetText(L["Add buttons of any data type"])
+main.addAnyTypeFromDataBroker:SetScript("OnClick", function(btn)
+	main.pConfig.addAnyTypeFromDataBroker = btn:GetChecked()
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
 -- GRAB DEFAULT BUTTONS
 main.grabDefault = CreateFrame("CheckButton", nil, addBtnOptionsScroll.child, "HidingBarAddonCheckButtonTemplate")
-main.grabDefault:SetPoint("TOPLEFT", main.addBtnFromDataBroker, "BOTTOMLEFT")
+main.grabDefault:SetPoint("TOPLEFT", main.addAnyTypeFromDataBroker, "BOTTOMLEFT", -20, 0)
 main.grabDefault.Text:SetText(L["Grab default buttons on minimap"])
 main.grabDefault:SetScript("OnClick", function(btn)
 	main.pConfig.grabDefMinimap = btn:GetChecked()
@@ -1983,6 +1994,8 @@ function main:setProfile()
 
 		if compareCustomGrabList
 		or self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
+		or self.pConfig.addFromDataBroker and
+			not self.pConfig.addAnyTypeFromDataBroker ~= not currentProfile.config.addAnyTypeFromDataBroker
 		or not self.pConfig.grabDefMinimap ~= not currentProfile.config.grabDefMinimap
 		or self.pConfig.grabMinimap ~= currentProfile.config.grabMinimap
 		or self.pConfig.grabMinimap and
@@ -2017,6 +2030,8 @@ function main:setProfile()
 
 	self.ignoreScroll:update()
 	self.addBtnFromDataBroker:SetChecked(self.pConfig.addFromDataBroker)
+	self.addAnyTypeFromDataBroker:SetEnabled(self.pConfig.addFromDataBroker)
+	self.addAnyTypeFromDataBroker:SetChecked(self.pConfig.addAnyTypeFromDataBroker)
 	self.grabDefault:SetChecked(self.pConfig.grabDefMinimap)
 	self.grab:SetChecked(self.pConfig.grabMinimap)
 	self.grabAfter:SetChecked(self.pConfig.grabMinimapAfter)
