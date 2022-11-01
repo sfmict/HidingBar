@@ -39,14 +39,14 @@ local ignoreFrameList = {
 
 local function void() end
 
-local function enter(btn, eventFrame)
+local function enter(btn, _, eventFrame)
 	local bar = btn:GetParent()
 	if not bar:IsShown() then return end
 	bar.isMouse = true
 	bar:enter()
 
 	if bar.config.interceptTooltip then
-		bar:updateTooltipPosition(eventFrame)
+		bar:updateTooltipPosition(eventFrame or btn)
 	end
 end
 
@@ -194,6 +194,7 @@ if MSQ then
 					data._Normal.SetAtlas = function(_, atlas)
 						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
 						if atlas == skin.Atlas or atlas == defAtlas then
+							data._isMSQCoord = true
 							data._isMSQColor = true
 						else
 							data._Icon:SetAtlas(atlas)
@@ -732,14 +733,18 @@ end
 
 
 function hb:ldb_add(event, name, data)
-	if name and data and data.type == "launcher" then
+	if name and data and (data.type == "launcher" or self.pConfig.addAnyTypeFromDataBroker
+	                                             and data.icon
+	                                             and data.OnClick
+	                                             and not name:match(addon))
+	then
 		self:addButton(name, data, event)
 	end
 end
 
 
 function hb:ldb_attrChange(_, name, key, value, data)
-	if not data or data.type ~= "launcher" then return end
+	if not data or data.type ~= "launcher" and not self.pConfig.addAnyTypeFromDataBroker then return end
 	local button = createdButtonsByName[name]
 	if button then
 		if key == "icon" then
@@ -856,6 +861,7 @@ function hb:grabDefButtons()
 	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		local GameTimeFrame = GameTimeFrame
 		self:setHooks(GameTimeFrame)
+
 		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
 			if not GameTimeFrame.__MSQ_Addon then
@@ -863,7 +869,12 @@ function hb:grabDefButtons()
 				GameTimeFrame:GetPushedTexture():SetTexCoord(unpack(p.pushedTexCoord))
 				GameTimeFrame:GetHighlightTexture():SetTexCoord(unpack(p.highlightTexCoord))
 			end
+			if p.AddonCompartmentFramePoint then
+				AddonCompartmentFrame:ClearAllPoints()
+				AddonCompartmentFrame:SetPoint(unpack(p.AddonCompartmentFramePoint))
+			end
 		end)
+
 		p.tooltipFrame = GameTooltip
 		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
 		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
@@ -881,6 +892,14 @@ function hb:grabDefButtons()
 		local highlightTexture = GameTimeFrame:GetHighlightTexture()
 		p.highlightTexCoord = {highlightTexture:GetTexCoord()}
 		highlightTexture:SetTexCoord(0, .8, 0, .8)
+
+		local AddonCompartmentFrame = AddonCompartmentFrame
+		local point, rFrame, rPoint, x, y = AddonCompartmentFrame:GetPoint()
+		if rFrame == GameTimeFrame then
+			p.AddonCompartmentFramePoint = {point, rFrame, rPoint, x, y}
+			AddonCompartmentFrame:ClearAllPoints()
+			AddonCompartmentFrame:SetPoint(GameTimeFrame:GetPoint())
+		end
 
 		if self.MSQ_MButton and not GameTimeFrame.__MSQ_Addon then
 			local icon = GameTimeFrame:CreateTexture(nil, "BACKGROUND")
@@ -927,15 +946,11 @@ function hb:grabDefButtons()
 
 	-- TRACKING BUTTON
 	if self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
-		if not self:ignoreCheck("MinimapCluster.MailFrame") then
-			MinimapCluster.MailFrame:ClearAllPoints()
-			MinimapCluster.MailFrame:SetPoint("RIGHT", MinimapCluster.BorderTop, "LEFT", -2, 0)
-		end
-
 		local tracking = MinimapCluster.Tracking
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
+
 		local p = self:setParams(tracking, function(p, tracking)
 			tracking.Background:Show()
 			self:unsetHooks(tracking.Button)
@@ -946,7 +961,17 @@ function hb:grabDefButtons()
 			for i = 1, #p.btnPoints do
 				self.SetPoint(tracking.Button, unpack(p.btnPoints[i]))
 			end
+			if p.mailFramePoint then
+				local mParams = self.btnParams[MinimapCluster.MailFrame]
+				if mParams then
+					mParams.points[1] = p.mailFramePoint
+				else
+					MinimapCluster.MailFrame:ClearAllPoints()
+					MinimapCluster.MailFrame:SetPoint(unpack(p.mailFramePoint))
+				end
+			end
 		end)
+
 		p.name = "MinimapCluster.Tracking"
 		tracking.Background:Hide()
 		p.width, p.height = tracking.Button:GetSize()
@@ -958,6 +983,18 @@ function hb:grabDefButtons()
 		self.ClearAllPoints(tracking.Button)
 		self.SetPoint(tracking.Button, "CENTER")
 		self:setHooks(tracking.Button)
+
+		local mail = MinimapCluster.MailFrame
+		local point, rFrame, rPoint, x, y = mail:GetPoint()
+		local mParams = self.btnParams[mail]
+		if rFrame == tracking then
+			p.mailFramePoint = {point, rFrame, rPoint, x, y}
+			mail:ClearAllPoints()
+			mail:SetPoint("RIGHT", MinimapCluster.BorderTop, "LEFT", -2, 0)
+		elseif mParams and mParams.points[1][2] == tracking then
+			p.mailFramePoint = mParams.points[1]
+			mParams.points[1] = {"RIGHT", MinimapCluster.BorderTop, "LEFT", -2, 0}
+		end
 
 		if self.MSQ_MButton and not tracking.Button.__MSQ_Addon then
 			self:setMButtonRegions(tracking.Button)
@@ -975,6 +1012,7 @@ function hb:grabDefButtons()
 		local mail = MinimapCluster.MailFrame
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
+
 		local p = self:setParams(mail, function(p, mail)
 			if mail.__MSQ_Addon then return end
 			self.SetSize(mail, p.width, p.height)
@@ -983,6 +1021,7 @@ function hb:grabDefButtons()
 				self.SetPoint(mail.icon, unpack(p.iconPoints[i]))
 			end
 		end)
+
 		p.name = "MinimapCluster.MailFrame"
 		p.width, p.height = mail:GetSize()
 		self.SetSize(mail, 20, 20)
@@ -1036,8 +1075,8 @@ function hb:grabDefButtons()
 			local normal = zoom:GetNormalTexture()
 			local pushed = zoom:GetPushedTexture()
 			local highlight = zoom:GetHighlightTexture()
-
 			self:setHooks(zoom)
+
 			local p = self:setParams(zoom, function()
 				zoom.Enable = nil
 				zoom.Disable = nil
@@ -1057,6 +1096,7 @@ function hb:grabDefButtons()
 					highlight:SetTexCoord(unpack(p.highlightTexCoord))
 				end
 			end)
+
 			p.name = name
 			p.tooltipFrame = GameTooltip
 			p.normalTexCoord = {normal:GetTexCoord()}
@@ -1107,6 +1147,7 @@ function hb:grabDefButtons()
 		queue.icon = queue.Eye.texture
 		queue.DropDown:SetScript("OnHide", nil)
 		self:setHooks(queue)
+
 		local p = self:setParams(queue, function(p, queue)
 			QueueStatusFrame:ClearAllPoints()
 			for i = 1, #p.statusFramePoints do
@@ -1471,7 +1512,7 @@ function hb:setParams(btn, cb)
 		p.points[i] = {self.GetPoint(btn, i)}
 	end
 
-	local function OnEnter(f) enter(btn, f) end
+	local function OnEnter(f) enter(btn, nil, f) end
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
