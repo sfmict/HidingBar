@@ -400,7 +400,7 @@ function hb:checkProfile(profile)
 	if profile.config.grabMinimap == nil then
 		profile.config.grabMinimap = true
 	end
-	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin"}
+	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin", "TTMinimapButton"}
 	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
 	profile.config.customGrabList = profile.config.customGrabList or {}
 	profile.config.ombGrabQueue = profile.config.ombGrabQueue or {}
