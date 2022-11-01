@@ -282,7 +282,6 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 			main:hidingBarUpdate()
 		end
 
-		local profileName = hb.charDB.currentProfileName
 		info.list = {}
 		for i, profile in ipairs(hb.profiles) do
 			local subInfo = {

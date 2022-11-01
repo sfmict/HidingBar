@@ -193,6 +193,7 @@ if MSQ then
 					data._Normal.SetAtlas = function(_, atlas)
 						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
 						if atlas == skin.Atlas then
+							data._isMSQCoord = true
 							data._isMSQColor = true
 						else
 							data._Icon:SetAtlas(atlas)
