@@ -28,6 +28,7 @@ local ignoreFrameNameList = {
 	["MinimapBackdrop"] = true,
 	["ExpansionLandingPageMinimapButton"] = true,
 	["QueueStatusButton"] = true,
+	["AddonCompartmentFrame"] = true,
 }
 
 
@@ -878,8 +879,13 @@ function hb:grabDefButtons()
 				GameTimeFrame:GetHighlightTexture():SetTexCoord(unpack(p.highlightTexCoord))
 			end
 			if p.AddonCompartmentFramePoint then
-				AddonCompartmentFrame:ClearAllPoints()
-				AddonCompartmentFrame:SetPoint(unpack(p.AddonCompartmentFramePoint))
+				local ACFParams = self.btnParams[AddonCompartmentFrame]
+				if ACFParams then
+					ACFParams.points[1] = p.AddonCompartmentFramePoint
+				else
+					AddonCompartmentFrame:ClearAllPoints()
+					AddonCompartmentFrame:SetPoint(unpack(p.AddonCompartmentFramePoint))
+				end
 			end
 		end)
 
@@ -903,10 +909,14 @@ function hb:grabDefButtons()
 
 		local AddonCompartmentFrame = AddonCompartmentFrame
 		local point, rFrame, rPoint, x, y = AddonCompartmentFrame:GetPoint()
+		local ACFParams = self.btnParams[AddonCompartmentFrame]
 		if rFrame == GameTimeFrame then
 			p.AddonCompartmentFramePoint = {point, rFrame, rPoint, x, y}
 			AddonCompartmentFrame:ClearAllPoints()
 			AddonCompartmentFrame:SetPoint(GameTimeFrame:GetPoint())
+		elseif ACFParams and ACFParams.points[1][2] == GameTimeFrame then
+			p.AddonCompartmentFramePoint = ACFParams.points[1]
+			ACFParams.points[1] = {GameTimeFrame:GetPoint()}
 		end
 
 		if self.MSQ_MButton and not GameTimeFrame.__MSQ_Addon then
@@ -946,6 +956,23 @@ function hb:grabDefButtons()
 
 		tinsert(self.minimapButtons, GameTimeFrame)
 		tinsert(self.mixedButtons, GameTimeFrame)
+	end
+
+	-- AddonCompartmentFrame
+	if self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
+		local AddonCompartmentFrame = AddonCompartmentFrame
+		self:setHooks(AddonCompartmentFrame)
+		self:setParams(AddonCompartmentFrame)
+
+		local btnData = self.pConfig.mbtnSettings["AddonCompartmentFrame"]
+		if btnData[5] == nil then btnData[5] = true end
+
+		if self.MSQ_MButton and not AddonCompartmentFrame.__MSQ_Addon then
+			self:setMButtonRegions(AddonCompartmentFrame)
+		end
+
+		tinsert(self.minimapButtons, AddonCompartmentFrame)
+		tinsert(self.mixedButtons, AddonCompartmentFrame)
 	end
 
 	-- TRACKING BUTTON
