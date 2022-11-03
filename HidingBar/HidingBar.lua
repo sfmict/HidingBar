@@ -191,6 +191,14 @@ if MSQ then
 			if data._Normal then
 				data._Normal:SetTexture()
 				if data._IsNormalIcon then
+					btn.SetNormalTexture = function(_, value)
+						if not value then return end
+						if C_Texture.GetAtlasInfo(value) then
+							data._Icon:SetAtlas(value)
+						else
+							data._Icon:SetTexture(value)
+						end
+					end
 					data._Normal.SetAtlas = function(_, atlas)
 						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
 						if atlas == skin.Atlas or atlas == defAtlas then
@@ -925,10 +933,6 @@ function hb:grabDefButtons()
 					data._Highlight.SetAlpha = void
 					data._Highlight.SetAtlas = void
 					data._Highlight.SetTexture = void
-
-					GameTimeFrame.SetNormalTexture = function(_, atlas)
-						data._Icon:SetAtlas(atlas)
-					end
 				end,
 			}
 			local data = {
@@ -1798,7 +1802,6 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 		tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
 
 		if not tooltip or tooltip:IsObjectType("GameTooltip") and tooltip:IsOwned(UIParent) then
-			if not eventFrame then return end
 			local lqtip = LibStub("LibQTip-1.0", true)
 			if not lqtip then return end
 			tooltip = nil
