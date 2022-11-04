@@ -35,6 +35,8 @@ local ignoreFrameNameList = {
 local ignoreFrameList = {
 	[Minimap.ZoomIn] = true,
 	[Minimap.ZoomOut] = true,
+	[MinimapCluster.Tracking] = true,
+	[MinimapCluster.MailFrame] = true,
 }
 
 
@@ -866,10 +868,22 @@ end
 
 
 function hb:grabDefButtons()
+	local function sexyMapRegionsHide(f)
+		for i, region in ipairs({f:GetRegions()}) do
+			if region:IsObjectType("Texture") then
+				local texture = region:GetTexture()
+				if texture == 136430 or texture == 136467 then
+					region:Hide()
+				end 
+			end
+		end
+	end
+	
 	-- CALENDAR BUTTON
 	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		local GameTimeFrame = GameTimeFrame
 		self:setHooks(GameTimeFrame)
+		sexyMapRegionsHide(GameTimeFrame)
 
 		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
@@ -981,6 +995,7 @@ function hb:grabDefButtons()
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
+		sexyMapRegionsHide(tracking)
 
 		local p = self:setParams(tracking, function(p, tracking)
 			tracking.Background:Show()
@@ -1043,6 +1058,7 @@ function hb:grabDefButtons()
 		local mail = MinimapCluster.MailFrame
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
+		sexyMapRegionsHide(mail)
 
 		local p = self:setParams(mail, function(p, mail)
 			if mail.__MSQ_Addon then return end
@@ -1107,6 +1123,7 @@ function hb:grabDefButtons()
 			local pushed = zoom:GetPushedTexture()
 			local highlight = zoom:GetHighlightTexture()
 			self:setHooks(zoom)
+			sexyMapRegionsHide(zoom)
 
 			local p = self:setParams(zoom, function()
 				zoom.Enable = nil
