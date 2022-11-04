@@ -2627,8 +2627,8 @@ do
 			btn.icon:SetAtlas(atlas)
 		else
 			btn.icon:SetTexture(icon:GetTexture())
-			btn.icon:SetTexCoord(icon:GetTexCoord())
 		end
+		btn.icon:SetTexCoord(icon:GetTexCoord())
 		btn.color = {icon:GetVertexColor()}
 		btn.defBtnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)

@@ -28,12 +28,15 @@ local ignoreFrameNameList = {
 	["MinimapBackdrop"] = true,
 	["ExpansionLandingPageMinimapButton"] = true,
 	["QueueStatusButton"] = true,
+	["AddonCompartmentFrame"] = true,
 }
 
 
 local ignoreFrameList = {
 	[Minimap.ZoomIn] = true,
 	[Minimap.ZoomOut] = true,
+	[MinimapCluster.Tracking] = true,
+	[MinimapCluster.MailFrame] = true,
 }
 
 
@@ -191,6 +194,14 @@ if MSQ then
 			if data._Normal then
 				data._Normal:SetTexture()
 				if data._IsNormalIcon then
+					btn.SetNormalTexture = function(_, value)
+						if not value then return end
+						if C_Texture.GetAtlasInfo(value) then
+							data._Icon:SetAtlas(value)
+						else
+							data._Icon:SetTexture(value)
+						end
+					end
 					data._Normal.SetAtlas = function(_, atlas)
 						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
 						if atlas == skin.Atlas or atlas == defAtlas then
@@ -857,10 +868,22 @@ end
 
 
 function hb:grabDefButtons()
+	local function sexyMapRegionsHide(f)
+		for i, region in ipairs({f:GetRegions()}) do
+			if region:IsObjectType("Texture") then
+				local texture = region:GetTexture()
+				if texture == 136430 or texture == 136467 then
+					region:Hide()
+				end 
+			end
+		end
+	end
+	
 	-- CALENDAR BUTTON
 	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		local GameTimeFrame = GameTimeFrame
 		self:setHooks(GameTimeFrame)
+		sexyMapRegionsHide(GameTimeFrame)
 
 		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
@@ -870,8 +893,13 @@ function hb:grabDefButtons()
 				GameTimeFrame:GetHighlightTexture():SetTexCoord(unpack(p.highlightTexCoord))
 			end
 			if p.AddonCompartmentFramePoint then
-				AddonCompartmentFrame:ClearAllPoints()
-				AddonCompartmentFrame:SetPoint(unpack(p.AddonCompartmentFramePoint))
+				local ACFParams = self.btnParams[AddonCompartmentFrame]
+				if ACFParams then
+					ACFParams.points[1] = p.AddonCompartmentFramePoint
+				else
+					AddonCompartmentFrame:ClearAllPoints()
+					AddonCompartmentFrame:SetPoint(unpack(p.AddonCompartmentFramePoint))
+				end
 			end
 		end)
 
@@ -895,10 +923,14 @@ function hb:grabDefButtons()
 
 		local AddonCompartmentFrame = AddonCompartmentFrame
 		local point, rFrame, rPoint, x, y = AddonCompartmentFrame:GetPoint()
+		local ACFParams = self.btnParams[AddonCompartmentFrame]
 		if rFrame == GameTimeFrame then
 			p.AddonCompartmentFramePoint = {point, rFrame, rPoint, x, y}
 			AddonCompartmentFrame:ClearAllPoints()
 			AddonCompartmentFrame:SetPoint(GameTimeFrame:GetPoint())
+		elseif ACFParams and ACFParams.points[1][2] == GameTimeFrame then
+			p.AddonCompartmentFramePoint = ACFParams.points[1]
+			ACFParams.points[1] = {GameTimeFrame:GetPoint()}
 		end
 
 		if self.MSQ_MButton and not GameTimeFrame.__MSQ_Addon then
@@ -925,10 +957,6 @@ function hb:grabDefButtons()
 					data._Highlight.SetAlpha = void
 					data._Highlight.SetAtlas = void
 					data._Highlight.SetTexture = void
-
-					GameTimeFrame.SetNormalTexture = function(_, atlas)
-						data._Icon:SetAtlas(atlas)
-					end
 				end,
 			}
 			local data = {
@@ -944,12 +972,30 @@ function hb:grabDefButtons()
 		tinsert(self.mixedButtons, GameTimeFrame)
 	end
 
+	-- AddonCompartmentFrame
+	if self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
+		local AddonCompartmentFrame = AddonCompartmentFrame
+		self:setHooks(AddonCompartmentFrame)
+		self:setParams(AddonCompartmentFrame)
+
+		local btnData = self.pConfig.mbtnSettings["AddonCompartmentFrame"]
+		if btnData[5] == nil then btnData[5] = true end
+
+		if self.MSQ_MButton and not AddonCompartmentFrame.__MSQ_Addon then
+			self:setMButtonRegions(AddonCompartmentFrame)
+		end
+
+		tinsert(self.minimapButtons, AddonCompartmentFrame)
+		tinsert(self.mixedButtons, AddonCompartmentFrame)
+	end
+
 	-- TRACKING BUTTON
 	if self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
 		local tracking = MinimapCluster.Tracking
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
+		sexyMapRegionsHide(tracking)
 
 		local p = self:setParams(tracking, function(p, tracking)
 			tracking.Background:Show()
@@ -1012,6 +1058,7 @@ function hb:grabDefButtons()
 		local mail = MinimapCluster.MailFrame
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
+		sexyMapRegionsHide(mail)
 
 		local p = self:setParams(mail, function(p, mail)
 			if mail.__MSQ_Addon then return end
@@ -1076,6 +1123,7 @@ function hb:grabDefButtons()
 			local pushed = zoom:GetPushedTexture()
 			local highlight = zoom:GetHighlightTexture()
 			self:setHooks(zoom)
+			sexyMapRegionsHide(zoom)
 
 			local p = self:setParams(zoom, function()
 				zoom.Enable = nil
@@ -1798,7 +1846,6 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 		tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
 
 		if not tooltip or tooltip:IsObjectType("GameTooltip") and tooltip:IsOwned(UIParent) then
-			if not eventFrame then return end
 			local lqtip = LibStub("LibQTip-1.0", true)
 			if not lqtip then return end
 			tooltip = nil
