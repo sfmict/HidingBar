@@ -243,6 +243,8 @@ if MSQ then
 					end
 					data._Normal = nil
 				else
+					btn.SetNormalTexture = void
+					btn.SetNormalAtlas = void
 					data._Normal.SetAtlas = void
 					data._Normal.SetTexture = void
 				end
