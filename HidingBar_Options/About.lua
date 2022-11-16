@@ -66,7 +66,7 @@ aboutConfig:SetScript("OnShow", function(self)
 	local langs, last = {
 		{"deDE", "SlayerEGT"},
 		{"esES", "neolynx_zero"},
-		{"koKR", "drixwow"},
+		{"koKR", "drixwow, netaras"},
 		{"ptBR", "6605270"},
 		{"zhCN", "lambdapak, huchang47"},
 		{"zhTW", "BNS333, terry1314"},
