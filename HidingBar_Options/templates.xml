@@ -79,7 +79,7 @@
 				<Texture parentKey="border" file ="Interface/Minimap/MiniMap-TrackingBorder">
 					<Size x="54" y="54"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" y="-1"/>
+						<Anchor point="TOPLEFT" x="-1"/>
 					</Anchors>
 				</Texture>
 			</Layer>
