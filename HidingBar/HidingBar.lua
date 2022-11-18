@@ -34,6 +34,11 @@ local ignoreFrameList = {
 	["MiniMapLFGFrame"] = true,
 }
 
+local ignoreFrameNamePattern = {
+	"^GatherMatePin%d+$",
+	"^TTMinimapButton%d+$",
+}
+
 
 local function void() end
 
@@ -399,7 +404,7 @@ function hb:checkProfile(profile)
 	if profile.config.grabMinimap == nil then
 		profile.config.grabMinimap = true
 	end
-	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {"GatherMatePin", "TTMinimapButton"}
+	profile.config.ignoreMBtn = profile.config.ignoreMBtn or {}
 	profile.config.grabMinimapAfterN = profile.config.grabMinimapAfterN or 1
 	profile.config.customGrabList = profile.config.customGrabList or {}
 	profile.config.ombGrabQueue = profile.config.ombGrabQueue or {}
@@ -495,6 +500,9 @@ end
 function hb:ignoreCheck(name)
 	if not name then return self.pConfig.grabMinimapWithoutName end
 	if name:match(self.matchName) then return end
+	for i = 1, #ignoreFrameNamePattern do
+		if name:match(ignoreFrameNamePattern[i]) then return end
+	end
 	for i = 1, #self.pConfig.ignoreMBtn do
 		if name:match(self.pConfig.ignoreMBtn[i]) then return end
 	end
