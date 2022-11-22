@@ -194,6 +194,19 @@ if MSQ then
 			if data._Normal then
 				data._Normal:SetTexture()
 				if data._IsNormalIcon then
+					btn.SetNormalTexture = function(_, value)
+						if not value then return end
+						if C_Texture.GetAtlasInfo(value) then
+							data._Icon:SetAtlas(value)
+						else
+							data._Icon:SetTexture(value)
+						end
+					end
+					btn.SetNormalAtlas = function(_, atlas)
+						if atlas then
+							data._Icon:SetAtlas(atlas)
+						end
+					end
 					data._Normal.SetAtlas = function(_, atlas)
 						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
 						if atlas == skin.Atlas then
@@ -230,16 +243,32 @@ if MSQ then
 					end
 					data._Normal = nil
 				else
+					btn.SetNormalTexture = void
+					btn.SetNormalAtlas = void
 					data._Normal.SetAtlas = void
 					data._Normal.SetTexture = void
 				end
 			end
 			if data._Pushed then
+				btn.SetPushedTexture = void
+				btn.SetPushedAtlas = void
 				data._Pushed:SetAlpha(0)
 				data._Pushed:SetTexture()
 				data._Pushed.SetAlpha = void
 				data._Pushed.SetAtlas = void
 				data._Pushed.SetTexture = void
+			end
+			if data._Highlight then
+				btn:UnlockHighlight()
+				btn.LockHighlight = void
+				btn.SetHighlightLocked = void
+				btn.SetHighlightTexture = void
+				btn.SetHighlightAtlas = void
+				data._Highlight:SetAlpha(0)
+				data._Highlight:SetTexture()
+				data._Highlight.SetAlpha = void
+				data._Highlight.SetAtlas = void
+				data._Highlight.SetTexture = void
 			end
 		end
 	end
@@ -280,8 +309,8 @@ if MSQ then
 				icon:SetAtlas(atlas)
 			else
 				icon:SetTexture(normal:GetTexture())
-				icon:SetTexCoord(normal:GetTexCoord())
 			end
+			icon:SetTexCoord(normal:GetTexCoord())
 			icon:SetVertexColor(normal:GetVertexColor())
 			icon:SetSize(normal:GetSize())
 			for i = 1, normal:GetNumPoints() do
@@ -291,8 +320,9 @@ if MSQ then
 			self.HookScript(btn, "OnMouseUp", function() icon:SetScale(1) end)
 		end
 
-		if not highlight then
-			highlight = isButton and btn:GetHighlightTexture() or btn:CreateTexture(nil, "HIGHLIGHT")
+		local btnHighlight = isButton and btn:GetHighlightTexture()
+		if not highlight or highlight == btnHighlight then
+			highlight = btn:CreateTexture(nil, "HIGHLIGHT")
 		end
 
 		if icon then
@@ -314,11 +344,12 @@ if MSQ then
 		MSQ_Group:AddButton(btn, data, "Legacy", true)
 
 		local pushed = isButton and btn:GetPushedTexture()
-		if border or background or pushed or normal then
+		if border or background or pushed or normal or btnHighlight then
 			self.MSQ_Button_Data[btn] = {
 				_Border = border,
 				_Background = background,
 				_Pushed = pushed,
+				_Highlight = btnHighlight,
 			}
 			if normal then
 				local data = self.MSQ_Button_Data[btn]
