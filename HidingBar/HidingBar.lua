@@ -708,7 +708,7 @@ function hb:setBtnSettings(btn)
 	local btnData = self.pConfig.btnSettings[btn.name]
 	btnData.tstmp = time()
 	btnSettings[btn] = btnData
-	btn:SetClipsChildren(btnData[4])
+	btn:SetClipsChildren(not not btnData[4])
 end
 
 
@@ -718,7 +718,7 @@ function hb:setMBtnSettings(btn)
 		local btnData = self.pConfig.mbtnSettings[name]
 		btnData.tstmp = time()
 		btnSettings[btn] = btnData
-		btn:SetClipsChildren(btnData[4])
+		btn:SetClipsChildren(not not btnData[4])
 	end
 end
 
@@ -1494,7 +1494,7 @@ function hb:setClipButtons()
 	for _, btn in ipairs(self.mixedButtons) do
 		local btnData = btnSettings[btn]
 		if btnData then
-			btn:SetClipsChildren(btnData[4])
+			btn:SetClipsChildren(not not btnData[4])
 		end
 	end
 end
