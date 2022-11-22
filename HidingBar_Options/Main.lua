@@ -2143,7 +2143,7 @@ function main:setBar(bar)
 		delayToHideEditBox:SetNumber(self.bConfig.hideDelay)
 		self.fade:SetChecked(self.bConfig.fade)
 		self.fadeOpacity:setValue(self.bConfig.fadeOpacity)
-		self.fadeOpacity:setEnabled(self.bConfig.fade)
+		self.fadeOpacity:setEnabled(not not self.bConfig.fade)
 
 		bgCombobox:ddSetSelectedValue(self.bConfig.bgTexture)
 		bgCombobox:ddSetSelectedText(self.bConfig.bgTexture or NONE)
