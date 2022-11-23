@@ -8,7 +8,7 @@ local btnSettingsMeta = {__index = function(self, key)
 	self[key] = {tstmp = 0}
 	return self[key]
 end}
-local createdButtonsByName, btnSettings, noGMEFrames = {}, {}, {}
+local createdButtonsByName, btnSettings, noEventFrames = {}, {}, {}
 hb.ldbiPrefix = "LibDBIcon10_"
 hb.matchName = hb.ldbiPrefix..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
@@ -1388,7 +1388,7 @@ function hb:setParams(btn, cb)
 				self.HookScript(frame, "OnLeave", OnLeave)
 			end
 
-			noGMEFrames[frame] = btn
+			noEventFrames[frame] = btn
 		end
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
 			setMouseEvents(fchild)
@@ -1428,7 +1428,7 @@ function hb:restoreParams(btn)
 		self.SetHitRectInsets(frame, unpack(param.insets))
 		if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", param.OnEnter) end
 		if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", param.OnLeave) end
-		noGMEFrames[frame] = nil
+		noEventFrames[frame] = nil
 	end
 
 	if p.callback then p:callback(btn) end
@@ -2446,14 +2446,29 @@ function hidingBarMixin:enter(force)
 end
 
 
+function hidingBarMixin:isFocusParent()
+	local frame = GetMouseFocus()
+	while frame do
+		if noEventFrames[frame] then
+			return noEventFrames[frame]:GetParent() == self
+		end
+		frame = frame:GetParent()
+	end
+end
+
+
 function hidingBarMixin:hideBar(elapsed)
-	self.timer = self.timer - elapsed
-	if self.timer <= 0 then
-		self:Hide()
-		self:updateDragBarPosition()
-		self:SetScript("OnUpdate", nil)
-		if self.config.fade and self.drag:IsShown() then
-			frameFade(self.drag, 1.5, self.config.fadeOpacity)
+	if self:isFocusParent() then
+		self.timer = self.config.hideDelay
+	else
+		self.timer = self.timer - elapsed
+		if self.timer <= 0 then
+			self:Hide()
+			self:updateDragBarPosition()
+			self:SetScript("OnUpdate", nil)
+			if self.config.fade and self.drag:IsShown() then
+				frameFade(self.drag, 1.5, self.config.fadeOpacity)
+			end
 		end
 	end
 end
@@ -2608,23 +2623,12 @@ local function bar_OnLeave(self)
 end
 
 
-local function isNoGMEParent(bar)
-	local frame = GetMouseFocus()
-	while frame do
-		if noGMEFrames[frame] then
-			return noGMEFrames[frame]:GetParent() == bar
-		end
-		frame = frame:GetParent()
-	end
-end
-
-
 local function bar_OnEvent(self, event, button)
 	if (button == "LeftButton" or button == "RightButton")
 	and not (self.isMouse
 		or self.drag:IsShown() and self.drag:IsMouseOver()
 		or self.omb and self.omb:IsShown() and self.omb:IsMouseOver()
-		or isNoGMEParent(self))
+		or self:isFocusParent())
 	then
 		self:Hide()
 		self:updateDragBarPosition()
