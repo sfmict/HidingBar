@@ -67,7 +67,7 @@ aboutConfig:SetScript("OnShow", function(self)
 		{"deDE", "SlayerEGT"},
 		{"esES", "neolynx_zero"},
 		{"koKR", "drixwow, netaras"},
-		{"ptBR", "6605270"},
+		{"ptBR", "cathzinhas, 6605270"},
 		{"zhCN", "lambdapak, huchang47"},
 		{"zhTW", "BNS333, terry1314"},
 	}
