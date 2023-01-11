@@ -35,7 +35,8 @@ local ignoreFrameList = {
 	[Minimap.ZoomIn] = true,
 	[Minimap.ZoomOut] = true,
 	[MinimapCluster.Tracking] = true,
-	[MinimapCluster.MailFrame] = true,
+	[MinimapCluster.IndicatorFrame.MailFrame] = true,
+	[MinimapCluster.IndicatorFrame.CraftingOrderFrame] = true,
 }
 
 local ignoreFrameNamePattern = {
@@ -47,7 +48,7 @@ local ignoreFrameNamePattern = {
 local function void() end
 
 local function enter(btn, _, eventFrame)
-	local bar = btn:GetParent()
+	local bar = hb.GetParent(btn)
 	if not bar:IsShown() then return end
 	bar.isMouse = true
 	bar:enter()
@@ -58,7 +59,7 @@ local function enter(btn, _, eventFrame)
 end
 
 local function leave(btn)
-	local bar = btn:GetParent()
+	local bar = hb.GetParent(btn)
 	if bar:IsShown() then
 		bar.isMouse = false
 		bar:leave()
@@ -1026,14 +1027,9 @@ function hb:grabDefButtons()
 			for i = 1, #p.btnPoints do
 				self.SetPoint(tracking.Button, unpack(p.btnPoints[i]))
 			end
-			if p.mailFramePoint then
-				local mParams = self.btnParams[MinimapCluster.MailFrame]
-				if mParams then
-					mParams.points[1] = p.mailFramePoint
-				else
-					MinimapCluster.MailFrame:ClearAllPoints()
-					MinimapCluster.MailFrame:SetPoint(unpack(p.mailFramePoint))
-				end
+			if p.indicatorFramePoint then
+				self.ClearAllPoints(MinimapCluster.IndicatorFrame)
+				self.SetPoint(MinimapCluster.IndicatorFrame, unpack(p.indicatorFramePoint))
 			end
 		end)
 
@@ -1049,16 +1045,12 @@ function hb:grabDefButtons()
 		self.SetPoint(tracking.Button, "CENTER")
 		self:setHooks(tracking.Button)
 
-		local mail = MinimapCluster.MailFrame
-		local point, rFrame, rPoint, x, y = mail:GetPoint()
-		local mParams = self.btnParams[mail]
+		local indicatorFrame = MinimapCluster.IndicatorFrame
+		local point, rFrame, rPoint, x, y = self.GetPoint(indicatorFrame)
 		if rFrame == tracking then
-			p.mailFramePoint = {point, rFrame, rPoint, x, y}
-			mail:ClearAllPoints()
-			mail:SetPoint("RIGHT", MinimapCluster.BorderTop, "LEFT", -2, 0)
-		elseif mParams and mParams.points[1][2] == tracking then
-			p.mailFramePoint = mParams.points[1]
-			mParams.points[1] = {"RIGHT", MinimapCluster.BorderTop, "LEFT", -2, 0}
+			p.indicatorFramePoint = {point, rFrame, rPoint, x, y}
+			self.ClearAllPoints(indicatorFrame)
+			self.SetPoint(indicatorFrame, "TOPRIGHT", MinimapCluster.BorderTop, "BOTTOMLEFT", 0, 0)
 		end
 
 		if self.MSQ_MButton and not tracking.Button.__MSQ_Addon then
@@ -1073,13 +1065,16 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL FRAME
-	if self:ignoreCheck("MinimapCluster.MailFrame") and not self.btnParams[MinimapCluster.MailFrame] then
-		local mail = MinimapCluster.MailFrame
+	if self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
+		local mail = MinimapCluster.IndicatorFrame.MailFrame
 		mail.icon = MiniMapMailIcon
+		mail.GetParent = function() return MinimapCluster.IndicatorFrame end
 		self:setHooks(mail)
 		sexyMapRegionsHide(mail)
 
 		local p = self:setParams(mail, function(p, mail)
+			mail.GetParent = nil
+			mail:GetParent():Layout()
 			if mail.__MSQ_Addon then return end
 			self.SetSize(mail, p.width, p.height)
 			self.ClearAllPoints(mail.icon)
@@ -1088,7 +1083,7 @@ function hb:grabDefButtons()
 			end
 		end)
 
-		p.name = "MinimapCluster.MailFrame"
+		p.name = "MinimapCluster.IndicatorFrame.MailFrame"
 		p.width, p.height = mail:GetSize()
 		self.SetSize(mail, 20, 20)
 		p.iconPoints = {}
@@ -1098,7 +1093,7 @@ function hb:grabDefButtons()
 		self.ClearAllPoints(mail.icon)
 		self.SetPoint(mail.icon, "CENTER")
 
-		local btnData = self.pConfig.mbtnSettings["MinimapCluster.MailFrame"]
+		local btnData = self.pConfig.mbtnSettings["MinimapCluster.IndicatorFrame.MailFrame"]
 		if btnData[5] == nil then btnData[5] = true end
 
 		if self.MSQ_MButton and not mail.__MSQ_Addon then
@@ -1107,6 +1102,46 @@ function hb:grabDefButtons()
 
 		tinsert(self.minimapButtons, mail)
 		tinsert(self.mixedButtons, mail)
+	end
+
+	-- CRAFTING ORDER FRAME
+	if self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
+		local craftingOrder = MinimapCluster.IndicatorFrame.CraftingOrderFrame
+		craftingOrder.icon = MiniMapCraftingOrderIcon
+		craftingOrder.GetParent = function() return MinimapCluster.IndicatorFrame end
+		self:setHooks(craftingOrder)
+		sexyMapRegionsHide(craftingOrder)
+
+		local p = self:setParams(craftingOrder, function(p, craftingOrder)
+			craftingOrder.GetParent = nil
+			craftingOrder:GetParent():Layout()
+			if craftingOrder.__MSQ_Addon then return end
+			self.SetSize(craftingOrder, p.width, p.height)
+			self.ClearAllPoints(craftingOrder.icon)
+			for i = 1, #p.iconPoints do
+				self.SetPoint(craftingOrder.icon, unpack(p.iconPoints[i]))
+			end
+		end)
+
+		p.name = "MinimapCluster.IndicatorFrame.CraftingOrderFrame"
+		p.width, p.height = craftingOrder:GetSize()
+		self.SetSize(craftingOrder, 20, 20)
+		p.iconPoints = {}
+		for i = 1, self.GetNumPoints(craftingOrder.icon) do
+			p.iconPoints[i] = {self.GetPoint(craftingOrder.icon, i)}
+		end
+		self.ClearAllPoints(craftingOrder.icon)
+		self.SetPoint(craftingOrder.icon, "CENTER")
+
+		local btnData = self.pConfig.mbtnSettings["MinimapCluster.IndicatorFrame.CraftingOrderFrame"]
+		if btnData[5] == nil then btnData[5] = true end
+
+		if self.MSQ_MButton and not craftingOrder.__MSQ_Addon then
+			self:setMButtonRegions(craftingOrder)
+		end
+
+		tinsert(self.minimapButtons, craftingOrder)
+		tinsert(self.mixedButtons, craftingOrder)
 	end
 
 	-- GARRISON BUTTON
@@ -1345,7 +1380,7 @@ function hb:ldbi_add(_, button, name)
 		self:setMBtnSettings(button)
 		self:setBtnParent(button)
 		self:sort()
-		button:GetParent():setButtonSize()
+		self.GetParent(button):setButtonSize()
 		self.cb:Fire("MBUTTON_ADDED", button)
 	end
 end
@@ -1471,7 +1506,7 @@ do
 		-- [1] - is disabled
 		-- [5] - auto show/hide
 		if btnData and btnData[5] and not btnData[1] then
-			btn:GetParent():applyLayout()
+			hb.GetParent(btn):applyLayout()
 		end
 	end
 
@@ -2155,12 +2190,12 @@ function hidingBarMixin:setButtonSize(size)
 	if size then self.config.buttonSize = size end
 
 	for _, btn in ipairs(hb.createdButtons) do
-		if btn:GetParent() == self then
+		if self.GetParent(btn) == self then
 			btn:SetScale(self.config.buttonSize / btn:GetWidth())
 		end
 	end
 	for _, btn in ipairs(hb.minimapButtons) do
-		if btn:GetParent() == self then
+		if self.GetParent(btn) == self then
 			local width, height = btn:GetSize()
 			local maxSize = width > height and width or height
 			self.SetScale(btn, self.config.buttonSize / maxSize)
@@ -2217,7 +2252,7 @@ function hidingBarMixin:applyLayout()
 	local i, maxButtons, line = 0
 	if self.config.mbtnPosition == 2 then
 		for _, btn in ipairs(hb.mixedButtons) do
-			if btn:GetParent() == self and btn:IsShown() then
+			if self.GetParent(btn) == self and btn:IsShown() then
 				i = i + 1
 				self:setPointBtn(btn, i, orientation)
 			end
@@ -2226,7 +2261,7 @@ function hidingBarMixin:applyLayout()
 		line = math.ceil(i / self.config.size)
 	else
 		for _, btn in ipairs(hb.createdButtons) do
-			if btn:GetParent() == self and btn:IsShown() then
+			if self.GetParent(btn) == self and btn:IsShown() then
 				i = i + 1
 				self:setPointBtn(btn, i, orientation)
 			end
@@ -2235,7 +2270,7 @@ function hidingBarMixin:applyLayout()
 		local orderDelta = followed and i or math.ceil(i / self.config.size) * self.config.size
 		local j = 0
 		for _, btn in ipairs(hb.minimapButtons) do
-			if btn:GetParent() == self and btn:IsShown() then
+			if self.GetParent(btn) == self and btn:IsShown() then
 				j = j + 1
 				self:setPointBtn(btn, j + orderDelta, orientation)
 			end
@@ -2661,9 +2696,9 @@ function hidingBarMixin:isFocusParent()
 	local frame = GetMouseFocus()
 	while frame do
 		if noEventFrames[frame] then
-			return noEventFrames[frame]:GetParent() == self
+			return self.GetParent(noEventFrames[frame]) == self
 		end
-		frame = frame:GetParent()
+		frame = self.GetParent(frame)
 	end
 end
 
