@@ -1068,12 +1068,11 @@ function hb:grabDefButtons()
 	if self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
 		local mail = MinimapCluster.IndicatorFrame.MailFrame
 		mail.icon = MiniMapMailIcon
-		mail.GetParent = function() return MinimapCluster.IndicatorFrame end
 		self:setHooks(mail)
 		sexyMapRegionsHide(mail)
 
 		local p = self:setParams(mail, function(p, mail)
-			mail.GetParent = nil
+			mail.GetParent = p.GetParent
 			mail:GetParent():Layout()
 			if mail.__MSQ_Addon then return end
 			self.SetSize(mail, p.width, p.height)
@@ -1083,6 +1082,8 @@ function hb:grabDefButtons()
 			end
 		end)
 
+		p.GetParent = rawget(mail, "GetParent")
+		mail.GetParent = function() return MinimapCluster.IndicatorFrame end
 		p.name = "MinimapCluster.IndicatorFrame.MailFrame"
 		p.width, p.height = mail:GetSize()
 		self.SetSize(mail, 20, 20)
@@ -1108,12 +1109,11 @@ function hb:grabDefButtons()
 	if self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
 		local craftingOrder = MinimapCluster.IndicatorFrame.CraftingOrderFrame
 		craftingOrder.icon = MiniMapCraftingOrderIcon
-		craftingOrder.GetParent = function() return MinimapCluster.IndicatorFrame end
 		self:setHooks(craftingOrder)
 		sexyMapRegionsHide(craftingOrder)
 
 		local p = self:setParams(craftingOrder, function(p, craftingOrder)
-			craftingOrder.GetParent = nil
+			craftingOrder.GetParent = p.GetParent
 			craftingOrder:GetParent():Layout()
 			if craftingOrder.__MSQ_Addon then return end
 			self.SetSize(craftingOrder, p.width, p.height)
@@ -1123,6 +1123,8 @@ function hb:grabDefButtons()
 			end
 		end)
 
+		p.GetParent = rawget(craftingOrder, "GetParent")
+		craftingOrder.GetParent = function() return MinimapCluster.IndicatorFrame end
 		p.name = "MinimapCluster.IndicatorFrame.CraftingOrderFrame"
 		p.width, p.height = craftingOrder:GetSize()
 		self.SetSize(craftingOrder, 20, 20)
