@@ -450,7 +450,7 @@ function hb:checkProfile(profile)
 	[1] - is disabled
 	[2] - order
 	[3] - parent bar name
-	[4] - is cliped button
+	[4] - is clipped button
 	[5] - auto show/hide
 	]]
 
@@ -916,6 +916,7 @@ function hb:grabDefButtons()
 		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
 			if not GameTimeFrame.__MSQ_Addon then
+				GameTimeFrame:SetSize(p.width, p.height)
 				GameTimeFrame:GetNormalTexture():SetTexCoord(unpack(p.normalTexCoord))
 				GameTimeFrame:GetPushedTexture():SetTexCoord(unpack(p.pushedTexCoord))
 				GameTimeFrame:GetHighlightTexture():SetTexCoord(unpack(p.highlightTexCoord))
@@ -931,6 +932,8 @@ function hb:grabDefButtons()
 			end
 		end)
 
+		p.width, p.height = GameTimeFrame:GetSize()
+		self.SetSize(GameTimeFrame, 20, 20)
 		p.tooltipFrame = GameTooltip
 		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
 		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
