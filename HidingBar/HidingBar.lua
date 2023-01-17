@@ -424,7 +424,7 @@ function hb:ADDON_LOADED(addonName)
 		end
 
 		C_Timer.After(0, function()
-			self:setProfile()
+			xpcall(self.setProfile, geterrorhandler(), self)
 			self.cb:Fire("INIT")
 			self.init = nil
 		end)
@@ -1024,8 +1024,6 @@ function hb:grabDefButtons()
 			tracking.Background:Show()
 			self:unsetHooks(tracking.Button)
 			tracking.Button:SetSize(p.width, p.height)
-			tracking.Button.ClearAllPoints = nil
-			tracking.Button.SetPoint = nil
 			self.ClearAllPoints(tracking.Button)
 			for i = 1, #p.btnPoints do
 				self.SetPoint(tracking.Button, unpack(p.btnPoints[i]))
