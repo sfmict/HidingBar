@@ -2382,7 +2382,7 @@ function main:addCustomGrabName(name)
 			hb:setMBtnSettings(btn)
 			hb:setBtnParent(btn)
 			hb:sort()
-			btn:GetParent():setButtonSize()
+			self.GetParent(btn):setButtonSize()
 			self:initMButtons(true)
 		end
 	end)
