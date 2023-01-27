@@ -2377,8 +2377,8 @@ function main:addCustomGrabName(name)
 		sort(self.pConfig.customGrabList)
 		self.customGrabScroll:update()
 
-		if hb:addCustomGrabButton(name) then
-			local btn = _G[name]
+		local btn = hb:addCustomGrabButton(name)
+		if btn then
 			hb:setMBtnSettings(btn)
 			hb:setBtnParent(btn)
 			hb:sort()
