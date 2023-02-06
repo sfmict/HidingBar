@@ -1172,8 +1172,10 @@ function hb:grabDefButtons()
 	end
 
 	-- ZOOM IN & ZOOM OUT
-	for _, zoom in ipairs({Minimap.ZoomIn, Minimap.ZoomOut}) do
-		local name = zoom:GetDebugName()
+	for _, pName in ipairs({"ZoomIn", "ZoomOut"}) do
+		local zoom = Minimap[pName]
+		local name = "Minimap."..pName
+
 		if self:ignoreCheck(name) and not self.btnParams[zoom] then
 			zoom:SetHeight(zoom:GetWidth())
 			local normal = zoom:GetNormalTexture()
@@ -1327,7 +1329,7 @@ function hb:isBarParent(button, bar)
 end
 
 
-function hb:grabOwnButton(button, force)
+function hb:grabOwnButton(button, force, MSQ_Group)
 	if button.isGrabbed or not (button.bar.config.barTypePosition == 2 and button.bar.config.omb.canGrabbed or force) then return end
 	local btnData = self.pConfig.mbtnSettings[button:GetName()]
 	local bar, stop = self.barByName[btnData[3]], true
@@ -1349,7 +1351,7 @@ function hb:grabOwnButton(button, force)
 	end
 	if stop then return end
 
-	if self:addMButton(button, true) then
+	if self:addMButton(button, true, MSQ_Group) then
 		button.isGrabbed = true
 		if not force then
 			self:setMBtnSettings(button)
@@ -1363,17 +1365,35 @@ end
 
 function hb:addCustomGrabButton(name)
 	local button = _G[name]
+
+	if not button then
+		local pNames = {("."):split(name)}
+		if #pNames > 1 then
+			local frame = _G[pNames[1]]
+			for i = 2, #pNames do
+				if type(frame) == "table" then
+					frame = frame[pNames[i]]
+				else
+					return
+				end
+			end
+			button = frame
+		end
+	end
+
 	if type(button) ~= "table" or type(button[0]) ~= "userdata" or self.btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
 	if oType ~= "Button" and oType ~= "Frame" and oType ~= "CheckButton" then return end
+
 	if name:match(self.matchName) then
-		if self:grabOwnButton(button, true) then
+		if self:grabOwnButton(button, true, self.MSQ_CGButton) then
 			self.manuallyButtons[button] = true
-			return true
+			return button
 		end
 	elseif self:addMButton(button, true, self.MSQ_CGButton) then
 		self.manuallyButtons[button] = true
-		return true
+		self.btnParams[button].name = name
+		return button
 	end
 end
 
