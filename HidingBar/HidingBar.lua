@@ -1172,8 +1172,10 @@ function hb:grabDefButtons()
 	end
 
 	-- ZOOM IN & ZOOM OUT
-	for _, zoom in ipairs({Minimap.ZoomIn, Minimap.ZoomOut}) do
-		local name = zoom:GetDebugName()
+	for _, pName in ipairs({"ZoomIn", "ZoomOut"}) do
+		local zoom = Minimap[pName]
+		local name = "Minimap."..pName
+
 		if self:ignoreCheck(name) and not self.btnParams[zoom] then
 			zoom:SetHeight(zoom:GetWidth())
 			local normal = zoom:GetNormalTexture()
