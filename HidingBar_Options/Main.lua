@@ -2330,7 +2330,7 @@ function main:restoreMbutton(rButton)
 
 	tinsert(self.mbuttons, btn)
 	tinsert(self.mixedButtons, btn)
-	btn.settings = self.pConfig.mbtnSettings[rButton:GetName()]
+	btn.settings = self.pConfig.mbtnSettings[hb:getBtnName(rButton)]
 	local bar = self.currentBar
 	btn:SetShown(btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
 	btn:SetChecked(btn.settings[1])
@@ -2381,7 +2381,7 @@ function main:addCustomGrabName(name)
 			hb:setMBtnSettings(btn)
 			hb:setBtnParent(btn)
 			hb:sort()
-			btn:GetParent():setButtonSize()
+			self.GetParent(btn):setButtonSize()
 			self:initMButtons(true)
 		end
 	end)
@@ -2666,7 +2666,7 @@ end
 
 function main:initMButtons(update)
 	for _, button in ipairs(hb.minimapButtons) do
-		local name = button:GetName()
+		local name = hb:getBtnName(button)
 		if name then
 			local icon = button.icon
 			          or button.Icon
