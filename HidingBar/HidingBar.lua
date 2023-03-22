@@ -22,7 +22,7 @@ local media = LibStub("LibSharedMedia-3.0")
 local MSQ = LibStub("Masque", true)
 
 
-local ignoreFrameList = {
+local ignoreFrameNameList = {
 	["HelpOpenWebTicketButton"] = true,
 	["MinimapBackdrop"] = true,
 	["MinimapZoomIn"] = true,
@@ -34,6 +34,8 @@ local ignoreFrameList = {
 	["MiniMapLFGFrame"] = true,
 }
 
+local ignoreFrameList = {}
+
 local ignoreFrameNamePattern = {
 	"^GatherMatePin%d+$",
 	"^TTMinimapButton%d+$",
@@ -43,7 +45,7 @@ local ignoreFrameNamePattern = {
 local function void() end
 
 local function enter(btn, _, eventFrame)
-	local bar = btn:GetParent()
+	local bar = hb.GetParent(btn)
 	if not bar:IsShown() then return end
 	bar.isMouse = true
 	bar:enter()
@@ -54,7 +56,7 @@ local function enter(btn, _, eventFrame)
 end
 
 local function leave(btn)
-	local bar = btn:GetParent()
+	local bar = hb.GetParent(btn)
 	if bar:IsShown() then
 		bar.isMouse = false
 		bar:leave()
@@ -419,7 +421,7 @@ function hb:ADDON_LOADED(addonName)
 		end
 
 		C_Timer.After(0, function()
-			self:setProfile()
+			xpcall(self.setProfile, geterrorhandler(), self)
 			self.cb:Fire("INIT")
 			self.init = nil
 		end)
@@ -445,7 +447,7 @@ function hb:checkProfile(profile)
 	[1] - is disabled
 	[2] - order
 	[3] - parent bar name
-	[4] - is cliped button
+	[4] - is clipped button
 	[5] - auto show/hide
 	]]
 
@@ -736,6 +738,11 @@ function hb:updateBars()
 end
 
 
+function hb:getBtnName(btn)
+	return self.GetName(btn) or self.btnParams[btn].name
+end
+
+
 function hb:setBtnSettings(btn)
 	local btnData = self.pConfig.btnSettings[btn.name]
 	btnData.tstmp = time()
@@ -745,7 +752,7 @@ end
 
 
 function hb:setMBtnSettings(btn)
-	local name = btn:GetName()
+	local name = self:getBtnName(btn)
 	if name then
 		local btnData = self.pConfig.mbtnSettings[name]
 		btnData.tstmp = time()
@@ -1152,7 +1159,7 @@ function hb:ldbi_add(_, button, name)
 		self:setMBtnSettings(button)
 		self:setBtnParent(button)
 		self:sort()
-		button:GetParent():setButtonSize()
+		self.GetParent(button):setButtonSize()
 		self.cb:Fire("MBUTTON_ADDED", button)
 	end
 end
@@ -1170,7 +1177,7 @@ end
 
 function hb:addMButton(button, force, MSQ_Group)
 	local name = self.GetName(button)
-	if not ignoreFrameList[name] and self:ignoreCheck(name) or force then
+	if not ignoreFrameNameList[name] and not ignoreFrameList[button] and self:ignoreCheck(name) or force then
 		if self.HasScript(button, "OnClick") and self.GetScript(button, "OnClick")
 		or self.HasScript(button, "OnMouseUp") and self.GetScript(button, "OnMouseUp")
 		or self.HasScript(button, "OnMouseDown") and self.GetScript(button, "OnMouseDown")
@@ -1238,7 +1245,8 @@ function hb:removeMButton(button, update)
 	self:unsetHooks(button)
 	self:restoreParams(button)
 
-	if self.GetName(button):match(self.matchName) then
+	local name = self.GetName(button)
+	if name and name:match(self.matchName) then
 		button.isGrabbed = nil
 		button.SetPoint = setOMBPoint
 		button.bar:setOMBSize()
@@ -1277,7 +1285,7 @@ do
 		-- [1] - is disabled
 		-- [5] - auto show/hide
 		if btnData and btnData[5] and not btnData[1] then
-			btn:GetParent():applyLayout()
+			hb.GetParent(btn):applyLayout()
 		end
 	end
 
@@ -1364,11 +1372,11 @@ end
 
 
 function hb:setParams(btn, cb)
-	self.btnParams[btn] = {
+	local p = {
 		points = {},
 		frames = {},
 	}
-	local p = self.btnParams[btn]
+	self.btnParams[btn] = p
 	p.callback = cb
 	p.isShown = self.IsShown(btn)
 	p.parent = self.GetParent(btn)
@@ -1389,9 +1397,12 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
+		p.frames[frame] = true
+		noEventFrames[frame] = btn
+
 		if self.IsMouseMotionEnabled(frame) or self.IsMouseClickEnabled(frame) then
-			p.frames[frame] = {}
-			local fParams = p.frames[frame]
+			local fParams = {}
+			p.frames[frame] = fParams
 
 			fParams.insets = {self.GetHitRectInsets(frame)}
 			self.SetHitRectInsets(frame, 0, 0, 0, 0)
@@ -1405,9 +1416,8 @@ function hb:setParams(btn, cb)
 				fParams.OnLeave = self.GetScript(frame, "OnLeave")
 				self.HookScript(frame, "OnLeave", OnLeave)
 			end
-
-			noEventFrames[frame] = btn
 		end
+
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
 			setMouseEvents(fchild)
 		end
@@ -1442,11 +1452,13 @@ function hb:restoreParams(btn)
 		self.SetPoint(btn, unpack(p.points[i]))
 	end
 
-	for frame, param in pairs(p.frames) do
-		self.SetHitRectInsets(frame, unpack(param.insets))
-		if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", param.OnEnter) end
-		if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", param.OnLeave) end
+	for frame, params in pairs(p.frames) do
 		noEventFrames[frame] = nil
+		if type(params) == "table" then
+			self.SetHitRectInsets(frame, unpack(params.insets))
+			if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", params.OnEnter) end
+			if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", params.OnLeave) end
+		end
 	end
 
 	if p.callback then p:callback(btn) end
@@ -1468,7 +1480,7 @@ function hb:sort()
 		if o1 and not o2 or o1 and o2 and o1 < o2 then return true
 		elseif o1 ~= o2 then return false end
 
-		local n1, n2 = a:GetName(), b:GetName()
+		local n1, n2 = self:getBtnName(a), self:getBtnName(b)
 		return n1 and not n2
 			or n1 and n2 and n1 < n2
 	end
@@ -1671,7 +1683,6 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 		tooltip = LibDBIconTooltip:IsShown() and LibDBIconTooltip or GameTooltip:IsShown() and GameTooltip
 
 		if not tooltip or tooltip:IsObjectType("GameTooltip") and tooltip:IsOwned(UIParent) then
-			if not eventFrame then return end
 			local lqtip = LibStub("LibQTip-1.0", true)
 			if not lqtip then return end
 			tooltip = nil
@@ -1962,12 +1973,12 @@ function hidingBarMixin:setButtonSize(size)
 	if size then self.config.buttonSize = size end
 
 	for _, btn in ipairs(hb.createdButtons) do
-		if btn:GetParent() == self then
+		if self.GetParent(btn) == self then
 			btn:SetScale(self.config.buttonSize / btn:GetWidth())
 		end
 	end
 	for _, btn in ipairs(hb.minimapButtons) do
-		if btn:GetParent() == self then
+		if self.GetParent(btn) == self then
 			local width, height = btn:GetSize()
 			local maxSize = width > height and width or height
 			self.SetScale(btn, self.config.buttonSize / maxSize)
@@ -2024,7 +2035,7 @@ function hidingBarMixin:applyLayout()
 	local i, maxButtons, line = 0
 	if self.config.mbtnPosition == 2 then
 		for _, btn in ipairs(hb.mixedButtons) do
-			if btn:GetParent() == self and btn:IsShown() then
+			if self.GetParent(btn) == self and btn:IsShown() then
 				i = i + 1
 				self:setPointBtn(btn, i, orientation)
 			end
@@ -2033,7 +2044,7 @@ function hidingBarMixin:applyLayout()
 		line = math.ceil(i / self.config.size)
 	else
 		for _, btn in ipairs(hb.createdButtons) do
-			if btn:GetParent() == self and btn:IsShown() then
+			if self.GetParent(btn) == self and btn:IsShown() then
 				i = i + 1
 				self:setPointBtn(btn, i, orientation)
 			end
@@ -2042,7 +2053,7 @@ function hidingBarMixin:applyLayout()
 		local orderDelta = followed and i or math.ceil(i / self.config.size) * self.config.size
 		local j = 0
 		for _, btn in ipairs(hb.minimapButtons) do
-			if btn:GetParent() == self and btn:IsShown() then
+			if self.GetParent(btn) == self and btn:IsShown() then
 				j = j + 1
 				self:setPointBtn(btn, j + orderDelta, orientation)
 			end
@@ -2468,9 +2479,15 @@ function hidingBarMixin:isFocusParent()
 	local frame = GetMouseFocus()
 	while frame do
 		if noEventFrames[frame] then
-			return noEventFrames[frame]:GetParent() == self
+			return self.GetParent(noEventFrames[frame]) == self
 		end
-		frame = frame:GetParent()
+		for i = 1, self.GetNumPoints(frame) do
+			local _, rFrame = self.GetPoint(frame, i)
+			if noEventFrames[rFrame] then
+				return self.GetParent(noEventFrames[rFrame]) == self
+			end
+		end
+		frame = self.GetParent(frame)
 	end
 end
 
