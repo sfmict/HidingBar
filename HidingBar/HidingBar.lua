@@ -1616,11 +1616,11 @@ end
 
 
 function hb:setParams(btn, cb)
-	self.btnParams[btn] = {
+	local p = {
 		points = {},
 		frames = {},
 	}
-	local p = self.btnParams[btn]
+	self.btnParams[btn] = p
 	p.callback = cb
 	p.isShown = self.IsShown(btn)
 	p.parent = self.GetParent(btn)
@@ -1641,9 +1641,12 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
+		p.frames[frame] = true
+		noEventFrames[frame] = btn
+
 		if self.IsMouseMotionEnabled(frame) or self.IsMouseClickEnabled(frame) then
-			p.frames[frame] = {}
-			local fParams = p.frames[frame]
+			local fParams = {}
+			p.frames[frame] = fParams
 
 			fParams.insets = {self.GetHitRectInsets(frame)}
 			self.SetHitRectInsets(frame, 0, 0, 0, 0)
@@ -1657,9 +1660,8 @@ function hb:setParams(btn, cb)
 				fParams.OnLeave = self.GetScript(frame, "OnLeave")
 				self.HookScript(frame, "OnLeave", OnLeave)
 			end
-
-			noEventFrames[frame] = btn
 		end
+
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
 			setMouseEvents(fchild)
 		end
@@ -1694,11 +1696,13 @@ function hb:restoreParams(btn)
 		self.SetPoint(btn, unpack(p.points[i]))
 	end
 
-	for frame, param in pairs(p.frames) do
-		self.SetHitRectInsets(frame, unpack(param.insets))
-		if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", param.OnEnter) end
-		if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", param.OnLeave) end
+	for frame, params in pairs(p.frames) do
 		noEventFrames[frame] = nil
+		if type(params) == "table" then
+			self.SetHitRectInsets(frame, unpack(params.insets))
+			if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", params.OnEnter) end
+			if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", params.OnLeave) end
+		end
 	end
 
 	if p.callback then p:callback(btn) end
@@ -2720,6 +2724,12 @@ function hidingBarMixin:isFocusParent()
 	while frame do
 		if noEventFrames[frame] then
 			return self.GetParent(noEventFrames[frame]) == self
+		end
+		for i = 1, self.GetNumPoints(frame) do
+			local _, rFrame = self.GetPoint(frame, i)
+			if noEventFrames[rFrame] then
+				return self.GetParent(noEventFrames[rFrame]) == self
+			end
 		end
 		frame = self.GetParent(frame)
 	end
