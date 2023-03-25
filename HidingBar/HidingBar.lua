@@ -84,7 +84,7 @@ end
 
 if MSQ then
 	hb.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
-	hb.MSQ_Button:SetCallback(function()
+	hb.MSQ_Button:RegisterCallback(function()
 		for btn in pairs(hb.MSQ_Button.Buttons) do
 			hb:MSQ_CoordUpdate(btn)
 		end
@@ -95,10 +95,11 @@ if MSQ then
 	end)
 
 
-	local defAtlas = MSQ:GetSkin("Default").Normal.Atlas
+	local _, defSkin = MSQ:GetDefaultSkin()
+	local defNormal = defSkin.Normal
 	hb.MSQ_Button_Data = {}
 	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
-	hb.MSQ_MButton:SetCallback(function()
+	hb.MSQ_MButton:RegisterCallback(function()
 		for btn in pairs(hb.MSQ_MButton.Buttons) do
 			hb:MSQ_Button_Update(btn)
 			hb:MSQ_CoordUpdate(btn)
@@ -111,7 +112,7 @@ if MSQ then
 
 
 	hb.MSQ_CGButton = MSQ:Group(addon, L["Manually Grabbed Buttons"], "CGButtons")
-	hb.MSQ_CGButton:SetCallback(function()
+	hb.MSQ_CGButton:RegisterCallback(function()
 		for btn in pairs(hb.MSQ_CGButton.Buttons) do
 			hb:MSQ_Button_Update(btn)
 			hb:MSQ_CoordUpdate(btn)
@@ -213,18 +214,22 @@ if MSQ then
 						end
 					end
 					data._Normal.SetAtlas = function(_, atlas)
-						local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
-						if atlas == skin.Atlas or atlas == defAtlas then
-							data._isMSQCoord = true
-							data._isMSQColor = true
-						else
-							data._Icon:SetAtlas(atlas)
+						if atlas then
+							if atlas == defNormal.Atlas
+							or atlas == MSQ:GetSkin(data._Group.db.SkinID).Normal.Atlas
+							then
+								data._isMSQCoord = true
+								data._isMSQColor = true
+							else
+								data._Icon:SetAtlas(atlas)
+							end
 						end
 					end
 					data._Normal.SetTexture = function(_, texture)
 						if texture then
-							local skin = MSQ:GetSkin(data._Group.db.SkinID).Normal
-							if texture == skin.Texture then
+							if texture == defNormal.Texture
+							or texture == MSQ:GetSkin(data._Group.db.SkinID).Normal.Texture
+							then
 								data._isMSQCoord = true
 								data._isMSQColor = true
 							else
@@ -1156,7 +1161,7 @@ function hb:grabDefButtons()
 
 		if MSQ and not self.MSQ_Garrison then
 			self.MSQ_Garrison = MSQ:Group(addon, GARRISON_FOLLOWERS, "GarrisonLandingPageMinimapButton")
-			self.MSQ_Garrison:SetCallback(function()
+			self.MSQ_Garrison:RegisterCallback(function()
 				self:MSQ_Button_Update(expBtn)
 				self:MSQ_CoordUpdate(expBtn)
 				for _, bar in ipairs(self.bars) do
@@ -1835,7 +1840,7 @@ function hidingBarMixin:initOwnMinimapButton()
 	if MSQ then
 		if not hb.MSQ_OMB then
 			hb.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
-			hb.MSQ_OMB:SetCallback(function()
+			hb.MSQ_OMB:RegisterCallback(function()
 				hb:MSQ_Button_Update(self.omb)
 				hb:MSQ_CoordUpdate(self.omb)
 			end)
