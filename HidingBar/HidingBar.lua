@@ -80,25 +80,24 @@ end
 
 
 if MSQ then
-	hb.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
-	hb.MSQ_Button:RegisterCallback(function()
-		for btn in pairs(hb.MSQ_Button.Buttons) do
-			hb:MSQ_CoordUpdate(btn)
-		end
-		for _, bar in ipairs(hb.bars) do
-			bar:enter()
-			bar:leave(math.max(1.5, bar.config.hideDelay))
-		end
-	end)
-
-
 	local _, defSkin = MSQ:GetDefaultSkin()
 	local defNormal = defSkin.Normal
 	hb.MSQ_Button_Data = {}
-	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
-	hb.MSQ_MButton:RegisterCallback(function()
-		for btn in pairs(hb.MSQ_MButton.Buttons) do
+	hb.MSQ_UpdateGroupBtns = function(self)
+		for btn in pairs(self.Buttons) do
 			hb:MSQ_Button_Update(btn)
+			hb:MSQ_CoordUpdate(btn)
+		end
+		for _, bar in ipairs(hb.bars) do
+			bar:enter()
+			bar:leave(math.max(1.5, bar.config.hideDelay))
+		end
+	end
+
+
+	hb.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
+	hb.MSQ_Button:RegisterCallback(function(self)
+		for btn in pairs(self.Buttons) do
 			hb:MSQ_CoordUpdate(btn)
 		end
 		for _, bar in ipairs(hb.bars) do
@@ -107,18 +106,11 @@ if MSQ then
 		end
 	end)
 
+	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
+	hb.MSQ_MButton:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 
 	hb.MSQ_CGButton = MSQ:Group(addon, L["Manually Grabbed Buttons"], "CGButtons")
-	hb.MSQ_CGButton:RegisterCallback(function()
-		for btn in pairs(hb.MSQ_CGButton.Buttons) do
-			hb:MSQ_Button_Update(btn)
-			hb:MSQ_CoordUpdate(btn)
-		end
-		for _, bar in ipairs(hb.bars) do
-			bar:enter()
-			bar:leave(math.max(1.5, bar.config.hideDelay))
-		end
-	end)
+	hb.MSQ_CGButton:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 
 
 	local prevCoord, curCoord, MSQ_Coord = {}, {}, {}
@@ -1596,10 +1588,7 @@ function hidingBarMixin:initOwnMinimapButton()
 	if MSQ then
 		if not hb.MSQ_OMB then
 			hb.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
-			hb.MSQ_OMB:RegisterCallback(function()
-				hb:MSQ_Button_Update(self.omb)
-				hb:MSQ_CoordUpdate(self.omb)
-			end)
+			hb.MSQ_OMB:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 		end
 		hb:setMButtonRegions(self.omb, nil, hb.MSQ_OMB)
 	end
