@@ -31,13 +31,7 @@ local ignoreFrameNameList = {
 	["AddonCompartmentFrame"] = true,
 }
 
-local ignoreFrameList = {
-	[Minimap.ZoomIn] = true,
-	[Minimap.ZoomOut] = true,
-	[MinimapCluster.Tracking] = true,
-	[MinimapCluster.IndicatorFrame.MailFrame] = true,
-	[MinimapCluster.IndicatorFrame.CraftingOrderFrame] = true,
-}
+local ignoreFrameList = {}
 
 local ignoreFrameNamePattern = {
 	"^GatherMatePin%d+$",
@@ -375,6 +369,20 @@ function hb:ADDON_LOADED(addonName)
 	if addonName == addon then
 		self:UnregisterEvent("ADDON_LOADED")
 		self.ADDON_LOADED = nil
+
+		local function addToIgnoreFrameList(name)
+			local frame = self:getFrameFromPath(name)
+			if frame then
+				ignoreFrameList[frame] = true
+			else
+				print(addon..":", name, "not found")
+			end
+		end
+		addToIgnoreFrameList("Minimap.ZoomIn")
+		addToIgnoreFrameList("Minimap.ZoomOut")
+		addToIgnoreFrameList("MinimapCluster.Tracking")
+		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.MailFrame")
+		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
 
 		HidingBarDBChar = HidingBarDBChar or {}
 		self.charDB = HidingBarDBChar
@@ -892,6 +900,22 @@ function hb:grabMButtons()
 end
 
 
+function hb:getFrameFromPath(path)
+	local pNames = {("."):split(path)}
+	if #pNames > 1 then
+		local frame = _G[pNames[1]]
+		for i = 2, #pNames do
+			if type(frame) == "table" then
+				frame = frame[pNames[i]]
+			else
+				return
+			end
+		end
+		return frame
+	end
+end
+
+
 function hb:grabDefButtons()
 	local function sexyMapRegionsHide(f)
 		for i, region in ipairs({f:GetRegions()}) do
@@ -905,7 +929,7 @@ function hb:grabDefButtons()
 	end
 
 	-- CALENDAR BUTTON
-	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
+	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		local GameTimeFrame = GameTimeFrame
 		self:setHooks(GameTimeFrame)
 		sexyMapRegionsHide(GameTimeFrame)
@@ -993,7 +1017,7 @@ function hb:grabDefButtons()
 	end
 
 	-- AddonCompartmentFrame
-	if self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
+	if AddonCompartmentFrame and self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
 		local AddonCompartmentFrame = AddonCompartmentFrame
 		self:setHooks(AddonCompartmentFrame)
 		self:setParams(AddonCompartmentFrame)
@@ -1010,7 +1034,7 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	if self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
+	if self:getFrameFromPath("MinimapCluster.Tracking") and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
 		local tracking = MinimapCluster.Tracking
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
@@ -1063,7 +1087,7 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL FRAME
-	if self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
+	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.MailFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
 		local mail = MinimapCluster.IndicatorFrame.MailFrame
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
@@ -1104,7 +1128,7 @@ function hb:grabDefButtons()
 	end
 
 	-- CRAFTING ORDER FRAME
-	if self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
+	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
 		local craftingOrder = MinimapCluster.IndicatorFrame.CraftingOrderFrame
 		craftingOrder.icon = MiniMapCraftingOrderIcon
 		self:setHooks(craftingOrder)
@@ -1145,7 +1169,7 @@ function hb:grabDefButtons()
 	end
 
 	-- GARRISON BUTTON
-	if self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[ExpansionLandingPageMinimapButton] then
+	if ExpansionLandingPageMinimapButton and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[ExpansionLandingPageMinimapButton] then
 		local expBtn = ExpansionLandingPageMinimapButton
 		self:setHooks(expBtn)
 		self:setParams(expBtn).autoShowHideDisabled = true
@@ -1166,7 +1190,7 @@ function hb:grabDefButtons()
 		local zoom = Minimap[pName]
 		local name = "Minimap."..pName
 
-		if self:ignoreCheck(name) and not self.btnParams[zoom] then
+		if zoom and self:ignoreCheck(name) and not self.btnParams[zoom] then
 			zoom:SetHeight(zoom:GetWidth())
 			local normal = zoom:GetNormalTexture()
 			local pushed = zoom:GetPushedTexture()
@@ -1239,7 +1263,7 @@ function hb:grabDefButtons()
 	end
 
 	-- QUEUE STATUS
-	if self:ignoreCheck("QueueStatusButton") and not self.btnParams[QueueStatusButton] then
+	if QueueStatusButton and self:ignoreCheck("QueueStatusButton") and not self.btnParams[QueueStatusButton] then
 		local queue = QueueStatusButton
 		queue.icon = queue.Eye.texture
 		queue.DropDown:SetScript("OnHide", nil)
@@ -1354,22 +1378,7 @@ end
 
 
 function hb:addCustomGrabButton(name)
-	local button = _G[name]
-
-	if not button then
-		local pNames = {("."):split(name)}
-		if #pNames > 1 then
-			local frame = _G[pNames[1]]
-			for i = 2, #pNames do
-				if type(frame) == "table" then
-					frame = frame[pNames[i]]
-				else
-					return
-				end
-			end
-			button = frame
-		end
-	end
+	local button = _G[name] or self:getFrameFromPath(name)
 
 	if type(button) ~= "table" or type(button[0]) ~= "userdata" or self.btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
