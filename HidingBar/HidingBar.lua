@@ -374,6 +374,15 @@ function hb:ADDON_LOADED(addonName)
 		self:UnregisterEvent("ADDON_LOADED")
 		self.ADDON_LOADED = nil
 
+		-- local function addToIgnoreFrameList(name)
+		-- 	local frame = self:getFrameFromPath(name)
+		-- 	if frame then
+		-- 		ignoreFrameList[frame] = true
+		-- 	else
+		-- 		print(addon..":", name, "not found")
+		-- 	end
+		-- end
+
 		HidingBarDBChar = HidingBarDBChar or {}
 		self.charDB = HidingBarDBChar
 		HidingBarDB = HidingBarDB or {}
@@ -896,9 +905,25 @@ function hb:grabMButtons()
 end
 
 
+function hb:getFrameFromPath(path)
+	local pNames = {("."):split(path)}
+	if #pNames > 1 then
+		local frame = _G[pNames[1]]
+		for i = 2, #pNames do
+			if type(frame) == "table" then
+				frame = frame[pNames[i]]
+			else
+				return
+			end
+		end
+		return frame
+	end
+end
+
+
 function hb:grabDefButtons()
 	-- CALENDAR BUTTON
-	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
+	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		local GameTimeFrame = GameTimeFrame
 		local text = GameTimeFrame:GetFontString()
 		text:SetPoint("CENTER", 0, -1)
@@ -938,7 +963,7 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	if self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
+	if MiniMapTracking and self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
 		local MiniMapTracking = MiniMapTracking
 		local MiniMapTrackingButton = MiniMapTrackingButton
 		local icon = MiniMapTrackingIcon
@@ -989,7 +1014,7 @@ function hb:grabDefButtons()
 	end
 
 	-- MINIMAP LFG FRAME
-	if self:ignoreCheck("MiniMapLFGFrame") and not self.btnParams[MiniMapLFGFrame] then
+	if MiniMapLFGFrame and self:ignoreCheck("MiniMapLFGFrame") and not self.btnParams[MiniMapLFGFrame] then
 		local LFGFrame = MiniMapLFGFrame
 		LFGFrame.icon = MiniMapLFGFrameIconTexture
 		LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
@@ -1026,7 +1051,7 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL
-	if self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[MiniMapMailFrame] then
+	if MiniMapMailFrame and self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[MiniMapMailFrame] then
 		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
 		if btnData then
 			self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
@@ -1050,7 +1075,7 @@ function hb:grabDefButtons()
 	end
 
 	-- ZOOM IN & ZOOM OUT
-	for _, zoom in ipairs({MinimapZoomIn, MinimapZoomOut}) do
+	for _, zoom in pairs({MinimapZoomIn, MinimapZoomOut}) do
 		local name = zoom:GetName()
 		if self:ignoreCheck(name) and not self.btnParams[zoom] then
 			self:setHooks(zoom)
@@ -1102,7 +1127,7 @@ function hb:grabDefButtons()
 	end
 
 	-- WORLD MAP BUTTON
-	if self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
+	if MiniMapWorldMapButton and self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
 		local mapButton = MiniMapWorldMapButton
 		self:setHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
@@ -1187,22 +1212,7 @@ end
 
 
 function hb:addCustomGrabButton(name)
-	local button = _G[name]
-
-	if not button then
-		local pNames = {("."):split(name)}
-		if #pNames > 1 then
-			local frame = _G[pNames[1]]
-			for i = 2, #pNames do
-				if type(frame) == "table" then
-					frame = frame[pNames[i]]
-				else
-					return
-				end
-			end
-			button = frame
-		end
-	end
+	local button = _G[name] or self:getFrameFromPath(name)
 
 	if type(button) ~= "table" or type(button[0]) ~= "userdata" or self.btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
