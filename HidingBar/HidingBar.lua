@@ -935,7 +935,7 @@ function hb:grabDefButtons()
 		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
 		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
 			local bar = GameTimeFrame:GetParent()
-			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTooltip) then
+			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
 				bar:updateTooltipPosition()
 			end
 		end)
@@ -1631,7 +1631,6 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
-		p.frames[frame] = true
 		noEventFrames[frame] = btn
 
 		if self.IsMouseMotionEnabled(frame) or self.IsMouseClickEnabled(frame) then
@@ -1650,6 +1649,8 @@ function hb:setParams(btn, cb)
 				fParams.OnLeave = self.GetScript(frame, "OnLeave")
 				self.HookScript(frame, "OnLeave", OnLeave)
 			end
+		else
+			p.frames[frame] = false
 		end
 
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
@@ -1688,7 +1689,7 @@ function hb:restoreParams(btn)
 
 	for frame, params in pairs(p.frames) do
 		noEventFrames[frame] = nil
-		if type(params) == "table" then
+		if params then
 			self.SetHitRectInsets(frame, unpack(params.insets))
 			if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", params.OnEnter) end
 			if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", params.OnLeave) end
