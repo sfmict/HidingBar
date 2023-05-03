@@ -1,7 +1,8 @@
-## Interface: 100007
+## Interface: 100100
 ## Title: HidingBar
 ## Author: sfmict
 ## Version: @project-version@
+## IconTexture: Interface\AddOns\HidingBar\media\icon
 ## Notes: Convenient hiding panel
 ## SavedVariables: HidingBarDB
 ## SavedVariablesPerCharacter: HidingBarDBChar

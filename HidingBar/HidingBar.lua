@@ -31,13 +31,7 @@ local ignoreFrameNameList = {
 	["AddonCompartmentFrame"] = true,
 }
 
-local ignoreFrameList = {
-	[Minimap.ZoomIn] = true,
-	[Minimap.ZoomOut] = true,
-	[MinimapCluster.Tracking] = true,
-	[MinimapCluster.IndicatorFrame.MailFrame] = true,
-	[MinimapCluster.IndicatorFrame.CraftingOrderFrame] = true,
-}
+local ignoreFrameList = {}
 
 local ignoreFrameNamePattern = {
 	"^GatherMatePin%d+$",
@@ -83,25 +77,24 @@ end
 
 
 if MSQ then
-	hb.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
-	hb.MSQ_Button:RegisterCallback(function()
-		for btn in pairs(hb.MSQ_Button.Buttons) do
-			hb:MSQ_CoordUpdate(btn)
-		end
-		for _, bar in ipairs(hb.bars) do
-			bar:enter()
-			bar:leave(math.max(1.5, bar.config.hideDelay))
-		end
-	end)
-
-
 	local _, defSkin = MSQ:GetDefaultSkin()
 	local defNormal = defSkin.Normal
 	hb.MSQ_Button_Data = {}
-	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
-	hb.MSQ_MButton:RegisterCallback(function()
-		for btn in pairs(hb.MSQ_MButton.Buttons) do
+	hb.MSQ_UpdateGroupBtns = function(self)
+		for btn in pairs(self.Buttons) do
 			hb:MSQ_Button_Update(btn)
+			hb:MSQ_CoordUpdate(btn)
+		end
+		for _, bar in ipairs(hb.bars) do
+			bar:enter()
+			bar:leave(math.max(1.5, bar.config.hideDelay))
+		end
+	end
+
+
+	hb.MSQ_Button = MSQ:Group(addon, L["DataBroker Buttons"], "DataBroker")
+	hb.MSQ_Button:RegisterCallback(function(self)
+		for btn in pairs(self.Buttons) do
 			hb:MSQ_CoordUpdate(btn)
 		end
 		for _, bar in ipairs(hb.bars) do
@@ -110,18 +103,11 @@ if MSQ then
 		end
 	end)
 
+	hb.MSQ_MButton = MSQ:Group(addon, L["Minimap Buttons"], "MinimapButtons")
+	hb.MSQ_MButton:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 
 	hb.MSQ_CGButton = MSQ:Group(addon, L["Manually Grabbed Buttons"], "CGButtons")
-	hb.MSQ_CGButton:RegisterCallback(function()
-		for btn in pairs(hb.MSQ_CGButton.Buttons) do
-			hb:MSQ_Button_Update(btn)
-			hb:MSQ_CoordUpdate(btn)
-		end
-		for _, bar in ipairs(hb.bars) do
-			bar:enter()
-			bar:leave(math.max(1.5, bar.config.hideDelay))
-		end
-	end)
+	hb.MSQ_CGButton:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 
 
 	local prevCoord, curCoord, MSQ_Coord = {}, {}, {}
@@ -383,6 +369,20 @@ function hb:ADDON_LOADED(addonName)
 	if addonName == addon then
 		self:UnregisterEvent("ADDON_LOADED")
 		self.ADDON_LOADED = nil
+
+		local function addToIgnoreFrameList(name)
+			local frame = self:getFrameFromPath(name)
+			if frame then
+				ignoreFrameList[frame] = true
+			else
+				print(addon..":", name, "not found")
+			end
+		end
+		addToIgnoreFrameList("Minimap.ZoomIn")
+		addToIgnoreFrameList("Minimap.ZoomOut")
+		addToIgnoreFrameList("MinimapCluster.Tracking")
+		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.MailFrame")
+		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
 
 		HidingBarDBChar = HidingBarDBChar or {}
 		self.charDB = HidingBarDBChar
@@ -900,6 +900,22 @@ function hb:grabMButtons()
 end
 
 
+function hb:getFrameFromPath(path)
+	local pNames = {("."):split(path)}
+	if #pNames > 1 then
+		local frame = _G[pNames[1]]
+		for i = 2, #pNames do
+			if type(frame) == "table" then
+				frame = frame[pNames[i]]
+			else
+				return
+			end
+		end
+		return frame
+	end
+end
+
+
 function hb:grabDefButtons()
 	local function sexyMapRegionsHide(f)
 		for i, region in ipairs({f:GetRegions()}) do
@@ -913,7 +929,7 @@ function hb:grabDefButtons()
 	end
 
 	-- CALENDAR BUTTON
-	if self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
+	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		local GameTimeFrame = GameTimeFrame
 		self:setHooks(GameTimeFrame)
 		sexyMapRegionsHide(GameTimeFrame)
@@ -943,7 +959,7 @@ function hb:grabDefButtons()
 		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
 		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
 			local bar = GameTimeFrame:GetParent()
-			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTooltip) then
+			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
 				bar:updateTooltipPosition()
 			end
 		end)
@@ -1001,7 +1017,7 @@ function hb:grabDefButtons()
 	end
 
 	-- AddonCompartmentFrame
-	if self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
+	if AddonCompartmentFrame and self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
 		local AddonCompartmentFrame = AddonCompartmentFrame
 		self:setHooks(AddonCompartmentFrame)
 		self:setParams(AddonCompartmentFrame)
@@ -1018,7 +1034,7 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	if self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
+	if self:getFrameFromPath("MinimapCluster.Tracking") and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
 		local tracking = MinimapCluster.Tracking
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
@@ -1071,7 +1087,7 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL FRAME
-	if self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
+	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.MailFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
 		local mail = MinimapCluster.IndicatorFrame.MailFrame
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
@@ -1112,7 +1128,7 @@ function hb:grabDefButtons()
 	end
 
 	-- CRAFTING ORDER FRAME
-	if self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
+	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
 		local craftingOrder = MinimapCluster.IndicatorFrame.CraftingOrderFrame
 		craftingOrder.icon = MiniMapCraftingOrderIcon
 		self:setHooks(craftingOrder)
@@ -1153,7 +1169,7 @@ function hb:grabDefButtons()
 	end
 
 	-- GARRISON BUTTON
-	if self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[ExpansionLandingPageMinimapButton] then
+	if ExpansionLandingPageMinimapButton and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[ExpansionLandingPageMinimapButton] then
 		local expBtn = ExpansionLandingPageMinimapButton
 		self:setHooks(expBtn)
 		self:setParams(expBtn).autoShowHideDisabled = true
@@ -1161,14 +1177,7 @@ function hb:grabDefButtons()
 
 		if MSQ and not self.MSQ_Garrison then
 			self.MSQ_Garrison = MSQ:Group(addon, GARRISON_FOLLOWERS, "GarrisonLandingPageMinimapButton")
-			self.MSQ_Garrison:RegisterCallback(function()
-				self:MSQ_Button_Update(expBtn)
-				self:MSQ_CoordUpdate(expBtn)
-				for _, bar in ipairs(self.bars) do
-					bar:enter()
-					bar:leave(math.max(1.5, bar.config.hideDelay))
-				end
-			end)
+			self.MSQ_Garrison:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 			self:setMButtonRegions(expBtn, nil, self.MSQ_Garrison)
 		end
 
@@ -1181,7 +1190,7 @@ function hb:grabDefButtons()
 		local zoom = Minimap[pName]
 		local name = "Minimap."..pName
 
-		if self:ignoreCheck(name) and not self.btnParams[zoom] then
+		if zoom and self:ignoreCheck(name) and not self.btnParams[zoom] then
 			zoom:SetHeight(zoom:GetWidth())
 			local normal = zoom:GetNormalTexture()
 			local pushed = zoom:GetPushedTexture()
@@ -1254,7 +1263,7 @@ function hb:grabDefButtons()
 	end
 
 	-- QUEUE STATUS
-	if self:ignoreCheck("QueueStatusButton") and not self.btnParams[QueueStatusButton] then
+	if QueueStatusButton and self:ignoreCheck("QueueStatusButton") and not self.btnParams[QueueStatusButton] then
 		local queue = QueueStatusButton
 		queue.icon = queue.Eye.texture
 		queue.DropDown:SetScript("OnHide", nil)
@@ -1369,22 +1378,7 @@ end
 
 
 function hb:addCustomGrabButton(name)
-	local button = _G[name]
-
-	if not button then
-		local pNames = {("."):split(name)}
-		if #pNames > 1 then
-			local frame = _G[pNames[1]]
-			for i = 2, #pNames do
-				if type(frame) == "table" then
-					frame = frame[pNames[i]]
-				else
-					return
-				end
-			end
-			button = frame
-		end
-	end
+	local button = _G[name] or self:getFrameFromPath(name)
 
 	if type(button) ~= "table" or type(button[0]) ~= "userdata" or self.btnParams[button] or self.IsProtected(button) then return end
 	local oType = self.GetObjectType(button)
@@ -1646,7 +1640,6 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
-		p.frames[frame] = true
 		noEventFrames[frame] = btn
 
 		if self.IsMouseMotionEnabled(frame) or self.IsMouseClickEnabled(frame) then
@@ -1665,6 +1658,8 @@ function hb:setParams(btn, cb)
 				fParams.OnLeave = self.GetScript(frame, "OnLeave")
 				self.HookScript(frame, "OnLeave", OnLeave)
 			end
+		else
+			p.frames[frame] = false
 		end
 
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
@@ -1703,7 +1698,7 @@ function hb:restoreParams(btn)
 
 	for frame, params in pairs(p.frames) do
 		noEventFrames[frame] = nil
-		if type(params) == "table" then
+		if params then
 			self.SetHitRectInsets(frame, unpack(params.insets))
 			if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", params.OnEnter) end
 			if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", params.OnLeave) end
@@ -1840,10 +1835,7 @@ function hidingBarMixin:initOwnMinimapButton()
 	if MSQ then
 		if not hb.MSQ_OMB then
 			hb.MSQ_OMB = MSQ:Group(addon, L["Own Minimap Button"], "OMB")
-			hb.MSQ_OMB:RegisterCallback(function()
-				hb:MSQ_Button_Update(self.omb)
-				hb:MSQ_CoordUpdate(self.omb)
-			end)
+			hb.MSQ_OMB:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 		end
 		hb:setMButtonRegions(self.omb, nil, hb.MSQ_OMB)
 	end
@@ -3052,3 +3044,12 @@ setmetatable(hb.bars, {__index = function(self, key)
 	self[key] = bar
 	return bar
 end})
+
+
+-------------------------------------------
+-- OPTIONS BUTTON
+-------------------------------------------
+hb:addButton(addon, {
+	icon = "Interface/AddOns/HidingBar/media/icon",
+	OnClick = function() config:openConfig() end,
+})
