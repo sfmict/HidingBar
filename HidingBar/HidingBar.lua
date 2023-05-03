@@ -2877,3 +2877,12 @@ setmetatable(hb.bars, {__index = function(self, key)
 	self[key] = bar
 	return bar
 end})
+
+
+-------------------------------------------
+-- OPTIONS BUTTON
+-------------------------------------------
+hb:addButton(addon, {
+	icon = "Interface/AddOns/HidingBar/media/icon",
+	OnClick = function() config:openConfig() end,
+})
