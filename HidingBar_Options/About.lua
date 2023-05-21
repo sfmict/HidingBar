@@ -18,7 +18,7 @@ author:SetText(L["author"])
 
 local authorName = aboutConfig:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 authorName:SetPoint("LEFT", author, "RIGHT", 4, 0)
-authorName:SetText(GetAddOnMetadata(addon, "Author"))
+authorName:SetText(C_AddOns.GetAddOnMetadata(addon, "Author"))
 
 -- VERSION
 local versionText = aboutConfig:CreateFontString(nil, "ARTWORK", "GameFontNormal")
@@ -27,7 +27,7 @@ versionText:SetText(GAME_VERSION_LABEL)
 
 local version = aboutConfig:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 version:SetPoint("LEFT", versionText, "RIGHT", 4, 0)
-version:SetText(GetAddOnMetadata(addon, "Version"))
+version:SetText(C_AddOns.GetAddOnMetadata(addon, "Version"))
 
 -- HELP TRANSLATION
 local helpText = aboutConfig:CreateFontString(nil, "ARTWORK", "GameFontNormal")
