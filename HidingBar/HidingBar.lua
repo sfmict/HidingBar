@@ -780,7 +780,7 @@ function hb:ldb_add(event, name, data)
 	if name and data and (data.type == "launcher" or self.pConfig.addAnyTypeFromDataBroker
 	                                             and data.icon
 	                                             and data.OnClick
-	                                             and not name:match(addon))
+	                                             and not name:match(addon.."%d+$"))
 	then
 		self:addButton(name, data, event)
 	end
@@ -929,8 +929,8 @@ function hb:grabDefButtons()
 	end
 
 	-- CALENDAR BUTTON
+	local GameTimeFrame = GameTimeFrame
 	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
-		local GameTimeFrame = GameTimeFrame
 		self:setHooks(GameTimeFrame)
 		sexyMapRegionsHide(GameTimeFrame)
 
@@ -1017,8 +1017,8 @@ function hb:grabDefButtons()
 	end
 
 	-- AddonCompartmentFrame
+	local AddonCompartmentFrame = AddonCompartmentFrame
 	if AddonCompartmentFrame and self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
-		local AddonCompartmentFrame = AddonCompartmentFrame
 		self:setHooks(AddonCompartmentFrame)
 		self:setParams(AddonCompartmentFrame)
 
@@ -1034,8 +1034,8 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	if self:getFrameFromPath("MinimapCluster.Tracking") and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
-		local tracking = MinimapCluster.Tracking
+	local tracking = self:getFrameFromPath("MinimapCluster.Tracking")
+	if tracking and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[tracking] then
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
@@ -1087,8 +1087,8 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL FRAME
-	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.MailFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
-		local mail = MinimapCluster.IndicatorFrame.MailFrame
+	local mail = self:getFrameFromPath("MinimapCluster.IndicatorFrame.MailFrame")
+	if mail and self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[mail] then
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
 		sexyMapRegionsHide(mail)
@@ -1128,8 +1128,8 @@ function hb:grabDefButtons()
 	end
 
 	-- CRAFTING ORDER FRAME
-	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
-		local craftingOrder = MinimapCluster.IndicatorFrame.CraftingOrderFrame
+	local craftingOrder = self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
+	if craftingOrder and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[craftingOrder] then
 		craftingOrder.icon = MiniMapCraftingOrderIcon
 		self:setHooks(craftingOrder)
 		sexyMapRegionsHide(craftingOrder)
@@ -1169,8 +1169,8 @@ function hb:grabDefButtons()
 	end
 
 	-- GARRISON BUTTON
-	if ExpansionLandingPageMinimapButton and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[ExpansionLandingPageMinimapButton] then
-		local expBtn = ExpansionLandingPageMinimapButton
+	local expBtn = ExpansionLandingPageMinimapButton
+	if expBtn and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[expBtn] then
 		self:setHooks(expBtn)
 		self:setParams(expBtn).autoShowHideDisabled = true
 		self.pConfig.mbtnSettings["ExpansionLandingPageMinimapButton"][5] = true
@@ -1263,8 +1263,8 @@ function hb:grabDefButtons()
 	end
 
 	-- QUEUE STATUS
-	if QueueStatusButton and self:ignoreCheck("QueueStatusButton") and not self.btnParams[QueueStatusButton] then
-		local queue = QueueStatusButton
+	local queue = QueueStatusButton
+	if queue and self:ignoreCheck("QueueStatusButton") and not self.btnParams[queue] then
 		queue.icon = queue.Eye.texture
 		queue.DropDown:SetScript("OnHide", nil)
 		self:setHooks(queue)
