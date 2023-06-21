@@ -785,7 +785,7 @@ function hb:ldb_add(event, name, data)
 	if name and data and (data.type == "launcher" or self.pConfig.addAnyTypeFromDataBroker
 	                                             and data.icon
 	                                             and data.OnClick
-	                                             and not name:match(addon))
+	                                             and not name:match(addon.."%d+$"))
 	then
 		self:addButton(name, data, event)
 	end
@@ -923,8 +923,8 @@ end
 
 function hb:grabDefButtons()
 	-- CALENDAR BUTTON
+	local GameTimeFrame = GameTimeFrame
 	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
-		local GameTimeFrame = GameTimeFrame
 		local text = GameTimeFrame:GetFontString()
 		text:SetPoint("CENTER", 0, -1)
 		GameTimeFrame:SetNormalFontObject("GameFontBlackMedium")
@@ -963,8 +963,8 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
+	local MiniMapTracking = MiniMapTracking
 	if MiniMapTracking and self:ignoreCheck("MiniMapTracking") and not self.btnParams[MiniMapTracking] then
-		local MiniMapTracking = MiniMapTracking
 		local MiniMapTrackingButton = MiniMapTrackingButton
 		local icon = MiniMapTrackingIcon
 		MiniMapTracking.rButton = MiniMapTrackingButton
@@ -1014,8 +1014,8 @@ function hb:grabDefButtons()
 	end
 
 	-- MINIMAP LFG FRAME
-	if MiniMapLFGFrame and self:ignoreCheck("MiniMapLFGFrame") and not self.btnParams[MiniMapLFGFrame] then
-		local LFGFrame = MiniMapLFGFrame
+	local LFGFrame = MiniMapLFGFrame
+	if LFGFrame and self:ignoreCheck("MiniMapLFGFrame") and not self.btnParams[LFGFrame] then
 		LFGFrame.icon = MiniMapLFGFrameIconTexture
 		LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
 		self:setHooks(LFGFrame)
@@ -1033,8 +1033,8 @@ function hb:grabDefButtons()
 	end
 
 	-- BATTLEFIELD FRAME
-	if self:ignoreCheck("MiniMapBattlefieldFrame") and not self.btnParams[MiniMapBattlefieldFrame] then
-		local battlefield = MiniMapBattlefieldFrame
+	local battlefield = MiniMapBattlefieldFrame
+	if battlefield and self:ignoreCheck("MiniMapBattlefieldFrame") and not self.btnParams[battlefield] then
 		battlefield.icon = MiniMapBattlefieldIcon
 		self:setHooks(battlefield)
 		self:setParams(battlefield)
@@ -1051,14 +1051,14 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL
-	if MiniMapMailFrame and self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[MiniMapMailFrame] then
+	local mail = MiniMapMailFrame
+	if mail and self:ignoreCheck("MiniMapMailFrame") and not self.btnParams[mail] then
 		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonMail")
 		if btnData then
 			self.pConfig.mbtnSettings["MiniMapMailFrame"] = btnData
 			self.pConfig.mbtnSettings["HidingBarAddonMail"] = nil
 		end
 
-		local mail = MiniMapMailFrame
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
 		self:setParams(mail)
@@ -1474,7 +1474,6 @@ function hb:setParams(btn, cb)
 	local function OnLeave() leave(btn) end
 
 	local function setMouseEvents(frame)
-		p.frames[frame] = true
 		noEventFrames[frame] = btn
 
 		if self.IsMouseMotionEnabled(frame) or self.IsMouseClickEnabled(frame) then
@@ -1493,6 +1492,8 @@ function hb:setParams(btn, cb)
 				fParams.OnLeave = self.GetScript(frame, "OnLeave")
 				self.HookScript(frame, "OnLeave", OnLeave)
 			end
+		else
+			p.frames[frame] = false
 		end
 
 		for _, fchild in ipairs({self.GetChildren(frame)}) do
@@ -1531,7 +1532,7 @@ function hb:restoreParams(btn)
 
 	for frame, params in pairs(p.frames) do
 		noEventFrames[frame] = nil
-		if type(params) == "table" then
+		if params then
 			self.SetHitRectInsets(frame, unpack(params.insets))
 			if self.HasScript(frame, "OnEnter") then self.SetScript(frame, "OnEnter", params.OnEnter) end
 			if self.HasScript(frame, "OnLeave") then self.SetScript(frame, "OnLeave", params.OnLeave) end

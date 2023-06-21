@@ -253,10 +253,10 @@ StaticPopupDialogs[main.addonName.."REMOVE_CUSTOM_GRAB_BTN"] = {
 
 -- ADDON INFO
 local info = main:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-info:SetPoint("TOPRIGHT", -16, 16)
+info:SetPoint("TOPLEFT", 40, 20)
 info:SetTextColor(.5, .5, .5, 1)
 info:SetJustifyH("RIGHT")
-info:SetText(GetAddOnMetadata(addon, "Version"))
+info:SetText(C_AddOns.GetAddOnMetadata(addon, "Version"))
 
 -- TITLE
 local title = main:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -1764,6 +1764,7 @@ main.canGrabbed.Text:SetText(L["The button can be grabbed"])
 main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will be grabbed"]
 main.canGrabbed:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
+	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then
@@ -2342,12 +2343,12 @@ end
 
 
 function main:addIgnoreName(name)
-	name = name:gsub("[%(%)%.%%%+%-%*%?%[%^%$]", "%%%1")
+	local mName = name:gsub("[%(%)%.%%%+%-%*%?%[%^%$]", "%%%1")
 	for _, n in ipairs(self.pConfig.ignoreMBtn) do
-		if name == n then return end
+		if mName == n then return end
 	end
 	self:removeMButtonByName(name, true)
-	tinsert(self.pConfig.ignoreMBtn, name)
+	tinsert(self.pConfig.ignoreMBtn, mName)
 	sort(self.pConfig.ignoreMBtn)
 	self.ignoreScroll:update()
 end
@@ -2626,8 +2627,8 @@ do
 			btn.icon:SetAtlas(atlas)
 		else
 			btn.icon:SetTexture(icon:GetTexture())
-			btn.icon:SetTexCoord(icon:GetTexCoord())
 		end
+		btn.icon:SetTexCoord(icon:GetTexCoord())
 		btn.color = {icon:GetVertexColor()}
 		btn.defBtnList = self.mbuttons
 		btn:HookScript("OnClick", btnClick)
