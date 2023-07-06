@@ -1777,50 +1777,64 @@ end
 local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
 
 
-function hidingBarMixin:createOwnMinimapButton()
-	self.createOwnMinimapButton = nil
-	self.ombName = addon..self.id
-	self.ldb_icon = ldb:NewDataObject(self.ombName, {
-		type = "data source",
-		text = self.ombName,
-		icon = "Interface/Icons/misc_arrowleft",
-		OnClick = function(_, button)
-			if button == "LeftButton" then
-				if self:IsShown() and self.config.showHandler ~= 3 then
-					self:Hide()
-				else
-					local func = self.drag:GetScript("OnClick")
-					if func then func(self.drag) end
-				end
-			elseif button == "RightButton" then
-				self.drag:GetScript("OnMouseDown")(self.drag, button)
+do
+	local OnClick = function(btn, button)
+		local bar = btn.bar
+		if button == "LeftButton" then
+			if bar:IsShown() and bar.config.showHandler ~= 3 then
+				bar:Hide()
+			else
+				local func = bar.drag:GetScript("OnClick")
+				if func then func(bar.drag) end
 			end
-		end,
-		OnEnter = function(btn)
-			local func = self.drag:GetScript("OnEnter")
-			if func then func(self.drag) end
+		elseif button == "RightButton" then
+			bar.drag:GetScript("OnMouseDown")(bar.drag, button)
+		end
+	end
 
-			local parent = btn:GetParent()
-			for i = 1, #hb.currentProfile.bars do
-				local bar = hb.bars[i]
-				if bar ~= self
-				and bar.config.barTypePosition == 2
-				and bar.config.showHandler ~= 3
-				and bar.omb
-				and parent == bar.omb:GetParent()
-				and bar:IsShown()
-				then
-					bar:Hide()
-					bar:updateDragBarPosition()
-				end
+
+	local OnEnter = function(btn)
+		local curBar = btn.bar
+		local func = curBar.drag:GetScript("OnEnter")
+		if func then func(curBar.drag) end
+
+		local parent = btn:GetParent()
+		for i = 1, #hb.currentProfile.bars do
+			local bar = hb.bars[i]
+			if bar ~= curBar
+			and bar.config.barTypePosition == 2
+			and bar.config.showHandler ~= 3
+			and bar.omb
+			and parent == bar.omb:GetParent()
+			and bar:IsShown()
+			then
+				bar:Hide()
+				bar:updateDragBarPosition()
 			end
-		end,
-		OnLeave = function()
-			local func = self.drag:GetScript("OnLeave")
-			if func then func(self.drag) end
-		end,
-	})
-	ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
+		end
+	end
+
+
+	local OnLeave = function(btn)
+		local drag = btn.bar.drag
+		local func = drag:GetScript("OnLeave")
+		if func then func(drag) end
+	end
+
+
+	function hidingBarMixin:createOwnMinimapButton()
+		self.createOwnMinimapButton = nil
+		self.ombName = addon..self.id
+		self.ldb_icon = ldb:NewDataObject(self.ombName, {
+			type = "data source",
+			text = self.ombName,
+			icon = "Interface/Icons/misc_arrowleft",
+			OnClick = OnClick,
+			OnEnter = OnEnter,
+			OnLeave = OnLeave,
+		})
+		ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
+	end
 end
 
 
