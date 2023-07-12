@@ -1045,6 +1045,8 @@ function hb:grabDefButtons()
 			tracking.Background:Show()
 			self:unsetHooks(tracking.Button)
 			tracking.Button:SetSize(p.width, p.height)
+			tracking.Button:SetIgnoreParentScale(p.buttonIgnoreParentScale)
+			tracking.Button:SetScale(p.buttonScale)
 			self.ClearAllPoints(tracking.Button)
 			for i = 1, #p.btnPoints do
 				self.SetPoint(tracking.Button, unpack(p.btnPoints[i]))
@@ -1059,6 +1061,10 @@ function hb:grabDefButtons()
 		tracking.Background:Hide()
 		p.width, p.height = tracking.Button:GetSize()
 		tracking.Button:SetSize(tracking:GetSize())
+		p.buttonIgnoreParentScale = tracking.Button:IsIgnoringParentScale()
+		tracking.Button:SetIgnoreParentScale(false)
+		p.buttonScale = tracking.Button:GetScale()
+		tracking.Button:SetScale(1)
 		p.btnPoints = {}
 		for i = 1, self.GetNumPoints(tracking.Button) do
 			p.btnPoints[i] = {self.GetPoint(tracking.Button, i)}
