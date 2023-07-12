@@ -780,7 +780,7 @@ function hb:ldb_add(event, name, data)
 	if name and data and (data.type == "launcher" or self.pConfig.addAnyTypeFromDataBroker
 	                                             and data.icon
 	                                             and data.OnClick
-	                                             and not name:match(addon))
+	                                             and not name:match(addon.."%d+$"))
 	then
 		self:addButton(name, data, event)
 	end
@@ -929,8 +929,8 @@ function hb:grabDefButtons()
 	end
 
 	-- CALENDAR BUTTON
+	local GameTimeFrame = GameTimeFrame
 	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
-		local GameTimeFrame = GameTimeFrame
 		self:setHooks(GameTimeFrame)
 		sexyMapRegionsHide(GameTimeFrame)
 
@@ -1017,8 +1017,8 @@ function hb:grabDefButtons()
 	end
 
 	-- AddonCompartmentFrame
+	local AddonCompartmentFrame = AddonCompartmentFrame
 	if AddonCompartmentFrame and self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
-		local AddonCompartmentFrame = AddonCompartmentFrame
 		self:setHooks(AddonCompartmentFrame)
 		self:setParams(AddonCompartmentFrame)
 
@@ -1034,8 +1034,8 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	if self:getFrameFromPath("MinimapCluster.Tracking") and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[MinimapCluster.Tracking] then
-		local tracking = MinimapCluster.Tracking
+	local tracking = self:getFrameFromPath("MinimapCluster.Tracking")
+	if tracking and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[tracking] then
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
@@ -1087,8 +1087,8 @@ function hb:grabDefButtons()
 	end
 
 	-- MAIL FRAME
-	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.MailFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.MailFrame] then
-		local mail = MinimapCluster.IndicatorFrame.MailFrame
+	local mail = self:getFrameFromPath("MinimapCluster.IndicatorFrame.MailFrame")
+	if mail and self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[mail] then
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
 		sexyMapRegionsHide(mail)
@@ -1128,8 +1128,8 @@ function hb:grabDefButtons()
 	end
 
 	-- CRAFTING ORDER FRAME
-	if self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[MinimapCluster.IndicatorFrame.CraftingOrderFrame] then
-		local craftingOrder = MinimapCluster.IndicatorFrame.CraftingOrderFrame
+	local craftingOrder = self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
+	if craftingOrder and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[craftingOrder] then
 		craftingOrder.icon = MiniMapCraftingOrderIcon
 		self:setHooks(craftingOrder)
 		sexyMapRegionsHide(craftingOrder)
@@ -1169,8 +1169,8 @@ function hb:grabDefButtons()
 	end
 
 	-- GARRISON BUTTON
-	if ExpansionLandingPageMinimapButton and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[ExpansionLandingPageMinimapButton] then
-		local expBtn = ExpansionLandingPageMinimapButton
+	local expBtn = ExpansionLandingPageMinimapButton
+	if expBtn and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[expBtn] then
 		self:setHooks(expBtn)
 		self:setParams(expBtn).autoShowHideDisabled = true
 		self.pConfig.mbtnSettings["ExpansionLandingPageMinimapButton"][5] = true
@@ -1263,8 +1263,8 @@ function hb:grabDefButtons()
 	end
 
 	-- QUEUE STATUS
-	if QueueStatusButton and self:ignoreCheck("QueueStatusButton") and not self.btnParams[QueueStatusButton] then
-		local queue = QueueStatusButton
+	local queue = QueueStatusButton
+	if queue and self:ignoreCheck("QueueStatusButton") and not self.btnParams[queue] then
 		queue.icon = queue.Eye.texture
 		queue.DropDown:SetScript("OnHide", nil)
 		self:setHooks(queue)
@@ -1777,50 +1777,64 @@ end
 local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
 
 
-function hidingBarMixin:createOwnMinimapButton()
-	self.createOwnMinimapButton = nil
-	self.ombName = addon..self.id
-	self.ldb_icon = ldb:NewDataObject(self.ombName, {
-		type = "data source",
-		text = self.ombName,
-		icon = "Interface/Icons/misc_arrowleft",
-		OnClick = function(_, button)
-			if button == "LeftButton" then
-				if self:IsShown() and self.config.showHandler ~= 3 then
-					self:Hide()
-				else
-					local func = self.drag:GetScript("OnClick")
-					if func then func(self.drag) end
-				end
-			elseif button == "RightButton" then
-				self.drag:GetScript("OnMouseDown")(self.drag, button)
+do
+	local OnClick = function(btn, button)
+		local bar = btn.bar
+		if button == "LeftButton" then
+			if bar:IsShown() and bar.config.showHandler ~= 3 then
+				bar:Hide()
+			else
+				local func = bar.drag:GetScript("OnClick")
+				if func then func(bar.drag) end
 			end
-		end,
-		OnEnter = function(btn)
-			local func = self.drag:GetScript("OnEnter")
-			if func then func(self.drag) end
+		elseif button == "RightButton" then
+			bar.drag:GetScript("OnMouseDown")(bar.drag, button)
+		end
+	end
 
-			local parent = btn:GetParent()
-			for i = 1, #hb.currentProfile.bars do
-				local bar = hb.bars[i]
-				if bar ~= self
-				and bar.config.barTypePosition == 2
-				and bar.config.showHandler ~= 3
-				and bar.omb
-				and parent == bar.omb:GetParent()
-				and bar:IsShown()
-				then
-					bar:Hide()
-					bar:updateDragBarPosition()
-				end
+
+	local OnEnter = function(btn)
+		local curBar = btn.bar
+		local func = curBar.drag:GetScript("OnEnter")
+		if func then func(curBar.drag) end
+
+		local parent = btn:GetParent()
+		for i = 1, #hb.currentProfile.bars do
+			local bar = hb.bars[i]
+			if bar ~= curBar
+			and bar.config.barTypePosition == 2
+			and bar.config.showHandler ~= 3
+			and bar.omb
+			and parent == bar.omb:GetParent()
+			and bar:IsShown()
+			then
+				bar:Hide()
+				bar:updateDragBarPosition()
 			end
-		end,
-		OnLeave = function()
-			local func = self.drag:GetScript("OnLeave")
-			if func then func(self.drag) end
-		end,
-	})
-	ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
+		end
+	end
+
+
+	local OnLeave = function(btn)
+		local drag = btn.bar.drag
+		local func = drag:GetScript("OnLeave")
+		if func then func(drag) end
+	end
+
+
+	function hidingBarMixin:createOwnMinimapButton()
+		self.createOwnMinimapButton = nil
+		self.ombName = addon..self.id
+		self.ldb_icon = ldb:NewDataObject(self.ombName, {
+			type = "data source",
+			text = self.ombName,
+			icon = "Interface/Icons/misc_arrowleft",
+			OnClick = OnClick,
+			OnEnter = OnEnter,
+			OnLeave = OnLeave,
+		})
+		ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
+	end
 end
 
 

@@ -256,7 +256,7 @@ local info = main:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 info:SetPoint("TOPLEFT", 40, 20)
 info:SetTextColor(.5, .5, .5, 1)
 info:SetJustifyH("RIGHT")
-info:SetText(GetAddOnMetadata(addon, "Version"))
+info:SetText(C_AddOns.GetAddOnMetadata(addon, "Version"))
 
 -- TITLE
 local title = main:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
