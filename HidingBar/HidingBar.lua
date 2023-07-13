@@ -747,7 +747,8 @@ end
 
 
 function hb:getBtnName(btn)
-	return self.GetName(btn) or self.btnParams[btn].name
+	local p = self.btnParams[btn]
+	return p and p.name or self.GetName(btn)
 end
 
 
@@ -1044,9 +1045,9 @@ function hb:grabDefButtons()
 		local p = self:setParams(tracking, function(p, tracking)
 			tracking.Background:Show()
 			self:unsetHooks(tracking.Button)
-			tracking.Button:SetSize(p.width, p.height)
-			tracking.Button:SetIgnoreParentScale(p.buttonIgnoreParentScale)
-			tracking.Button:SetScale(p.buttonScale)
+			self.SetSize(tracking.Button, p.btnWidth, p.btnHeight)
+			self.SetIgnoreParentScale(tracking.Button, p.btnIgnoreParentScale)
+			self.SetScale(tracking.Button, p.btnScale)
 			self.ClearAllPoints(tracking.Button)
 			for i = 1, #p.btnPoints do
 				self.SetPoint(tracking.Button, unpack(p.btnPoints[i]))
@@ -1059,12 +1060,12 @@ function hb:grabDefButtons()
 
 		p.name = "MinimapCluster.Tracking"
 		tracking.Background:Hide()
-		p.width, p.height = tracking.Button:GetSize()
-		tracking.Button:SetSize(tracking:GetSize())
-		p.buttonIgnoreParentScale = tracking.Button:IsIgnoringParentScale()
-		tracking.Button:SetIgnoreParentScale(false)
-		p.buttonScale = tracking.Button:GetScale()
-		tracking.Button:SetScale(1)
+		p.btnWidth, p.btnHeight = self.GetSize(tracking.Button)
+		self.SetSize(tracking.Button, tracking:GetSize())
+		p.btnIgnoreParentScale = self.IsIgnoringParentScale(tracking.Button)
+		self.SetIgnoreParentScale(tracking.Button, false)
+		p.btnScale = self.GetScale(tracking.Button)
+		self.SetScale(tracking.Button, 1)
 		p.btnPoints = {}
 		for i = 1, self.GetNumPoints(tracking.Button) do
 			p.btnPoints[i] = {self.GetPoint(tracking.Button, i)}
