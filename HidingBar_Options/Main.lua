@@ -2004,6 +2004,9 @@ function main:setProfile()
 		then
 			StaticPopup_Show(self.addonName.."GET_RELOAD")
 		end
+
+		self:removeAllMButtonsWithoutOMB()
+		hb:grabMButtons()
 	end
 
 	self.currentProfile = currentProfile
@@ -2064,7 +2067,7 @@ function main:createBar()
 				sort(self.pBars, function(a, b) return a.name < b.name end)
 			end)
 			hb:checkProfile(self.currentProfile)
-			self:removeAllOMB()
+			self:removeAllControlOMB()
 			hb:updateBars()
 			self:setBar(self.currentBar)
 		end
@@ -2101,7 +2104,7 @@ function main:removeBar(barName)
 				settings[3] = nil
 			end
 		end
-		self:removeAllOMB()
+		self:removeAllControlOMB()
 		hb:updateBars()
 		if self.currentBar.name == barName then
 			self:setBar()
@@ -2275,12 +2278,27 @@ hb:on("COORDS_UPDATED", function(_, bar)
 end)
 
 
-function main:removeAllOMB()
+function main:removeAllControlOMB()
 	local i = 1
 	local btn = self.mbuttons[i]
 	while btn do
 		if btn.name:match(hb.matchName) and btn.rButton.isGrabbed then
 			self:removeMButton(btn, i)
+		else
+			i = i + 1
+		end
+		btn = self.mbuttons[i]
+	end
+end
+
+
+function main:removeAllMButtonsWithoutOMB()
+	local i = 1
+	local btn = self.mbuttons[i]
+	while btn do
+		if not btn.name:match(hb.matchName) then
+			self:removeMButton(btn, 1)
+			hb:removeMButton(btn.rButton)
 		else
 			i = i + 1
 		end

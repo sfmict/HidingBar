@@ -895,6 +895,10 @@ function hb:grabMButtons()
 		self:grabDefButtons()
 	end
 
+	for i = 1, #self.pConfig.customGrabList do
+		self:addCustomGrabButton(self.pConfig.customGrabList[i])
+	end
+
 	if numButtons ~= #self.minimapButtons then
 		updateMinimapButtons(self)
 	end
