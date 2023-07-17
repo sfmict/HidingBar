@@ -1845,9 +1845,20 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 			info.disabled = nil
 		end
 
+		info.OnTooltipShow = nil
+
+		if LibStub("Masque", true) and not btn.name:match(hb.matchName) then
+			info.text = L["Disable Masque"]
+			info.checked = btn.settings[6]
+			info.func = function(_,_,_, checked)
+				btn.settings[6] = checked and true or nil
+				StaticPopup_Show(main.addonName.."GET_RELOAD")
+			end
+			self:ddAddButton(info, level)
+		end
+
 		info.notCheckable = true
 		info.keepShownOnClick = nil
-		info.OnTooltipShow = nil
 		info.checked = nil
 
 		if btn.toIgnore then

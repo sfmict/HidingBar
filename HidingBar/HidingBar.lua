@@ -457,6 +457,7 @@ function hb:checkProfile(profile)
 	[3] - parent bar name
 	[4] - is clipped button
 	[5] - auto show/hide
+	[6] - disable masque
 	]]
 
 	profile.bars = profile.bars or {
@@ -568,6 +569,12 @@ function hb:init()
 	if self.pConfig.addFromDataBroker then
 		self:addFromDataBroker()
 	end
+
+	-- OPTIONS BUTTON
+	self:addButton(addon, {
+		icon = "Interface/AddOns/HidingBar/media/icon",
+		OnClick = function() config:openConfig() end,
+	})
 
 	if self.pConfig.grabMinimap then
 		local ldbiTbl = ldbi:GetButtonList()
@@ -774,22 +781,30 @@ function hb:getBtnName(btn)
 end
 
 
+function hb:getBtnSettings(btn)
+	return self.pConfig.btnSettings[btn.name]
+end
+
+
 function hb:setBtnSettings(btn)
-	local btnData = self.pConfig.btnSettings[btn.name]
+	local btnData = self:getBtnSettings(btn)
 	btnData.tstmp = time()
 	btnSettings[btn] = btnData
 	btn:SetClipsChildren(not not btnData[4])
 end
 
 
-function hb:setMBtnSettings(btn)
+function hb:getMBtnSettings(btn)
 	local name = self:getBtnName(btn)
-	if name then
-		local btnData = self.pConfig.mbtnSettings[name]
-		btnData.tstmp = time()
-		btnSettings[btn] = btnData
-		btn:SetClipsChildren(not not btnData[4])
-	end
+	return name and self.pConfig.mbtnSettings[name]
+end
+
+
+function hb:setMBtnSettings(btn)
+	local btnData = self:getMBtnSettings(btn)
+	btnData.tstmp = time()
+	btnSettings[btn] = btnData
+	btn:SetClipsChildren(not not btnData[4])
 end
 
 
@@ -903,7 +918,7 @@ do
 			self.cb:Fire("BUTTON_ADDED", name, button, true)
 		end
 
-		if self.MSQ_Button then
+		if not self:getBtnSettings(button)[6] and self.MSQ_Button then
 			self:setTexCurCoord(button.icon, button.icon:GetTexCoord())
 			button.icon.SetTexCoord = self.setTexCoord
 			local buttonData = {
@@ -945,6 +960,10 @@ function hb:grabDefButtons()
 				end
 			end
 		end
+	end
+
+	local function checkMasqueConditions(btn, btnData)
+		return self.MSQ_MButton and not btn.__MSQ_Addon and not (btnData or self:getMBtnSettings(btn))[6]
 	end
 
 	-- CALENDAR BUTTON
@@ -1004,7 +1023,7 @@ function hb:grabDefButtons()
 			ACFParams.points[1] = {GameTimeFrame:GetPoint()}
 		end
 
-		if self.MSQ_MButton and not GameTimeFrame.__MSQ_Addon then
+		if checkMasqueConditions(GameTimeFrame) then
 			local icon = GameTimeFrame:CreateTexture(nil, "BACKGROUND")
 			icon:SetAtlas(normalTexture:GetAtlas())
 			icon:SetTexCoord(normalTexture:GetTexCoord())
@@ -1040,11 +1059,12 @@ function hb:grabDefButtons()
 	if AddonCompartmentFrame and self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
 		self:setHooks(AddonCompartmentFrame)
 		self:setParams(AddonCompartmentFrame)
+		sexyMapRegionsHide(AddonCompartmentFrame)
 
-		local btnData = self.pConfig.mbtnSettings["AddonCompartmentFrame"]
+		local btnData = self:getMBtnSettings(AddonCompartmentFrame)
 		if btnData[5] == nil then btnData[5] = true end
 
-		if self.MSQ_MButton and not AddonCompartmentFrame.__MSQ_Addon then
+		if checkMasqueConditions(AddonCompartmentFrame, btnData) then
 			self:setMButtonRegions(AddonCompartmentFrame)
 		end
 
@@ -1100,7 +1120,7 @@ function hb:grabDefButtons()
 			self.SetPoint(indicatorFrame, "TOPRIGHT", MinimapCluster.BorderTop, "BOTTOMLEFT", 0, 0)
 		end
 
-		if self.MSQ_MButton and not tracking.Button.__MSQ_Addon then
+		if checkMasqueConditions(tracking.Button, self:getMBtnSettings(tracking)) then
 			self:setMButtonRegions(tracking.Button)
 			if tracking.Button.__MSQ_Enabled then
 				tracking.icon = tracking.Button.__MSQ_Icon
@@ -1141,10 +1161,10 @@ function hb:grabDefButtons()
 		self.ClearAllPoints(mail.icon)
 		self.SetPoint(mail.icon, "CENTER")
 
-		local btnData = self.pConfig.mbtnSettings["MinimapCluster.IndicatorFrame.MailFrame"]
+		local btnData = self:getMBtnSettings(mail)
 		if btnData[5] == nil then btnData[5] = true end
 
-		if self.MSQ_MButton and not mail.__MSQ_Addon then
+		if checkMasqueConditions(mail, btnData) then
 			self:setMButtonRegions(mail)
 		end
 
@@ -1182,10 +1202,10 @@ function hb:grabDefButtons()
 		self.ClearAllPoints(craftingOrder.icon)
 		self.SetPoint(craftingOrder.icon, "CENTER")
 
-		local btnData = self.pConfig.mbtnSettings["MinimapCluster.IndicatorFrame.CraftingOrderFrame"]
+		local btnData = self:getMBtnSettings(craftingOrder)
 		if btnData[5] == nil then btnData[5] = true end
 
-		if self.MSQ_MButton and not craftingOrder.__MSQ_Addon then
+		if checkMasqueConditions(craftingOrder, btnData) then
 			self:setMButtonRegions(craftingOrder)
 		end
 
@@ -1198,9 +1218,11 @@ function hb:grabDefButtons()
 	if expBtn and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[expBtn] then
 		self:setHooks(expBtn)
 		self:setParams(expBtn).autoShowHideDisabled = true
-		self.pConfig.mbtnSettings["ExpansionLandingPageMinimapButton"][5] = true
 
-		if MSQ and not self.MSQ_Garrison then
+		local btnData = self:getMBtnSettings(expBtn)
+		btnData[5] = true
+
+		if MSQ and not self.MSQ_Garrison and not btnData[6] then
 			self.MSQ_Garrison = MSQ:Group(addon, GARRISON_FOLLOWERS, "GarrisonLandingPageMinimapButton")
 			self.MSQ_Garrison:RegisterCallback(hb.MSQ_UpdateGroupBtns)
 			self:setMButtonRegions(expBtn, nil, self.MSQ_Garrison)
@@ -1252,7 +1274,7 @@ function hb:grabDefButtons()
 			pushed:SetTexCoord(0, .9, 0, .9)
 			highlight:SetTexCoord(0, .9, 0, .9)
 
-			if self.MSQ_MButton and not zoom.__MSQ_Addon then
+			if checkMasqueConditions(zoom) then
 				zoom.icon = zoom:CreateTexture(nil, "BACKGROUND")
 				zoom.icon:SetAtlas(normal:GetAtlas())
 				zoom.icon:SetTexCoord(0, .9, 0, .9)
@@ -1338,7 +1360,7 @@ function hb:grabDefButtons()
 			f.eyeAnim:SetPlaying(queue.EyeHighlightAnim:IsPlaying())
 		end
 
-		if self.MSQ_MButton and not queue.__MSQ_Addon then
+		if checkMasqueConditions(queue) then
 			self:setTexCurCoord(queue.icon, queue.icon:GetTexCoord())
 			queue.icon.SetTexCoord = self.setTexCoord
 			local data = {
@@ -1370,7 +1392,7 @@ end
 
 function hb:grabOwnButton(button, force, MSQ_Group)
 	if button.isGrabbed or not (button.bar.config.barTypePosition == 2 and button.bar.config.omb.canGrabbed or force) then return end
-	local btnData = self.pConfig.mbtnSettings[button:GetName()]
+	local btnData = self:getMBtnSettings(button)
 	local bar, stop = self.barByName[btnData[3]], true
 
 	if bar and not self:isBarParent(button, bar) then
@@ -1456,7 +1478,8 @@ function hb:addMButton(button, force, MSQ_Group)
 				self:setHooks(button)
 			end
 
-			if self.MSQ_MButton and not button.__MSQ_Addon then
+			local btnData = self:getMBtnSettings(button)
+			if self.MSQ_MButton and not button.__MSQ_Addon and not (btnData and btnData[6]) then
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
@@ -3083,12 +3106,3 @@ setmetatable(hb.bars, {__index = function(self, key)
 	self[key] = bar
 	return bar
 end})
-
-
--------------------------------------------
--- OPTIONS BUTTON
--------------------------------------------
-hb:addButton(addon, {
-	icon = "Interface/AddOns/HidingBar/media/icon",
-	OnClick = function() config:openConfig() end,
-})
