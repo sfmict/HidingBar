@@ -566,16 +566,7 @@ end
 
 function hb:init()
 	if self.pConfig.addFromDataBroker then
-		for name, data in ldb:DataObjectIterator() do
-			self:ldb_add(nil, name, data)
-		end
-		ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconDesaturated", "ldb_attrChange")
+		self:addFromDataBroker()
 	end
 
 	if self.pConfig.grabMinimap then
@@ -629,6 +620,37 @@ function hb:init()
 
 	hooksecurefunc(UIParent, "SetScale", function() self:UI_SCALE_CHANGED() end)
 	self:RegisterEvent("UI_SCALE_CHANGED")
+end
+
+
+function hb:addButtons()
+	if self.pConfig.addFromDataBroker then
+		self:addFromDataBroker()
+	else
+		ldb.UnregisterCallback(self, "LibDataBroker_DataObjectCreated")
+	end
+
+	local numButtons = #self.minimapButtons
+
+	if self.pConfig.grabMinimap then
+		self:grabMinimapAddonsButtons(Minimap)
+		self:grabMinimapAddonsButtons(MinimapBackdrop)
+		ldbi.RegisterCallback(self, "LibDBIcon_IconCreated", "ldbi_add")
+	else
+		ldbi.UnregisterCallback(self, "LibDBIcon_IconCreated")
+	end
+
+	if self.pConfig.grabDefMinimap then
+		self:grabDefButtons()
+	end
+
+	for i = 1, #self.pConfig.customGrabList do
+		self:addCustomGrabButton(self.pConfig.customGrabList[i])
+	end
+
+	if numButtons ~= #self.minimapButtons then
+		updateMinimapButtons(self)
+	end
 end
 
 
@@ -777,6 +799,20 @@ function hb:setBtnParent(btn)
 end
 
 
+function hb:addFromDataBroker()
+	for name, data in ldb:DataObjectIterator() do
+		self:ldb_add(not self.init, name, data)
+	end
+	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconDesaturated", "ldb_attrChange")
+end
+
+
 function hb:ldb_add(event, name, data)
 	if name and data and (data.type == "launcher" or self.pConfig.addAnyTypeFromDataBroker
 	                                             and data.icon
@@ -814,7 +850,7 @@ end
 
 do
 	local function IsShown(btn)
-		local show = not btnSettings[btn][1]
+		local show = (hb.pConfig.addFromDataBroker or btn.name == addon) and not btnSettings[btn][1]
 		btn:SetShown(show)
 		return show
 	end
@@ -879,28 +915,6 @@ do
 		end
 
 		return button
-	end
-end
-
-
-function hb:grabMButtons()
-	local numButtons = #self.minimapButtons
-
-	if self.pConfig.grabMinimap then
-		self:grabMinimapAddonsButtons(Minimap)
-		self:grabMinimapAddonsButtons(MinimapBackdrop)
-	end
-
-	if self.pConfig.grabDefMinimap then
-		self:grabDefButtons()
-	end
-
-	for i = 1, #self.pConfig.customGrabList do
-		self:addCustomGrabButton(self.pConfig.customGrabList[i])
-	end
-
-	if numButtons ~= #self.minimapButtons then
-		updateMinimapButtons(self)
 	end
 end
 
