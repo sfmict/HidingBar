@@ -802,9 +802,11 @@ end
 
 function hb:setMBtnSettings(btn)
 	local btnData = self:getMBtnSettings(btn)
-	btnData.tstmp = time()
-	btnSettings[btn] = btnData
-	btn:SetClipsChildren(not not btnData[4])
+	if btnData then
+		btnData.tstmp = time()
+		btnSettings[btn] = btnData
+		btn:SetClipsChildren(not not btnData[4])
+	end
 end
 
 
@@ -1245,7 +1247,7 @@ function hb:grabDefButtons()
 			self:setHooks(zoom)
 			sexyMapRegionsHide(zoom)
 
-			local p = self:setParams(zoom, function()
+			local p = self:setParams(zoom, function(p, zoom)
 				zoom.Enable = nil
 				zoom.Disable = nil
 

@@ -574,6 +574,10 @@ main.addBtnFromDataBroker.Text:SetText(L["Add buttons from DataBroker"])
 main.addBtnFromDataBroker:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	main.pConfig.addFromDataBroker = checked
+	hb:updateBars()
+	hb:addButtons()
+	main:setBar()
+	main:hidingBarUpdate()
 	main.addAnyTypeFromDataBroker:SetEnabled(checked)
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
@@ -584,6 +588,7 @@ main.addAnyTypeFromDataBroker:SetPoint("TOPLEFT", main.addBtnFromDataBroker, "BO
 main.addAnyTypeFromDataBroker.Text:SetText(L["Add buttons of any data type"])
 main.addAnyTypeFromDataBroker:SetScript("OnClick", function(btn)
 	main.pConfig.addAnyTypeFromDataBroker = btn:GetChecked()
+	hb:addButtons()
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
@@ -593,7 +598,12 @@ main.grabDefault:SetPoint("TOPLEFT", main.addAnyTypeFromDataBroker, "BOTTOMLEFT"
 main.grabDefault.Text:SetText(L["Grab default buttons on minimap"])
 main.grabDefault:SetScript("OnClick", function(btn)
 	main.pConfig.grabDefMinimap = btn:GetChecked()
-	StaticPopup_Show(main.addonName.."GET_RELOAD")
+	main:removeAllMButtonsWithoutOMB()
+	hb:addButtons()
+	main:hidingBarUpdate()
+	if LibStub("Masque", true) then
+		StaticPopup_Show(main.addonName.."GET_RELOAD")
+	end
 end)
 
 -- GRAB ADDONS BUTTONS
@@ -603,6 +613,9 @@ main.grab.Text:SetText(L["Grab addon buttons on minimap"])
 main.grab:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	main.pConfig.grabMinimap = checked
+	main:removeAllMButtonsWithoutOMB()
+	hb:addButtons()
+	main:hidingBarUpdate()
 	main.grabAfter:SetEnabled(checked)
 	main.grabWithoutName:SetEnabled(checked)
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
@@ -645,6 +658,7 @@ main.grabWithoutName:SetPoint("TOPLEFT", main.grabAfter, "BOTTOMLEFT")
 main.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
 main.grabWithoutName:SetScript("OnClick", function(btn)
 	main.pConfig.grabMinimapWithoutName = btn:GetChecked()
+	hb:addButtons()
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
@@ -1990,32 +2004,14 @@ function main:setProfile()
 	currentProfile = currentProfile or default
 
 	if self.currentProfile then
-		local MSQ = LibStub("Masque", true)
-		local compareCustomGrabList = false
-		if MSQ then
-			if #self.pConfig.customGrabList ~= #currentProfile.config.customGrabList then
-				compareCustomGrabList = true
-			else
-				for i, name in ipairs(self.pConfig.customGrabList) do
-					if name:match(hb.matchName) or name ~= currentProfile.config.customGrabList[i] then
-						compareCustomGrabList = true
-						break
-					end
-				end
-			end
-		end
-
-		if MSQ and
-			(compareCustomGrabList
-			or not self.pConfig.grabDefMinimap ~= not currentProfile.config.grabDefMinimap)
-			or self.pConfig.grabMinimap ~= currentProfile.config.grabMinimap
-		or self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
+		if self.pConfig.addFromDataBroker ~= currentProfile.config.addFromDataBroker
 		or self.pConfig.addFromDataBroker and
 			not self.pConfig.addAnyTypeFromDataBroker ~= not currentProfile.config.addAnyTypeFromDataBroker
-		or self.pConfig.grabMinimap and
+		or (self.pConfig.grabMinimap or currentProfile.config.grabMinimap) and
 			(not self.pConfig.grabMinimapWithoutName ~= not currentProfile.config.grabMinimapWithoutName
 			or not self.pConfig.grabMinimapAfter ~= not currentProfile.config.grabMinimapAfter
 			or self.pConfig.grabMinimapAfter and self.pConfig.grabMinimapAfterN ~= currentProfile.config.grabMinimapAfterN)
+		or LibStub("Masque", true)
 		then
 			StaticPopup_Show(self.addonName.."GET_RELOAD")
 		end
