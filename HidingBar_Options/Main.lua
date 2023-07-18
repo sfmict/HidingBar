@@ -588,7 +588,10 @@ main.addAnyTypeFromDataBroker:SetPoint("TOPLEFT", main.addBtnFromDataBroker, "BO
 main.addAnyTypeFromDataBroker.Text:SetText(L["Add buttons of any data type"])
 main.addAnyTypeFromDataBroker:SetScript("OnClick", function(btn)
 	main.pConfig.addAnyTypeFromDataBroker = btn:GetChecked()
+	hb:updateBars()
 	hb:addButtons()
+	main:setBar()
+	main:hidingBarUpdate()
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
@@ -618,7 +621,9 @@ main.grab:SetScript("OnClick", function(btn)
 	main:hidingBarUpdate()
 	main.grabAfter:SetEnabled(checked)
 	main.grabWithoutName:SetEnabled(checked)
-	StaticPopup_Show(main.addonName.."GET_RELOAD")
+	if LibStub("Masque", true) then
+		StaticPopup_Show(main.addonName.."GET_RELOAD")
+	end
 end)
 
 -- GRAB AFTER N SECOND
@@ -658,8 +663,12 @@ main.grabWithoutName:SetPoint("TOPLEFT", main.grabAfter, "BOTTOMLEFT")
 main.grabWithoutName.Text:SetText(L["Grab buttons without a name"])
 main.grabWithoutName:SetScript("OnClick", function(btn)
 	main.pConfig.grabMinimapWithoutName = btn:GetChecked()
+	main:removeAllMButtonsWithoutOMB()
 	hb:addButtons()
-	StaticPopup_Show(main.addonName.."GET_RELOAD")
+	main:hidingBarUpdate()
+	if LibStub("Masque", true) then
+		StaticPopup_Show(main.addonName.."GET_RELOAD")
+	end
 end)
 
 -- ADD BUTTON MANUALLY
@@ -2213,7 +2222,12 @@ function main:setBar(bar)
 	self:updateCoords()
 
 	for _, btn in ipairs(self.buttons) do
-		local show = (self.pConfig.addFromDataBroker or btn.title == addon) and (btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
+		local show = btn.title == addon or (
+				self.pConfig.addFromDataBroker and (
+					self.pConfig.addAnyTypeFromDataBroker or btn.rButton.data.type == "launcher"
+				)
+			)
+			and (btn.settings[3] == bar.name or not btn.settings[3] and bar.isDefault)
 		btn:SetShown(show)
 		if show then btn:SetChecked(btn.settings[1]) end
 	end
@@ -2318,6 +2332,18 @@ function main:removeAllMButtonsWithoutOMB()
 			i = i + 1
 		end
 		btn = self.mbuttons[i]
+	end
+
+	-- remove unnamed buttons
+	i = 1
+	btn = hb.minimapButtons[i]
+	while btn do
+		if self.GetName(btn) then
+			i = i + 1
+		else
+			hb:removeMButton(btn)
+		end
+		btn = hb.minimapButtons[i]
 	end
 end
 
@@ -2575,6 +2601,7 @@ do
 	function main:createButton(name, button, update)
 		if buttonsByName[name] then return end
 		local btn = CreateFrame("CheckButton", nil, self.buttonPanel, "HidingBarAddonConfigButtonTemplate")
+		btn.rButton = button
 		btn.name = button:GetName()
 		btn.title = name
 		if button.iconTex then

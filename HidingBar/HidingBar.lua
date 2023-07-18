@@ -867,7 +867,12 @@ end
 
 do
 	local function IsShown(btn)
-		local show = (hb.pConfig.addFromDataBroker or btn.name == addon) and not btnSettings[btn][1]
+		local show = btn.name == addon or (
+				hb.pConfig.addFromDataBroker and (
+					hb.pConfig.addAnyTypeFromDataBroker or btn.data.type == "launcher"
+				)
+			)
+			and not btnSettings[btn][1]
 		btn:SetShown(show)
 		return show
 	end
