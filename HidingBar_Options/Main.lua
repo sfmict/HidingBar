@@ -574,10 +574,9 @@ main.addBtnFromDataBroker.Text:SetText(L["Add buttons from DataBroker"])
 main.addBtnFromDataBroker:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	main.pConfig.addFromDataBroker = checked
-	hb:updateBars()
 	hb:addButtons()
 	main:setBar()
-	main:hidingBarUpdate()
+	main:hidingBarUpdate(true)
 	main.addAnyTypeFromDataBroker:SetEnabled(checked)
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
@@ -588,10 +587,9 @@ main.addAnyTypeFromDataBroker:SetPoint("TOPLEFT", main.addBtnFromDataBroker, "BO
 main.addAnyTypeFromDataBroker.Text:SetText(L["Add buttons of any data type"])
 main.addAnyTypeFromDataBroker:SetScript("OnClick", function(btn)
 	main.pConfig.addAnyTypeFromDataBroker = btn:GetChecked()
-	hb:updateBars()
 	hb:addButtons()
 	main:setBar()
-	main:hidingBarUpdate()
+	main:hidingBarUpdate(true)
 	StaticPopup_Show(main.addonName.."GET_RELOAD")
 end)
 
@@ -1132,8 +1130,7 @@ end
 local function setBorder(btn)
 	borderCombobox:ddSetSelectedValue(btn.value)
 	main.barFrame:setBorder(btn.value)
-	main.barFrame:applyLayout()
-	main:hidingBarUpdate()
+	main:hidingBarUpdate(true)
 end
 
 borderCombobox:ddSetInitFunc(function(self)
@@ -1180,8 +1177,7 @@ borderOffset:setText(L["Border Offset"])
 borderOffset:setMaxLetters(2)
 borderOffset:setOnChanged(function(frame, value)
 	main.barFrame:setBorderOffset(value)
-	main.barFrame:applyLayout()
-	main:hidingBarUpdate()
+	main:hidingBarUpdate(true)
 end)
 
 -- BORDER SIZE
@@ -1458,9 +1454,8 @@ buttonDirection:ddSetInitFunc(function(self, level)
 
 	local function setDirection(btn, ...)
 		main.barFrame:setButtonDirection(...)
-		main.barFrame:applyLayout()
 		main:applyLayout(.3)
-		main:hidingBarUpdate()
+		main:hidingBarUpdate(true)
 		self:ddRefresh()
 	end
 
@@ -1833,8 +1828,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 		info.func = function()
 			btn.settings[1] = not btn.settings[1]
 			btn:SetChecked(btn.settings[1])
-			main.barFrame:applyLayout()
-			main:hidingBarUpdate()
+			main:hidingBarUpdate(true)
 		end
 		self:ddAddButton(info, level)
 
@@ -1856,8 +1850,7 @@ contextmenu:ddSetInitFunc(function(self, level, btn)
 			info.checked = btn.settings[5]
 			info.func = function(_,_,_, checked)
 				btn.settings[5] = checked
-				main.barFrame:applyLayout()
-				main:hidingBarUpdate()
+				main:hidingBarUpdate(true)
 			end
 			info.OnTooltipShow = function(_, tooltip)
 				tooltip:AddLine(L["Allow the button to control its own visibility"], nil, nil, nil, true)
@@ -2466,9 +2459,10 @@ function main:removeCustomGrabName(name)
 end
 
 
-function main:hidingBarUpdate()
+function main:hidingBarUpdate(updateButtons)
 	for i = 1, #self.pBars do
 		local bar = hb.bars[i]
+		if updateButtons then bar:applyLayout() end
 		bar:enter()
 		bar:leave(math.max(1.5, bar.config.hideDelay))
 	end
@@ -2550,8 +2544,7 @@ function main:dragStop(btn)
 	self:sort(self.mixedButtons)
 	self:applyLayout()
 	hb:sort()
-	self.barFrame:applyLayout()
-	self:hidingBarUpdate()
+	self:hidingBarUpdate(true)
 end
 
 
@@ -2571,8 +2564,7 @@ do
 	local function btnClick(btn, button)
 		if button == "LeftButton" then
 			btn.settings[1] = btn:GetChecked()
-			main.barFrame:applyLayout()
-			main:hidingBarUpdate()
+			main:hidingBarUpdate(true)
 			contextmenu:ddCloseMenus()
 		elseif button == "RightButton" then
 			btn:SetChecked(not btn:GetChecked())
@@ -2644,8 +2636,7 @@ do
 	local function btnClick(btn, button)
 		if button == "LeftButton" then
 			btn.settings[1] = btn:GetChecked()
-			main.barFrame:applyLayout()
-			main:hidingBarUpdate()
+			main:hidingBarUpdate(true)
 			contextmenu:ddCloseMenus()
 		elseif button == "RightButton" then
 			btn:SetChecked(not btn:GetChecked())
