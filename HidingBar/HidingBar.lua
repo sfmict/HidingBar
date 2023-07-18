@@ -867,8 +867,8 @@ end
 
 do
 	local function IsShown(btn)
-		local show = btn.name == addon or (
-				hb.pConfig.addFromDataBroker and (
+		local show = (
+				btn.name == addon or hb.pConfig.addFromDataBroker and (
 					hb.pConfig.addAnyTypeFromDataBroker or btn.data.type == "launcher"
 				)
 			)
