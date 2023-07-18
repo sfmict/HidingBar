@@ -2215,8 +2215,8 @@ function main:setBar(bar)
 	self:updateCoords()
 
 	for _, btn in ipairs(self.buttons) do
-		local show = btn.title == addon or (
-				self.pConfig.addFromDataBroker and (
+		local show = (
+				btn.title == addon or self.pConfig.addFromDataBroker and (
 					self.pConfig.addAnyTypeFromDataBroker or btn.rButton.data.type == "launcher"
 				)
 			)
