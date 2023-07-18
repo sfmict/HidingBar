@@ -456,6 +456,7 @@ function hb:checkProfile(profile)
 	[3] - parent bar name
 	[4] - is clipped button
 	[5] - auto show/hide
+	[6] - disable masque
 	]]
 
 	profile.bars = profile.bars or {
@@ -565,17 +566,14 @@ end
 
 function hb:init()
 	if self.pConfig.addFromDataBroker then
-		for name, data in ldb:DataObjectIterator() do
-			self:ldb_add(nil, name, data)
-		end
-		ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
-		ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconDesaturated", "ldb_attrChange")
+		self:addFromDataBroker()
 	end
+
+	-- OPTIONS BUTTON
+	self:addButton(addon, {
+		icon = "Interface/AddOns/HidingBar/media/icon",
+		OnClick = function() config:openConfig() end,
+	})
 
 	if self.pConfig.grabMinimap then
 		local ldbiTbl = ldbi:GetButtonList()
@@ -634,6 +632,37 @@ function hb:init()
 
 	hooksecurefunc(UIParent, "SetScale", function() self:UI_SCALE_CHANGED() end)
 	self:RegisterEvent("UI_SCALE_CHANGED")
+end
+
+
+function hb:addButtons()
+	if self.pConfig.addFromDataBroker then
+		self:addFromDataBroker()
+	else
+		ldb.UnregisterCallback(self, "LibDataBroker_DataObjectCreated")
+	end
+
+	local numButtons = #self.minimapButtons
+
+	if self.pConfig.grabMinimap then
+		self:grabMinimapAddonsButtons(Minimap)
+		self:grabMinimapAddonsButtons(MinimapBackdrop)
+		ldbi.RegisterCallback(self, "LibDBIcon_IconCreated", "ldbi_add")
+	else
+		ldbi.UnregisterCallback(self, "LibDBIcon_IconCreated")
+	end
+
+	if self.pConfig.grabDefMinimap then
+		self:grabDefButtons()
+	end
+
+	for i = 1, #self.pConfig.customGrabList do
+		self:addCustomGrabButton(self.pConfig.customGrabList[i])
+	end
+
+	if numButtons ~= #self.minimapButtons then
+		updateMinimapButtons(self)
+	end
 end
 
 
@@ -752,22 +781,33 @@ end
 
 
 function hb:getBtnName(btn)
-	return self.GetName(btn) or self.btnParams[btn].name
+	local p = self.btnParams[btn]
+	return p and p.name or self.GetName(btn)
+end
+
+
+function hb:getBtnSettings(btn)
+	return self.pConfig.btnSettings[btn.name]
 end
 
 
 function hb:setBtnSettings(btn)
-	local btnData = self.pConfig.btnSettings[btn.name]
+	local btnData = self:getBtnSettings(btn)
 	btnData.tstmp = time()
 	btnSettings[btn] = btnData
 	btn:SetClipsChildren(not not btnData[4])
 end
 
 
-function hb:setMBtnSettings(btn)
+function hb:getMBtnSettings(btn)
 	local name = self:getBtnName(btn)
-	if name then
-		local btnData = self.pConfig.mbtnSettings[name]
+	return name and self.pConfig.mbtnSettings[name]
+end
+
+
+function hb:setMBtnSettings(btn)
+	local btnData = self:getMBtnSettings(btn)
+	if btnData then
 		btnData.tstmp = time()
 		btnSettings[btn] = btnData
 		btn:SetClipsChildren(not not btnData[4])
@@ -778,6 +818,20 @@ end
 function hb:setBtnParent(btn)
 	local btnData = btnSettings[btn]
 	self.SetParent(btn, self.barByName[btnData and btnData[3]] or self.defaultBar)
+end
+
+
+function hb:addFromDataBroker()
+	for name, data in ldb:DataObjectIterator() do
+		self:ldb_add(not self.init, name, data)
+	end
+	ldb.RegisterCallback(self, "LibDataBroker_DataObjectCreated", "ldb_add")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__icon", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconCoords", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconR", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconG", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconB", "ldb_attrChange")
+	ldb.RegisterCallback(self, "LibDataBroker_AttributeChanged__iconDesaturated", "ldb_attrChange")
 end
 
 
@@ -818,7 +872,12 @@ end
 
 do
 	local function IsShown(btn)
-		local show = not btnSettings[btn][1]
+		local show = btn.name == addon or (
+				hb.pConfig.addFromDataBroker and (
+					hb.pConfig.addAnyTypeFromDataBroker or btn.data.type == "launcher"
+				)
+			)
+			and not btnSettings[btn][1]
 		btn:SetShown(show)
 		return show
 	end
@@ -871,7 +930,7 @@ do
 			self.cb:Fire("BUTTON_ADDED", name, button, true)
 		end
 
-		if self.MSQ_Button then
+		if not self:getBtnSettings(button)[6] and self.MSQ_Button then
 			self:setTexCurCoord(button.icon, button.icon:GetTexCoord())
 			button.icon.SetTexCoord = self.setTexCoord
 			local buttonData = {
@@ -883,24 +942,6 @@ do
 		end
 
 		return button
-	end
-end
-
-
-function hb:grabMButtons()
-	local numButtons = #self.minimapButtons
-
-	if self.pConfig.grabMinimap then
-		self:grabMinimapAddonsButtons(Minimap)
-		self:grabMinimapAddonsButtons(MinimapBackdrop)
-	end
-
-	if self.pConfig.grabDefMinimap then
-		self:grabDefButtons()
-	end
-
-	if numButtons ~= #self.minimapButtons then
-		updateMinimapButtons(self)
 	end
 end
 
@@ -922,6 +963,10 @@ end
 
 
 function hb:grabDefButtons()
+	local function checkMasqueConditions(btn, btnData)
+		return self.MSQ_MButton and not btn.__MSQ_Addon and not (btnData or self:getMBtnSettings(btn))[6]
+	end
+
 	-- CALENDAR BUTTON
 	local GameTimeFrame = GameTimeFrame
 	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
@@ -946,14 +991,11 @@ function hb:grabDefButtons()
 		end)
 
 		if not GameTimeFrame.__MSQ_Addon then
-			local normalTexture = GameTimeFrame:GetNormalTexture()
-			normalTexture:SetTexCoord(0, .375, 0, .75)
-			local pushedTexture = GameTimeFrame:GetPushedTexture()
-			pushedTexture:SetTexCoord(.5, .875, 0, .75)
-			local highlightTexture = GameTimeFrame:GetHighlightTexture()
-			highlightTexture:SetTexCoord(0, 1, 0, .9375)
+			GameTimeFrame:GetNormalTexture():SetTexCoord(0, .375, 0, .75)
+			GameTimeFrame:GetPushedTexture():SetTexCoord(.5, .875, 0, .75)
+			GameTimeFrame:GetHighlightTexture():SetTexCoord(0, 1, 0, .9375)
 
-			if self.MSQ_MButton then
+			if checkMasqueConditions(GameTimeFrame) then
 				self:setMButtonRegions(GameTimeFrame, {.0859375, .296875, .156255, .59375})
 			end
 		end
@@ -976,37 +1018,35 @@ function hb:grabDefButtons()
 			MiniMapTrackingButton:SetScript("OnMouseUp", p.OnMouseUp)
 		end)
 
-		if not MiniMapTracking.__MSQ_Addon then
+		icon:ClearAllPoints()
+		icon:SetPoint("CENTER")
+		hooksecurefunc(icon, "SetPoint", function(icon)
 			icon:ClearAllPoints()
-			icon:SetPoint("CENTER")
-			hooksecurefunc(icon, "SetPoint", function(icon)
-				icon:ClearAllPoints()
-				self.SetPoint(icon, "CENTER")
-			end)
-			p.OnMouseDown = MiniMapTrackingButton:GetScript("OnMouseDown")
-			p.OnMouseUp = MiniMapTrackingButton:GetScript("OnMouseUp")
-			MiniMapTrackingButton:HookScript("OnMouseDown", function()
-				icon:SetScale(.9)
-			end)
-			MiniMapTrackingButton:HookScript("OnMouseUp", function()
-				icon:SetScale(1)
-			end)
+			self.SetPoint(icon, "CENTER")
+		end)
+		p.OnMouseDown = MiniMapTrackingButton:GetScript("OnMouseDown")
+		p.OnMouseUp = MiniMapTrackingButton:GetScript("OnMouseUp")
+		MiniMapTrackingButton:HookScript("OnMouseDown", function()
+			icon:SetScale(.9)
+		end)
+		MiniMapTrackingButton:HookScript("OnMouseUp", function()
+			icon:SetScale(1)
+		end)
 
-			if self.MSQ_MButton then
-				self.MSQ_Button_Data[MiniMapTrackingButton] = {
-					_Border = MiniMapTrackingButtonBorder,
-					_Background = MiniMapTrackingBackground,
-				}
-				self:setTexCurCoord(icon, icon:GetTexCoord())
-				icon.SetTexCoord = self.setTexCoord
-				local data = {
-					Icon = icon,
-					Highlight = MiniMapTrackingButton:GetHighlightTexture()
-				}
-				self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
-				self:MSQ_Button_Update(MiniMapTrackingButton)
-				self:MSQ_CoordUpdate(MiniMapTrackingButton)
-			end
+		if checkMasqueConditions(MiniMapTrackingButton, self:getMBtnSettings(MiniMapTracking)) then
+			self.MSQ_Button_Data[MiniMapTrackingButton] = {
+				_Border = MiniMapTrackingButtonBorder,
+				_Background = MiniMapTrackingBackground,
+			}
+			self:setTexCurCoord(icon, icon:GetTexCoord())
+			icon.SetTexCoord = self.setTexCoord
+			local data = {
+				Icon = icon,
+				Highlight = MiniMapTrackingButton:GetHighlightTexture()
+			}
+			self.MSQ_MButton:AddButton(MiniMapTrackingButton, data, "Legacy", true)
+			self:MSQ_Button_Update(MiniMapTrackingButton)
+			self:MSQ_CoordUpdate(MiniMapTrackingButton)
 		end
 
 		tinsert(self.minimapButtons, MiniMapTracking)
@@ -1021,10 +1061,10 @@ function hb:grabDefButtons()
 		self:setHooks(LFGFrame)
 		self:setParams(LFGFrame)
 
-		local btnData = self.pConfig.mbtnSettings["MiniMapLFGFrame"]
+		local btnData = self:getMBtnSettings(LFGFrame)
 		if btnData[5] == nil then btnData[5] = true end
 
-		if self.MSQ_MButton and not LFGFrame.__MSQ_Addon then
+		if checkMasqueConditions(LFGFrame, btnData) then
 			self:setMButtonRegions(LFGFrame)
 		end
 
@@ -1039,10 +1079,10 @@ function hb:grabDefButtons()
 		self:setHooks(battlefield)
 		self:setParams(battlefield)
 
-		local btnData = self.pConfig.mbtnSettings["MiniMapBattlefieldFrame"]
+		local btnData = self:getMBtnSettings(battlefield)
 		if btnData[5] == nil then btnData[5] = true end
 
-		if self.MSQ_MButton and not battlefield.__MSQ_Addon then
+		if checkMasqueConditions(battlefield, btnData) then
 			self:setMButtonRegions(battlefield)
 		end
 
@@ -1063,10 +1103,10 @@ function hb:grabDefButtons()
 		self:setHooks(mail)
 		self:setParams(mail)
 
-		local btnData = self.pConfig.mbtnSettings["MiniMapMailFrame"]
+		local btnData = self:getMBtnSettings(mail)
 		if btnData[5] == nil then btnData[5] = true end
 
-		if self.MSQ_MButton and not mail.__MSQ_Addon then
+		if checkMasqueConditions(mail, btnData) then
 			self:setMButtonRegions(mail)
 		end
 
@@ -1081,7 +1121,7 @@ function hb:grabDefButtons()
 			self:setHooks(zoom)
 			local normal = zoom:GetNormalTexture()
 
-			if self.MSQ_MButton and not zoom.__MSQ_Addon then
+			if checkMasqueConditions(zoom) then
 				zoom.icon = zoom:CreateTexture(nil, "BACKGROUND")
 				zoom.icon:SetTexture(normal:GetTexture())
 				zoom:SetScript("OnMouseDown", function(self) self.icon:SetScale(.9) end)
@@ -1108,7 +1148,7 @@ function hb:grabDefButtons()
 				zoom:Disable()
 			end
 
-			local p = self:setParams(zoom, function()
+			local p = self:setParams(zoom, function(p, zoom)
 				zoom.Enable = nil
 				zoom.Disable = nil
 				if not zoom:GetScript("OnClick") then
@@ -1127,8 +1167,8 @@ function hb:grabDefButtons()
 	end
 
 	-- WORLD MAP BUTTON
-	if MiniMapWorldMapButton and self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
-		local mapButton = MiniMapWorldMapButton
+	local mapButton = MiniMapWorldMapButton
+	if mapButton and self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[mapButton] then
 		self:setHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
 			if mapButton.__MSQ_Addon then return end
@@ -1140,23 +1180,21 @@ function hb:grabDefButtons()
 			mapButton.border:SetPoint(unpack(p.borderPoint))
 		end)
 
-		if not mapButton.__MSQ_Addon then
-			mapButton.normal = mapButton:GetNormalTexture()
-			p.iconPoint = {mapButton.normal:GetPoint()}
-			mapButton.normal:ClearAllPoints()
-			mapButton.normal:SetPoint("CENTER")
-			mapButton.puched = mapButton:GetPushedTexture()
-			p.pushedPoint = {mapButton.puched:GetPoint()}
-			mapButton.puched:ClearAllPoints()
-			mapButton.puched:SetPoint("CENTER", 1, -1)
-			mapButton.border = MiniMapWorldBorder
-			p.borderPoint = {mapButton.border:GetPoint()}
-			mapButton.border:ClearAllPoints()
-			mapButton.border:SetPoint("TOPLEFT", 1, -1)
+		mapButton.normal = mapButton:GetNormalTexture()
+		p.iconPoint = {mapButton.normal:GetPoint()}
+		mapButton.normal:ClearAllPoints()
+		mapButton.normal:SetPoint("CENTER")
+		mapButton.puched = mapButton:GetPushedTexture()
+		p.pushedPoint = {mapButton.puched:GetPoint()}
+		mapButton.puched:ClearAllPoints()
+		mapButton.puched:SetPoint("CENTER", 1, -1)
+		mapButton.border = MiniMapWorldBorder
+		p.borderPoint = {mapButton.border:GetPoint()}
+		mapButton.border:ClearAllPoints()
+		mapButton.border:SetPoint("TOPLEFT", 1, -1)
 
-			if self.MSQ_MButton then
-				self:setMButtonRegions(mapButton)
-			end
+		if checkMasqueConditions(mapButton) then
+			self:setMButtonRegions(mapButton)
 		end
 
 		tinsert(self.minimapButtons, mapButton)
@@ -1179,7 +1217,7 @@ end
 
 function hb:grabOwnButton(button, force, MSQ_Group)
 	if button.isGrabbed or not (button.bar.config.barTypePosition == 2 and button.bar.config.omb.canGrabbed or force) then return end
-	local btnData = self.pConfig.mbtnSettings[button:GetName()]
+	local btnData = self:getMBtnSettings(button)
 	local bar, stop = self.barByName[btnData[3]], true
 
 	if bar and not self:isBarParent(button, bar) then
@@ -1265,7 +1303,8 @@ function hb:addMButton(button, force, MSQ_Group)
 				self:setHooks(button)
 			end
 
-			if self.MSQ_MButton and not button.__MSQ_Addon then
+			local btnData = self:getMBtnSettings(button)
+			if self.MSQ_MButton and not button.__MSQ_Addon and not (btnData and btnData[6]) then
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 
@@ -1611,50 +1650,64 @@ end
 local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
 
 
-function hidingBarMixin:createOwnMinimapButton()
-	self.createOwnMinimapButton = nil
-	self.ombName = addon..self.id
-	self.ldb_icon = ldb:NewDataObject(self.ombName, {
-		type = "data source",
-		text = self.ombName,
-		icon = "Interface/MINIMAP/Vehicle-SilvershardMines-Arrow",
-		OnClick = function(_, button)
-			if button == "LeftButton" then
-				if self:IsShown() and self.config.showHandler ~= 3 then
-					self:Hide()
-				else
-					local func = self.drag:GetScript("OnClick")
-					if func then func(self.drag) end
-				end
-			elseif button == "RightButton" then
-				self.drag:GetScript("OnMouseDown")(self.drag, button)
+do
+	local OnClick = function(btn, button)
+		local bar = btn.bar
+		if button == "LeftButton" then
+			if bar:IsShown() and bar.config.showHandler ~= 3 then
+				bar:Hide()
+			else
+				local func = bar.drag:GetScript("OnClick")
+				if func then func(bar.drag) end
 			end
-		end,
-		OnEnter = function(btn)
-			local func = self.drag:GetScript("OnEnter")
-			if func then func(self.drag) end
+		elseif button == "RightButton" then
+			bar.drag:GetScript("OnMouseDown")(bar.drag, button)
+		end
+	end
 
-			local parent = btn:GetParent()
-			for i = 1, #hb.currentProfile.bars do
-				local bar = hb.bars[i]
-				if bar ~= self
-				and bar.config.barTypePosition == 2
-				and bar.config.showHandler ~= 3
-				and bar.omb
-				and parent == bar.omb:GetParent()
-				and bar:IsShown()
-				then
-					bar:Hide()
-					bar:updateDragBarPosition()
-				end
+
+	local OnEnter = function(btn)
+		local curBar = btn.bar
+		local func = curBar.drag:GetScript("OnEnter")
+		if func then func(curBar.drag) end
+
+		local parent = btn:GetParent()
+		for i = 1, #hb.currentProfile.bars do
+			local bar = hb.bars[i]
+			if bar ~= curBar
+			and bar.config.barTypePosition == 2
+			and bar.config.showHandler ~= 3
+			and bar.omb
+			and parent == bar.omb:GetParent()
+			and bar:IsShown()
+			then
+				bar:Hide()
+				bar:updateDragBarPosition()
 			end
-		end,
-		OnLeave = function()
-			local func = self.drag:GetScript("OnLeave")
-			if func then func(self.drag) end
-		end,
-	})
-	ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
+		end
+	end
+
+
+	local OnLeave = function(btn)
+		local drag = btn.bar.drag
+		local func = drag:GetScript("OnLeave")
+		if func then func(drag) end
+	end
+
+
+	function hidingBarMixin:createOwnMinimapButton()
+		self.createOwnMinimapButton = nil
+		self.ombName = addon..self.id
+		self.ldb_icon = ldb:NewDataObject(self.ombName, {
+			type = "data source",
+			text = self.ombName,
+			icon = "Interface/MINIMAP/Vehicle-SilvershardMines-Arrow",
+			OnClick = OnClick,
+			OnEnter = OnEnter,
+			OnLeave = OnLeave,
+		})
+		ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
+	end
 end
 
 
@@ -2878,12 +2931,3 @@ setmetatable(hb.bars, {__index = function(self, key)
 	self[key] = bar
 	return bar
 end})
-
-
--------------------------------------------
--- OPTIONS BUTTON
--------------------------------------------
-hb:addButton(addon, {
-	icon = "Interface/AddOns/HidingBar/media/icon",
-	OnClick = function() config:openConfig() end,
-})
