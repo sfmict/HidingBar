@@ -1457,6 +1457,9 @@ do
 			if disable then
 				animationGroup:Stop()
 				animationGroup.Play = void
+				animationGroup.Restart = void
+			elseif animationGroup:IsPlaying() then
+				C_Timer.After(0, function() animationGroup:Restart() end)
 			end
 		end
 		for i = 1, #voidFunctions do
@@ -1474,6 +1477,7 @@ do
 		btn.CreateAnimationGroup = nil
 		for _, animationGroup in ipairs({btn:GetAnimationGroups()}) do
 			animationGroup.Play = nil
+			animationGroup.Restart = nil
 		end
 		for i = 1, #voidFunctions do
 			btn[voidFunctions[i]] = nil
