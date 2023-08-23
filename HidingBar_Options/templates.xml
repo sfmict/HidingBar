@@ -79,7 +79,7 @@
 				<Texture parentKey="border" file ="Interface/Minimap/MiniMap-TrackingBorder">
 					<Size x="54" y="54"/>
 					<Anchors>
-						<Anchor point="TOPLEFT" y="-1"/>
+						<Anchor point="TOPLEFT" x="-1"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -126,13 +126,24 @@
 		</Scripts>
 	</CheckButton>
 
-	<CheckButton name="HidingBarAddonCheckButtonTemplate" inherits="OptionsBaseCheckButtonTemplate" virtual="true">
+	<CheckButton name="HidingBarAddonCheckButtonTemplate" virtual="true">
+		<Size x="27" y="26"/>
 		<HitRectInsets left="0" right="-100" top="0" bottom="0"/>
+		<NormalTexture atlas="checkbox-minimal" useAtlasSize="true"/>
+		<PushedTexture atlas="checkbox-minimal" useAtlasSize="true"/>
+		<HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD">
+			<Anchors>
+				<Anchor point="TOPLEFT" x="-3" y="5"/>
+				<Anchor point="BOTTOMRIGHT" x="3" y="-7"/>
+			</Anchors>
+		</HighlightTexture>
+		<CheckedTexture atlas="checkmark-minimal" useAtlasSize="true"/>
+		<DisabledCheckedTexture atlas="checkmark-minimal-disabled" useAtlasSize="true"/>
 		<Layers>
 			<Layer level="ARTWORK">
 				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
 					<Anchors>
-						<Anchor point="LEFT" relativePoint="RIGHT" x="1"/>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="1" y="-1"/>
 					</Anchors>
 				</FontString>
 			</Layer>
@@ -140,6 +151,19 @@
 		<Scripts>
 			<OnEnable>self.Text:SetTextColor(1,1,1,1)</OnEnable>
 			<OnDisable>self.Text:SetTextColor(.5,.5,.5,1)</OnDisable>
+			<OnEnter>
+				if self.tooltipText then
+					GameTooltip:SetOwner(self, self.tooltipOwnerPoint or "ANCHOR_RIGHT")
+					GameTooltip:SetText(self.tooltipText, nil, nil, nil, nil, true)
+				end
+				if self.tooltipRequirement then
+					GameTooltip:AddLine(self.tooltipRequirement, 1, 1, 1, true)
+					GameTooltip:Show()
+				end
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide()
+			</OnLeave>
 		</Scripts>
 	</CheckButton>
 
@@ -221,7 +245,7 @@
 					</OnMouseWheel>
 				</Scripts>
 			</EditBox>
-			<Slider parentKey="slider" inherits="HorizontalSliderTemplate">
+			<Slider parentKey="slider" inherits="MinimalSliderTemplate">
 				<Size y="17"/>
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" x="0" y="2"/>
@@ -232,7 +256,7 @@
 					<Layer level="ARTWORK">
 						<FontString parentKey="text" inherits="GameFontNormalSmall">
 							<Anchors>
-								<Anchor point="BOTTOM" relativePoint="TOP"/>
+								<Anchor point="BOTTOM" relativePoint="TOP" y="1"/>
 							</Anchors>
 						</FontString>
 					</Layer>
