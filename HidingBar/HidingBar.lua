@@ -923,7 +923,6 @@ do
 			self.cb:Fire("BUTTON_ADDED", name, button, true)
 		end
 
-		fprint(name)
 		if not self:getBtnSettings(button)[6] and self.MSQ_Button then
 			self:setTexCurCoord(button.icon, button.icon:GetTexCoord())
 			button.icon.SetTexCoord = self.setTexCoord
