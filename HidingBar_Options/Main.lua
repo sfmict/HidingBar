@@ -725,6 +725,11 @@ local ignoredNames = {
 	"StaticPopup.+",
 }
 
+local function getNoErr(func, ...)
+	local status, val = pcall(func, ...)
+	return status and val
+end
+
 main.customGrabPointBtn = CreateFrame("BUTTON", nil, addBtnOptionsScroll.child, "UIPanelButtonTemplate")
 main.customGrabPointBtn:SetSize(120, 22)
 main.customGrabPointBtn:SetPoint("LEFT", main.customGrabBtn, "RIGHT")
@@ -733,10 +738,12 @@ main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
 	if not btn.isPoint then return end
 	local focus = GetMouseFocus()
 	if focus then
-		local name = focus:GetName()
-		if name and not focus:IsProtected() and (focus:HasScript("OnClick") and focus:GetScript("OnClick")
-			or focus:HasScript("OnMouseUp") and focus:GetScript("OnMouseUp")
-			or focus:HasScript("OnMouseDown") and focus:GetScript("OnMouseDown"))
+		local name = getNoErr(btn.GetName, focus)
+		if name and not getNoErr(btn.IsProtected, focus) and (
+				getNoErr(btn.HasScript, focus, "OnClick") and getNoErr(btn.GetScript, focus, "OnClick")
+				or getNoErr(btn.HasScript, focus, "OnMouseUp") and getNoErr(btn.GetScript, focus, "OnMouseUp")
+				or getNoErr(btn.HasScript, focus, "OnMouseDown") and getNoErr(btn.GetScript, focus, "OnMouseDown")
+			)
 		then
 			for i = 1, #ignoredNames do
 				if name:match(ignoredNames[i]) then return end
