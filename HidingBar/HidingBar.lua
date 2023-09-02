@@ -2607,19 +2607,24 @@ function hidingBarMixin:enter(force)
 end
 
 
+local GetMouseFocus, pcall = GetMouseFocus, pcall
 function hidingBarMixin:isFocusParent()
+	local status, numPoints = true
 	local frame = GetMouseFocus()
-	while frame do
+	while status and frame do
 		if noEventFrames[frame] then
 			return self.GetParent(noEventFrames[frame]) == self
 		end
-		for i = 1, self.GetNumPoints(frame) do
-			local _, rFrame = self.GetPoint(frame, i)
-			if noEventFrames[rFrame] then
-				return self.GetParent(noEventFrames[rFrame]) == self
+		status, numPoints = pcall(self.GetNumPoints, frame)
+		if status then
+			for i = 1, numPoints do
+				local status, _, rFrame = pcall(self.GetPoint, frame, i)
+				if status and noEventFrames[rFrame] then
+					return self.GetParent(noEventFrames[rFrame]) == self
+				end
 			end
 		end
-		frame = self.GetParent(frame)
+		status, frame = pcall(self.GetParent, frame)
 	end
 end
 
