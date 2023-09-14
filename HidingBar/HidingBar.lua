@@ -1549,6 +1549,7 @@ function hb:setParams(btn, cb)
 	self.SetFixedFrameStrata(btn, false)
 	self.SetFixedFrameLevel(btn, false)
 	self.SetAlpha(btn, 1)
+	self.SetSize(btn, self.GetSize(btn))
 
 	return p
 end
