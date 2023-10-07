@@ -1147,6 +1147,7 @@ function hb:grabDefButtons()
 
 		local p = self:setParams(mail, function(p, mail)
 			mail.GetParent = p.GetParent
+			self.SetScript(mail, "OnShow", p.OnShow)
 			mail:GetParent():Layout()
 			if mail.__MSQ_Addon then return end
 			self.SetSize(mail, p.width, p.height)
@@ -1158,6 +1159,8 @@ function hb:grabDefButtons()
 
 		p.GetParent = rawget(mail, "GetParent")
 		mail.GetParent = function() return MinimapCluster.IndicatorFrame end
+		p.OnShow = self.GetScript(mail, "OnShow")
+		self.SetScript(mail, "OnShow", function(mail) mail:OnEvent("UPDATE_PENDING_MAIL") end)
 		p.name = "MinimapCluster.IndicatorFrame.MailFrame"
 		p.width, p.height = mail:GetSize()
 		self.SetSize(mail, 20, 20)
