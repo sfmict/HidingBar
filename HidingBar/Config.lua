@@ -1,4 +1,7 @@
 local addon, L = ...
+local IsAddOnLoaded = IsAddOnLoaded or C_AddOns.IsAddOnLoaded
+local LoadAddOn = LoadAddOn or C_AddOns.LoadAddOn
+local EnableAddOn = EnableAddOn or C_AddOns.EnableAddOn
 
 
 local function onShow(self)
@@ -10,15 +13,15 @@ local function loadOptions(self)
 	self:SetPoint("TOPLEFT", -12, 8)
 
 	local name = addon.."_Options"
-	if  C_AddOns.IsAddOnLoaded(name) then
+	if IsAddOnLoaded(name) then
 		self:SetScript("OnShow", onShow)
 		return
 	end
 
-	local loaded, reason =  C_AddOns.LoadAddOn(name)
+	local loaded, reason = LoadAddOn(name)
 	if not loaded and reason == "DISABLED" then
-		 C_AddOns.EnableAddOn(name)
-		loaded, reason =  C_AddOns.LoadAddOn(name)
+		EnableAddOn(name)
+		loaded, reason = LoadAddOn(name)
 	end
 
 	if loaded then
