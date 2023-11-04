@@ -10,14 +10,17 @@ local function loadOptions(self)
 	self:SetPoint("TOPLEFT", -12, 8)
 
 	local name = addon.."_Options"
-	if IsAddOnLoaded(name) then
+	if  C_AddOns.IsAddOnLoaded(name) then
 		self:SetScript("OnShow", onShow)
 		return
 	end
-	if select(5, GetAddOnInfo(name)) == "DISABLED" then
-		EnableAddOn(name)
+
+	local loaded, reason =  C_AddOns.LoadAddOn(name)
+	if not loaded and reason == "DISABLED" then
+		 C_AddOns.EnableAddOn(name)
+		loaded, reason =  C_AddOns.LoadAddOn(name)
 	end
-	local loaded, reason = LoadAddOn(name)
+
 	if loaded then
 		self:SetScript("OnShow", onShow)
 		-- SettingsPanel:GetCategoryList():CreateCategories()
