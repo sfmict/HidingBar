@@ -1,4 +1,7 @@
 local addon, L = ...
+local IsAddOnLoaded = IsAddOnLoaded or C_AddOns.IsAddOnLoaded
+local LoadAddOn = LoadAddOn or C_AddOns.LoadAddOn
+local EnableAddOn = EnableAddOn or C_AddOns.EnableAddOn
 
 
 local function onShow(self)
@@ -14,10 +17,13 @@ local function loadOptions(self)
 		self:SetScript("OnShow", onShow)
 		return
 	end
-	if select(5, GetAddOnInfo(name)) == "DISABLED" then
-		EnableAddOn(name)
-	end
+
 	local loaded, reason = LoadAddOn(name)
+	if not loaded and reason == "DISABLED" then
+		EnableAddOn(name)
+		loaded, reason = LoadAddOn(name)
+	end
+
 	if loaded then
 		self:SetScript("OnShow", onShow)
 		-- SettingsPanel:GetCategoryList():CreateCategories()
