@@ -1052,8 +1052,7 @@ backdropFrame.setBackdrop = function(self, btn, backdrop)
 		return
 	end
 
-	local f, t = lsfdd:IterateMenus()
-	local menu = t[1]
+	local menu = lsfdd:GetMenu(1)
 
 	for name, style in pairs(menu.styles) do
 		if style:IsShown() then
