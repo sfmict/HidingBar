@@ -61,7 +61,8 @@ translators:SetText(L["Localization Translators:"])
 
 local langs, last = {
 	{"deDE", "SlayerEGT"},
-	{"esES", "neolynx_zero"},
+	{"esES", "neolynx_zero, maylisdalan"},
+	{"esMX", "maylisdalan"},
 	{"frFR", "PhantomLord"},
 	{"koKR", "drixwow, Hayan, netaras"},
 	{"ptBR", "cathzinhas, 6605270"},
