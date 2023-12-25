@@ -1427,6 +1427,7 @@ do
 	local function CreateAnimationGroup(self, ...)
 		local animationGroup = getmetatable(self).__index.CreateAnimationGroup(self, ...)
 		animationGroup.Play = void
+		animationGroup.Restart = void
 		return animationGroup
 	end
 
