@@ -61,18 +61,26 @@ local function showColorPicker(color, cb)
 	info.r, info.g, info.b, info.opacity = unpack(color)
 	if info.opacity then
 		info.hasOpacity = true
-		info.opacity = 1 - info.opacity
+		info.opacity = info.opacity
 		info.opacityFunc = function()
-			cb(nil, nil, nil, 1 - OpacitySliderFrame:GetValue())
+			if OpacitySliderFrame then
+				cb(nil, nil, nil, OpacitySliderFrame:GetValue())
+			else
+				cb(nil, nil, nil, ColorPickerFrame:GetColorAlpha())
+			end
 		end
 	end
 	info.swatchFunc = function()
 		cb(ColorPickerFrame:GetColorRGB())
 	end
 	info.cancelFunc = function(color)
-		cb(color.r, color.g, color.b, color.opacity and 1 - color.opacity)
+		cb(color.r, color.g, color.b, color.opacity or color.a)
 	end
-	OpenColorPicker(info)
+	if OpenColorPicker then
+		OpenColorPicker(info)
+	else
+		ColorPickerFrame:SetupColorPickerAndShow(info)
+	end
 end
 
 
@@ -676,7 +684,7 @@ addButtonManuallyText:SetText(L["Add button manually"])
 
 -- MANUALLY GRAB EDITBOX
 local editBoxGrab = CreateFrame("EditBox", nil, addBtnOptionsScroll.child, "HidingBarAddonAddTextBox")
-editBoxGrab:SetWidth(368)
+editBoxGrab:SetWidth(348)
 editBoxGrab:SetPoint("TOPLEFT", addButtonManuallyText, 0, -12)
 editBoxGrab:SetScript("OnTextChanged", function(editBox)
 	local textExists = editBox:GetText() ~= ""
@@ -731,7 +739,7 @@ local function getNoErr(func, ...)
 end
 
 main.customGrabPointBtn = CreateFrame("BUTTON", nil, addBtnOptionsScroll.child, "UIPanelButtonTemplate")
-main.customGrabPointBtn:SetSize(120, 22)
+main.customGrabPointBtn:SetSize(140, 22)
 main.customGrabPointBtn:SetPoint("LEFT", main.customGrabBtn, "RIGHT")
 main.customGrabPointBtn:SetText(L["Point to button"])
 main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
