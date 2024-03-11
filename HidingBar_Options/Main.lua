@@ -5,7 +5,7 @@ main.noIcon:SetTexCoord(.05, .95, .05, .95)
 main.noIcon:Hide()
 main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
 local media = LibStub("LibSharedMedia-3.0")
-local lsfdd = LibStub("LibSFDropDown-1.4")
+local lsfdd = LibStub("LibSFDropDown-1.5")
 
 
 local lang, margin, lineFont = GetLocale()
@@ -352,78 +352,67 @@ main.barPanel:SetHeight(242)
 main.barPanel:SetPoint("TOPLEFT", 8, -58)
 main.barPanel:SetPoint("TOPRIGHT", -8, -58)
 
-local barPanelScroll = CreateFrame("ScrollFrame", nil, main.barPanel, "UIPanelScrollFrameTemplate")
-barPanelScroll:SetPoint("TOPLEFT", main.barPanel, 4, -6)
-barPanelScroll:SetPoint("BOTTOMRIGHT", main.barPanel, -26, 20)
-barPanelScroll.ScrollBar.bg = barPanelScroll.ScrollBar:CreateTexture(nil, "BACKGROUND")
-barPanelScroll.ScrollBar.bg:SetAllPoints()
-barPanelScroll.ScrollBar.bg:SetTexture("interface/buttons/white8x8")
-barPanelScroll.ScrollBar.bg:SetVertexColor(0, 0, 0, .2)
-barPanelScroll.HScrollBar = CreateFrame("SLIDER", nil, barPanelScroll)
-local HScrollBar = barPanelScroll.HScrollBar
-HScrollBar:SetOrientation("horizontal")
-HScrollBar:SetSize(0, 16)
-HScrollBar:SetPoint("TOPLEFT", barPanelScroll, "BOTTOMLEFT", 19, 0)
-HScrollBar:SetPoint("TOPRIGHT", barPanelScroll, "BOTTOMRIGHT", -12, 0)
-HScrollBar:SetThumbTexture("Interface/Buttons/UI-ScrollBar-Knob")
-HScrollBar:SetMinMaxValues(0, 0)
-HScrollBar:SetValue(0)
-HScrollBar.thumb = HScrollBar:GetThumbTexture()
-HScrollBar.thumb:SetSize(18, 24)
-HScrollBar.thumb:SetTexCoord(.20, .80, .125, 0.875)
-HScrollBar.bg = HScrollBar:CreateTexture(nil, "BACKGROUND")
-HScrollBar.bg:SetAllPoints()
-HScrollBar.bg:SetTexture("interface/buttons/white8x8")
-HScrollBar.bg:SetVertexColor(0, 0, 0, .2)
-HScrollBar.leftBtn = CreateFrame("BUTTON", nil, HScrollBar, "UIPanelScrollUpButtonTemplate")
-HScrollBar.leftBtn:SetPoint("RIGHT", HScrollBar, "LEFT", 0, 1)
-HScrollBar.leftBtn:GetNormalTexture():SetRotation(math.pi/2)
-HScrollBar.leftBtn:GetPushedTexture():SetRotation(math.pi/2)
-HScrollBar.leftBtn:GetDisabledTexture():SetRotation(math.pi/2)
-HScrollBar.leftBtn:GetHighlightTexture():SetRotation(math.pi/2)
-HScrollBar.leftBtn:Disable()
-HScrollBar.leftBtn:SetScript("OnClick", function(btn)
-	local parent = btn:GetParent()
-	parent:SetValue(parent:GetValue() - parent:GetWidth() / 2)
-	PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
-end)
-HScrollBar.rightBtn = CreateFrame("BUTTON", nil, HScrollBar, "UIPanelScrollDownButtonTemplate")
-HScrollBar.rightBtn:SetPoint("LEFT", HScrollBar, "RIGHT", 0, 1)
-HScrollBar.rightBtn:GetNormalTexture():SetRotation(math.pi/2)
-HScrollBar.rightBtn:GetPushedTexture():SetRotation(math.pi/2)
-HScrollBar.rightBtn:GetDisabledTexture():SetRotation(math.pi/2)
-HScrollBar.rightBtn:GetHighlightTexture():SetRotation(math.pi/2)
-HScrollBar.rightBtn:Disable()
-HScrollBar.rightBtn:SetScript("OnClick", function(btn)
-	local parent = btn:GetParent()
-	parent:SetValue(parent:GetValue() + parent:GetWidth() / 2)
-	PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
-end)
-HScrollBar:SetScript("OnValueChanged", function(self, value)
-	self:GetParent():SetHorizontalScroll(value)
-end)
-barPanelScroll:HookScript("OnScrollRangeChanged", function(self, xrange)
-	local hsb = self.HScrollBar
-	xrange = math.floor(xrange)
-	local value = math.min(xrange, hsb:GetValue())
-	hsb:SetMinMaxValues(0, xrange)
-	hsb:SetValue(value)
+local barPanelScroll = CreateFrame("ScrollFrame", nil, main.barPanel)
+barPanelScroll:SetPoint("TOPLEFT", main.barPanel, 4, -4)
+barPanelScroll:SetPoint("BOTTOMRIGHT", main.barPanel, -23, 23)
 
-	if xrange == 0 then
-		hsb.leftBtn:Disable()
-		hsb.rightBtn:Disable()
-	elseif xrange - value > .005 then
-		hsb.rightBtn:Enable()
+barPanelScroll:SetScript("OnVerticalScroll", function(self, offset)
+	self.vBar:SetScrollPercentage(offset / self:GetVerticalScrollRange(), ScrollBoxConstants.NoScrollInterpolation)
+end)
+barPanelScroll:SetScript("OnHorizontalScroll", function(self, offset)
+	self.hBar:SetScrollPercentage(offset / self:GetHorizontalScrollRange(), ScrollBoxConstants.NoScrollInterpolation)
+end)
+barPanelScroll:SetScript("OnScrollRangeChanged", function(self, xrange, yrange)
+	self:GetScript("OnVerticalScroll")(self, self:GetVerticalScroll())
+	self:GetScript("OnHorizontalScroll")(self, self:GetHorizontalScroll())
+	local num = 30
+	local width, height = self:GetSize()
+	self.vBar:SetVisibleExtentPercentage(height > 0 and height / (yrange + height) or 0)
+	self.vBar:SetPanExtentPercentage(yrange > 0 and Saturate(num / yrange) or 0)
+	self.hBar:SetVisibleExtentPercentage(width > 0 and width / (xrange + width) or 0)
+	self.hBar:SetPanExtentPercentage(xrange > 0 and Saturate(num / xrange) or 0)
+end)
+barPanelScroll:SetScript("OnMouseWheel", function(self, delta)
+	if delta > 0 then
+		if self.vBar:GetScrollPercentage() > 0 and self.vBar:GetThumb():IsShown() then
+			self.vBar:ScrollStepInDirection(-delta)
+		else
+			self.hBar:ScrollStepInDirection(-delta * 3)
+		end
 	else
-		hsb.rightBtn:Disable()
+		if self.vBar:GetScrollPercentage() < 1 and self.vBar:GetThumb():IsShown() then
+			self.vBar:ScrollStepInDirection(-delta)
+		else
+			self.hBar:ScrollStepInDirection(-delta * 3)
+		end
 	end
 end)
-barPanelScroll:HookScript("OnHorizontalScroll", function(self, offset)
-	local hsb = self.HScrollBar
-	local min, max = hsb:GetMinMaxValues()
-	hsb.leftBtn:SetEnabled(offset ~= 0)
-	hsb.rightBtn:SetEnabled(hsb:GetValue() ~= max)
-end)
+
+barPanelScroll.vBar = CreateFrame("EventFrame", nil, main.barPanel, "WowTrimScrollBar")
+barPanelScroll.vBar:SetPoint("TOPLEFT", barPanelScroll, "TOPRIGHT", -2, 4)
+barPanelScroll.vBar:SetPoint("BOTTOMLEFT", barPanelScroll, "BOTTOMRIGHT", -2, -4)
+barPanelScroll.vBar.Background:Hide()
+barPanelScroll.vBar.Backplate:SetPoint("TOPLEFT", 4, -4)
+barPanelScroll.vBar.Backplate:SetPoint("BOTTOMRIGHT", -4, 4)
+barPanelScroll.vBar.Backplate:SetTexture("interface/buttons/white8x8")
+barPanelScroll.vBar.Backplate:SetVertexColor(0, 0, 0, .2)
+barPanelScroll.vBar:RegisterCallback(barPanelScroll.vBar.Event.OnScroll, function(scrollFrame, scrollPercentage)
+	scrollFrame:SetVerticalScroll(scrollPercentage * scrollFrame:GetVerticalScrollRange())
+end, barPanelScroll)
+
+barPanelScroll.hBar = CreateFrame("EventFrame", nil, main.barPanel, "WowTrimHorizontalScrollBar")
+barPanelScroll.hBar:SetPoint("TOPLEFT", barPanelScroll, "BOTTOMLEFT", -5, 2)
+barPanelScroll.hBar:SetPoint("TOPRIGHT", barPanelScroll, "BOTTOMRIGHT", 4, 2)
+barPanelScroll.hBar.Background:Hide()
+barPanelScroll.hBar.Backplate = barPanelScroll.hBar:GetRegions()
+barPanelScroll.hBar.Backplate:SetPoint("TOPLEFT", 4, -4)
+barPanelScroll.hBar.Backplate:SetPoint("BOTTOMRIGHT", -4, 4)
+barPanelScroll.hBar.Backplate:SetTexture("interface/buttons/white8x8")
+barPanelScroll.hBar.Backplate:SetVertexColor(0, 0, 0, .2)
+barPanelScroll.hBar:RegisterCallback(barPanelScroll.hBar.Event.OnScroll, function(scrollFrame, scrollPercentage)
+	scrollFrame:SetHorizontalScroll(scrollPercentage * scrollFrame:GetHorizontalScrollRange())
+end, barPanelScroll)
+
 barPanelScroll.child = CreateFrame("FRAME")
 barPanelScroll.child:SetSize(1, 1)
 barPanelScroll:SetScrollChild(barPanelScroll.child)
@@ -526,31 +515,30 @@ main.ignoreBtn:SetScript("OnClick", function()
 end)
 
 -- IGNORE SCROLL
-main.ignoreScroll = CreateFrame("ScrollFrame", "HidingBarAddonIgnoreListScroll", main.ignoreTabPanel, "HidingBarAddonHybridScrollTemplate")
-main.ignoreScroll.scrollBar.doNotHide = true
+main.ignoreScroll = CreateFrame("FRAME", nil, main.ignoreTabPanel, "WowScrollBoxList")
 main.ignoreScroll:SetSize(300, 200)
 main.ignoreScroll:SetPoint("TOPLEFT", editBoxIgnore, "BOTTOMLEFT", -2, -2)
+local customGrabScrollBg = main.ignoreScroll:CreateTexture(nil, "BACKGROUND")
+customGrabScrollBg:SetAllPoints()
+customGrabScrollBg:SetColorTexture(0, 0, 0, .2)
+main.ignoreScroll.scrollBar = CreateFrame("EventFrame", nil, main.ignoreTabPanel, "MinimalScrollBar")
+main.ignoreScroll.scrollBar:SetPoint("TOPLEFT", main.ignoreScroll, "TOPRIGHT", 6, -2)
+main.ignoreScroll.scrollBar:SetPoint("BOTTOMLEFT", main.ignoreScroll, "BOTTOMRIGHT", 6, 0)
+main.ignoreScroll.view = CreateScrollBoxListLinearView()
+main.ignoreScroll.view:SetElementInitializer("HidingBarAddonCustomGrabButtonTemplate", function(btn, data)
+	btn:SetText(data.name:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1"))
+	btn.removeButton:SetScript("OnClick", function()
+		main:removeIgnoreName(data.name)
+	end)
+end)
+ScrollUtil.InitScrollBoxListWithScrollBar(main.ignoreScroll, main.ignoreScroll.scrollBar, main.ignoreScroll.view)
 main.ignoreScroll.update = function(scroll)
-	local offset = HybridScrollFrame_GetOffset(scroll)
-	local numButtons = #main.pConfig.ignoreMBtn
-
-	for i, btn in ipairs(scroll.buttons) do
-		local index = i + offset
-		if index <= numButtons then
-			btn:SetText(main.pConfig.ignoreMBtn[index]:gsub("%%([%(%)%.%%%+%-%*%?%[%^%$])", "%1"))
-			btn.removeButton:SetScript("OnClick", function()
-				main:removeIgnoreName(main.pConfig.ignoreMBtn[index])
-			end)
-			btn:Enable()
-		else
-			btn:SetText(EMPTY)
-			btn:Disable()
-		end
+	local dataProvider = CreateDataProvider()
+	for i = 1, #main.pConfig.ignoreMBtn do
+		dataProvider:Insert({index = i, name = main.pConfig.ignoreMBtn[i]})
 	end
-
-	HybridScrollFrame_Update(scroll, scroll.buttonHeight * numButtons, scroll:GetHeight())
+	scroll:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
 end
-HybridScrollFrame_CreateButtons(main.ignoreScroll, "HidingBarAddonIgnoreButtonTemplate")
 
 -- IGNORE DESCRIPTION
 local ignoreDescription = main.ignoreTabPanel:CreateFontString("ARTWORK", nil, "GameFontHighlight")
@@ -564,13 +552,15 @@ ignoreDescription:SetText(L["IGNORE_DESCRIPTION"])
 -------------------------------------------
 main.addBtnOptionsPanel = createTabPanel(buttonsTabs, L["Options of adding buttons"])
 
-local addBtnOptionsScroll = CreateFrame("ScrollFrame", nil, main.addBtnOptionsPanel, "UIPanelScrollFrameTemplate")
-addBtnOptionsScroll:SetPoint("TOPLEFT", main.addBtnOptionsPanel, 4, -6)
-addBtnOptionsScroll:SetPoint("BOTTOMRIGHT", main.addBtnOptionsPanel, -26, 5)
-addBtnOptionsScroll.ScrollBar.bg = addBtnOptionsScroll.ScrollBar:CreateTexture(nil, "BACKGROUND")
-addBtnOptionsScroll.ScrollBar.bg:SetAllPoints()
-addBtnOptionsScroll.ScrollBar.bg:SetTexture("interface/buttons/white8x8")
-addBtnOptionsScroll.ScrollBar.bg:SetVertexColor(0, 0, 0, .2)
+local addBtnOptionsScroll = CreateFrame("ScrollFrame", nil, main.addBtnOptionsPanel)
+addBtnOptionsScroll:SetPoint("TOPLEFT", main.addBtnOptionsPanel, 4, -4)
+addBtnOptionsScroll:SetPoint("BOTTOMRIGHT", main.addBtnOptionsPanel, -22, 4)
+
+addBtnOptionsScroll.scrollBar = CreateFrame("EventFrame", nil, main.addBtnOptionsPanel, "MinimalScrollBar")
+addBtnOptionsScroll.scrollBar:SetPoint("TOPLEFT", addBtnOptionsScroll, "TOPRIGHT", 5, 0)
+addBtnOptionsScroll.scrollBar:SetPoint("BOTTOMLEFT", addBtnOptionsScroll, "BOTTOMRIGHT", 5, 0)
+ScrollUtil.InitScrollFrameWithScrollBar(addBtnOptionsScroll, addBtnOptionsScroll.scrollBar)
+
 addBtnOptionsScroll.child = CreateFrame("FRAME")
 addBtnOptionsScroll.child:SetSize(1, 1)
 addBtnOptionsScroll:SetScrollChild(addBtnOptionsScroll.child)
@@ -787,31 +777,30 @@ main.customGrabPointBtn:SetScript("OnClick", function(btn)
 end)
 
 -- CUSTOM GRAB SCROLL
-main.customGrabScroll = CreateFrame("ScrollFrame", "HidingBarAddonCustomGrabScroll", addBtnOptionsScroll.child, "HidingBarAddonHybridScrollTemplate")
-main.customGrabScroll.scrollBar.doNotHide = true
-main.customGrabScroll:SetSize(545, 195)
+main.customGrabScroll = CreateFrame("FRAME", nil, addBtnOptionsScroll.child, "WowScrollBoxList")
+main.customGrabScroll:SetSize(547, 195)
 main.customGrabScroll:SetPoint("TOPLEFT", editBoxGrab, "BOTTOMLEFT", -2, -2)
+local customGrabScrollBg = main.customGrabScroll:CreateTexture(nil, "BACKGROUND")
+customGrabScrollBg:SetAllPoints()
+customGrabScrollBg:SetColorTexture(0, 0, 0, .2)
+main.customGrabScroll.scrollBar = CreateFrame("EventFrame", nil, addBtnOptionsScroll.child, "MinimalScrollBar")
+main.customGrabScroll.scrollBar:SetPoint("TOPLEFT", main.customGrabScroll, "TOPRIGHT", 6, -2)
+main.customGrabScroll.scrollBar:SetPoint("BOTTOMLEFT", main.customGrabScroll, "BOTTOMRIGHT", 6, 0)
+main.customGrabScroll.view = CreateScrollBoxListLinearView()
+main.customGrabScroll.view:SetElementInitializer("HidingBarAddonCustomGrabButtonTemplate", function(btn, data)
+	btn:SetText(data.name)
+	btn.removeButton:SetScript("OnClick", function()
+		main:removeCustomGrabName(data.name)
+	end)
+end)
+ScrollUtil.InitScrollBoxListWithScrollBar(main.customGrabScroll, main.customGrabScroll.scrollBar, main.customGrabScroll.view)
 main.customGrabScroll.update = function(scroll)
-	local offset = HybridScrollFrame_GetOffset(scroll)
-	local numButtons = #main.pConfig.customGrabList
-
-	for i, btn in ipairs(scroll.buttons) do
-		local index = i + offset
-		if index <= numButtons then
-			btn:SetText(main.pConfig.customGrabList[index])
-			btn.removeButton:SetScript("OnClick", function()
-				main:removeCustomGrabName(main.pConfig.customGrabList[index])
-			end)
-			btn:Enable()
-		else
-			btn:SetText(EMPTY)
-			btn:Disable()
-		end
+	local dataProvider = CreateDataProvider()
+	for i = 1, #main.pConfig.customGrabList do
+		dataProvider:Insert({index = i, name = main.pConfig.customGrabList[i]})
 	end
-
-	HybridScrollFrame_Update(scroll, scroll.buttonHeight * numButtons, scroll:GetHeight())
+	scroll:SetDataProvider(dataProvider, ScrollBoxConstants.RetainScrollPosition)
 end
-HybridScrollFrame_CreateButtons(main.customGrabScroll, "HidingBarAddonCustomGrabButtonTemplate")
 
 -------------------------------------------
 -- BAR SETTINGS TAB PANEL
@@ -1041,73 +1030,13 @@ bgText:SetPoint("TOPLEFT", 8, -20)
 bgText:SetText(L["Background"])
 
 -- BACKGROUND COMBOBOX
-local bgCombobox = lsfdd:CreateButton(main.displayPanel, 120)
+local bgCombobox = lsfdd:CreateMediaBackgroundButton(main.displayPanel, 120)
 bgCombobox:SetPoint("LEFT", bgText, "RIGHT", 3, 0)
-
-local backdropFrame = CreateFrame("FRAME", nil, UIParent, "BackdropTemplate")
-backdropFrame:SetScript("OnHide", function(self)
-	self:SetParent(UIParent)
-	self:ClearAllPoints()
-	self:Hide()
-end)
-backdropFrame.setBackdrop = function(self, btn, backdrop)
-	if not btn.value then
-		if self.style then
-			self.style:Show()
-			self.style = nil
-		end
-		self:Hide()
-		return
-	end
-
-	local menu = lsfdd:GetMenu(1)
-
-	for name, style in pairs(menu.styles) do
-		if style:IsShown() then
-			self.style = style
-			style:Hide()
-			break
-		end
-	end
-
-	self:SetParent(menu)
-	self:SetAllPoints()
-	self:SetBackdrop(backdrop)
-	self:Show()
-end
-
-local function background_OnEnter(btn)
-	backdropFrame:setBackdrop(btn, {bgFile = media:Fetch("background", btn.value)})
-end
-
-local function setBackground(btn)
-	bgCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame:setBackground(btn.value)
+bgCombobox:ddSetOnSelectedFunc(function(value)
+	if value == "None" then value = false end
+	main.barFrame:setBackground(value)
 	main.buttonPanel.bg:SetTexture(media:Fetch("background", main.bConfig.bgTexture, true))
 	main:hidingBarUpdate()
-end
-
-bgCombobox:ddSetInitFunc(function(self)
-	local info = {}
-	info.list = {
-		{
-			text = NONE,
-			func = setBackground,
-			value = false,
-			OnEnter = background_OnEnter,
-		}
-	}
-	for i, bgTex in ipairs(media:List("background")) do
-		if bgTex ~= "None" then
-			info.list[#info.list + 1] = {
-				text = bgTex,
-				value = bgTex,
-				func = setBackground,
-				OnEnter = background_OnEnter,
-			}
-		end
-	end
-	self:ddAddButton(info)
 end)
 
 -- BACKGROUND COLOR
@@ -1129,45 +1058,12 @@ borderText:SetPoint("TOPLEFT", bgText, "BOTTOMLEFT", 0, -margin)
 borderText:SetText(L["Border"])
 
 -- BORDER COMBOBOX
-local borderCombobox = lsfdd:CreateButton(main.displayPanel, 120)
+local borderCombobox = lsfdd:CreateMediaBorderButton(main.displayPanel, 120)
 borderCombobox:SetPoint("LEFT", borderText, "RIGHT", 3, 0)
-
-local function border_OnEnter(btn)
-	backdropFrame:setBackdrop(btn, {
-		edgeFile = media:Fetch("border", btn.value),
-		bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]],
-		tile = true, tileSize = 16, edgeSize = 16,
-		insets = { left = 4, right = 4, top = 4, bottom = 4 },
-	})
-end
-
-local function setBorder(btn)
-	borderCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame:setBorder(btn.value)
-	main:hidingBarUpdate(true)
-end
-
-borderCombobox:ddSetInitFunc(function(self)
-	local info = {}
-	info.list = {
-		{
-			text = NONE,
-			func = setBorder,
-			value = false,
-			OnEnter = border_OnEnter,
-		}
-	}
-	for i, edge in ipairs(media:List("border")) do
-		if edge ~= "None" then
-			info.list[#info.list + 1] = {
-				text = edge,
-				value = edge,
-				func = setBorder,
-				OnEnter = border_OnEnter,
-			}
-		end
-	end
-	self:ddAddButton(info)
+borderCombobox:ddSetOnSelectedFunc(function(value)
+	if value == "None" then value = false end
+	main.barFrame:setBorder(value)
+	main:hidingBarUpdate()
 end)
 
 -- BORDER COLOR
@@ -1212,34 +1108,10 @@ lineText:SetPoint("TOPLEFT", borderSize, "BOTTOMLEFT", 0, -margin)
 lineText:SetText(L["Line"])
 
 -- LINE TEXTURE COMBOBOX
-local lineTextureCombobox = lsfdd:CreateButton(main.displayPanel, 120)
+local lineTextureCombobox = lsfdd:CreateMediaStatusbarButton(main.displayPanel, 120)
 lineTextureCombobox:SetPoint("LEFT", lineText, "RIGHT", 3, 0)
-lineTextureCombobox:ddSetMinMenuWidth(280)
-
-local function setLineTexture(btn)
-	lineTextureCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame:setLineTexture(btn.value)
-end
-
-lineTextureCombobox:ddSetInitFunc(function(self)
-	local info = {list = {}}
-	local textures = media:HashTable("statusbar")
-
-	for i, texName in ipairs(media:List("statusbar")) do
-		info.list[i] = {
-			text = texName,
-			fontObject = lineFont,
-			icon = textures[texName],
-			iconOnly = true,
-			iconInfo = {
-				tSizeX = 0,
-				tSizeY = 14,
-			},
-			value = texName,
-			func = setLineTexture,
-		}
-	end
-	self:ddAddButton(info)
+lineTextureCombobox:ddSetOnSelectedFunc(function(value)
+	main.barFrame:setLineTexture(value)
 end)
 
 -- LINE COLOR
@@ -1285,36 +1157,12 @@ lineBorderText:SetPoint("TOPLEFT", lineText, "BOTTOMLEFT", 0, -margin)
 lineBorderText:SetText(L["Line Border"])
 
 -- BORDER COMBOBOX
-local lineBorderCombobox = lsfdd:CreateButton(main.displayPanel, 120)
+local lineBorderCombobox = lsfdd:CreateMediaBorderButton(main.displayPanel, 120)
 lineBorderCombobox:SetPoint("LEFT", lineBorderText, "RIGHT", 3, 0)
-
-local function setLineBorder(btn)
-	lineBorderCombobox:ddSetSelectedValue(btn.value)
-	main.barFrame:setLineBorder(btn.value)
+lineBorderCombobox:ddSetOnSelectedFunc(function(value)
+	if value == "None" then value = false end
+	main.barFrame:setLineBorder(value)
 	main:hidingBarUpdate()
-end
-
-lineBorderCombobox:ddSetInitFunc(function(self)
-	local info = {}
-	info.list = {
-		{
-			text = NONE,
-			func = setLineBorder,
-			value = false,
-			OnEnter = border_OnEnter,
-		}
-	}
-	for i, edge in ipairs(media:List("border")) do
-		if edge ~= "None" then
-			info.list[#info.list + 1] = {
-				text = edge,
-				value = edge,
-				func = setLineBorder,
-				OnEnter = border_OnEnter,
-			}
-		end
-	end
-	self:ddAddButton(info)
 end)
 
 -- LINE BORDER COLOR
@@ -2176,26 +2024,17 @@ function main:setBar(bar)
 		self.fadeOpacity:setValue(self.bConfig.fadeOpacity)
 		self.fadeOpacity:setEnabled(not not self.bConfig.fade)
 
-		bgCombobox:ddSetSelectedValue(self.bConfig.bgTexture)
-		bgCombobox:ddSetSelectedText(self.bConfig.bgTexture or NONE)
+		bgCombobox:ddSetSelectedValue(self.bConfig.bgTexture or "None")
 		bgColor.color:SetColorTexture(unpack(self.bConfig.bgColor))
-		borderCombobox:ddSetSelectedValue(self.bConfig.borderEdge)
-		borderCombobox:ddSetSelectedText(self.bConfig.borderEdge or NONE)
+		borderCombobox:ddSetSelectedValue(self.bConfig.borderEdge or "None")
 		borderColor.color:SetColorTexture(unpack(self.bConfig.borderColor))
 		borderOffset:setValue(self.bConfig.borderOffset)
 		borderSize:setValue(self.bConfig.borderSize)
 		lineTextureCombobox:ddSetSelectedValue(self.bConfig.lineTexture)
-		local icon = media:Fetch("statusbar", self.bConfig.lineTexture, true)
-		local iconInfo = {
-			tSizeX = 0,
-			tSizeY = 14,
-		}
-		lineTextureCombobox:ddSetSelectedText(self.bConfig.lineTexture, icon, iconInfo, true, lineFont)
 		main.lineColor.color:SetColorTexture(unpack(self.bConfig.lineColor))
 		main.lineColor.updateLineColor()
 		self.lineWidth:setValue(self.bConfig.lineWidth)
-		lineBorderCombobox:ddSetSelectedValue(self.bConfig.lineBorderEdge)
-		lineBorderCombobox:ddSetSelectedText(self.bConfig.lineBorderEdge or NONE)
+		lineBorderCombobox:ddSetSelectedValue(self.bConfig.lineBorderEdge or "None")
 		lineBorderColor.color:SetColorTexture(unpack(self.bConfig.lineBorderColor))
 		self.lineBorderOffset:setValue(self.bConfig.lineBorderOffset)
 		self.lineBorderSize:setValue(self.bConfig.lineBorderSize)
