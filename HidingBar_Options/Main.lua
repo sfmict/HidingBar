@@ -8,13 +8,11 @@ local media = LibStub("LibSharedMedia-3.0")
 local lsfdd = LibStub("LibSFDropDown-1.5")
 
 
-local lang, margin, lineFont = GetLocale()
+local lang, margin = GetLocale()
 if lang == "zhTW" or lang == "zhCN" then
 	margin = 16
-	lineFont = GameFontHighlightOutline
 else
 	margin = 18
-	lineFont = Game10Font_o1
 end
 
 
@@ -516,7 +514,7 @@ end)
 
 -- IGNORE SCROLL
 main.ignoreScroll = CreateFrame("FRAME", nil, main.ignoreTabPanel, "WowScrollBoxList")
-main.ignoreScroll:SetSize(300, 200)
+main.ignoreScroll:SetSize(302, 200)
 main.ignoreScroll:SetPoint("TOPLEFT", editBoxIgnore, "BOTTOMLEFT", -2, -2)
 local customGrabScrollBg = main.ignoreScroll:CreateTexture(nil, "BACKGROUND")
 customGrabScrollBg:SetAllPoints()
@@ -1637,7 +1635,7 @@ main.ombBarDisplacement:setOnChanged(function(frame, value)
 	end
 end)
 
--- THE BUTTON CAN BE CRABBED
+-- THE BUTTON CAN BE GRABBED
 main.canGrabbed = CreateFrame("CheckButton", nil, main.positionBarPanel, "HidingBarAddonCheckButtonTemplate")
 main.canGrabbed:SetPoint("TOPLEFT", main.distanceFromButtonToBar, "BOTTOMLEFT", -2, -8)
 main.canGrabbed.Text:SetText(L["The button can be grabbed"])
