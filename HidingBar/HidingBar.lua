@@ -380,7 +380,7 @@ function hb:ADDON_LOADED(addonName)
 		end
 		addToIgnoreFrameList("Minimap.ZoomIn")
 		addToIgnoreFrameList("Minimap.ZoomOut")
-		addToIgnoreFrameList("MinimapCluster.Tracking")
+		addToIgnoreFrameList("MinimapCluster.TrackingFrame")
 		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.MailFrame")
 		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
 
@@ -1080,8 +1080,8 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	local tracking = self:getFrameFromPath("MinimapCluster.Tracking")
-	if tracking and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[tracking] then
+	local tracking = self:getFrameFromPath("MinimapCluster.TrackingFrame")
+	if tracking and self:ignoreCheck("MinimapCluster.TrackingFrame") and not self.btnParams[tracking] then
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
@@ -1103,7 +1103,7 @@ function hb:grabDefButtons()
 			end
 		end)
 
-		p.name = "MinimapCluster.Tracking"
+		p.name = "MinimapCluster.TrackingFrame"
 		tracking.Background:Hide()
 		p.btnWidth, p.btnHeight = self.GetSize(tracking.Button)
 		self.SetSize(tracking.Button, tracking:GetSize())
