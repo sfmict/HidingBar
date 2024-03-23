@@ -630,28 +630,6 @@
 		<Size x="550" y="18"/>
 	</Button>
 
-	<ScrollFrame name="HidingBarAddonHybridScrollTemplate" inherits="HybridScrollFrameTemplate" virtual="true">
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="bg" alpha=".5">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="0" y="0"/>
-						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
-					</Anchors>
-					<Color r=".1" g=".1" b=".1"/>
-				</Texture>
-			</Layer>
-		</Layers>
-		<Frames>
-			<Slider parentKey="scrollBar" inherits="HybridScrollBarTrimTemplate">
-				<Anchors>
-					<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="4" y="-18"/>
-					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMRIGHT" x="4" y="15"/>
-				</Anchors>
-			</Slider>
-		</Frames>
-	</ScrollFrame>
-
 	<Frame name="HidingBarAddonHelpPlate" virtual="true">
 		<Size x="64" y="64"/>
 		<HitRectInsets>
