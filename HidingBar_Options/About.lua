@@ -64,6 +64,7 @@ local langs, last = {
 	{"esES", "neolynx_zero, maylisdalan"},
 	{"esMX", "maylisdalan"},
 	{"frFR", "PhantomLord, maylisdalan"},
+	{"itIT", "Grifo92"},
 	{"koKR", "drixwow, Hayan, netaras"},
 	{"ptBR", "cathzinhas, 6605270, maylisdalan"},
 	{"zhCN", "lambdapak, huchang47, kuaishan"},
