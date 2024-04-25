@@ -273,6 +273,9 @@ if MSQ then
 				btn.__MSQ_Icon:RemoveMaskTexture(data._IconCircleMask)
 				data._IconCircleMask = nil
 			end
+			if not next(data) then
+				self.MSQ_Button_Data[btn] = nil
+			end
 		end
 	end
 
@@ -357,7 +360,7 @@ if MSQ then
 
 		local pushed = isButton and btn:GetPushedTexture()
 		if border or background or pushed or normal or btnHighlight or iconMask then
-			self.MSQ_Button_Data[btn] = {
+			local data = {
 				_Border = border,
 				_Background = background,
 				_Pushed = pushed,
@@ -365,12 +368,12 @@ if MSQ then
 				_IconCircleMask = iconMask,
 			}
 			if normal then
-				local data = self.MSQ_Button_Data[btn]
 				data._Normal = normal
 				data._IsNormalIcon = isNormalIcon
 				data._Icon = icon
 				data._Group = MSQ_Group
 			end
+			self.MSQ_Button_Data[btn] = data
 		end
 		self:MSQ_Button_Update(btn)
 		self:MSQ_CoordUpdate(btn)
@@ -441,7 +444,7 @@ function hb:ADDON_LOADED(addonName)
 		end
 
 		C_Timer.After(0, function()
-			xpcall(self.setProfile, geterrorhandler(), self)
+			xpcall(self.setProfile, CallErrorHandler, self)
 			self.cb:Fire("INIT")
 			self.init = nil
 		end)
