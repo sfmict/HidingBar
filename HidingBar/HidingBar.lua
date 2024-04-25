@@ -446,7 +446,7 @@ function hb:ADDON_LOADED(addonName)
 		end
 
 		C_Timer.After(0, function()
-			xpcall(self.setProfile, geterrorhandler(), self)
+			xpcall(self.setProfile, CallErrorHandler, self)
 			self.cb:Fire("INIT")
 			self.init = nil
 		end)
