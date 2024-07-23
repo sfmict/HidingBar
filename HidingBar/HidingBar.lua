@@ -397,7 +397,7 @@ function hb:ADDON_LOADED(addonName)
 		end
 		addToIgnoreFrameList("Minimap.ZoomIn")
 		addToIgnoreFrameList("Minimap.ZoomOut")
-		addToIgnoreFrameList("MinimapCluster.TrackingFrame")
+		addToIgnoreFrameList("MinimapCluster.Tracking")
 		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.MailFrame")
 		addToIgnoreFrameList("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
 
@@ -1097,8 +1097,8 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	local tracking = self:getFrameFromPath("MinimapCluster.TrackingFrame")
-	if tracking and self:ignoreCheck("MinimapCluster.TrackingFrame") and not self.btnParams[tracking] then
+	local tracking = self:getFrameFromPath("MinimapCluster.Tracking")
+	if tracking and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[tracking] then
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
@@ -1120,7 +1120,7 @@ function hb:grabDefButtons()
 			end
 		end)
 
-		p.name = "MinimapCluster.TrackingFrame"
+		p.name = "MinimapCluster.Tracking"
 		tracking.Background:Hide()
 		p.btnWidth, p.btnHeight = self.GetSize(tracking.Button)
 		self.SetSize(tracking.Button, tracking:GetSize())
@@ -1340,7 +1340,6 @@ function hb:grabDefButtons()
 	local queue = QueueStatusButton
 	if queue and self:ignoreCheck("QueueStatusButton") and not self.btnParams[queue] then
 		queue.icon = queue.Eye.texture
-		queue.DropDown:SetScript("OnHide", nil)
 		self:setHooks(queue)
 
 		local p = self:setParams(queue, function(p, queue)
@@ -2841,24 +2840,37 @@ function hidingBarMixin:enter(force)
 end
 
 
-local GetMouseFocus, pcall = GetMouseFocus, pcall
-function hidingBarMixin:isFocusParent()
-	local status, numPoints = true
-	local frame = GetMouseFocus()
-	while status and frame do
-		if noEventFrames[frame] then
-			return self.GetParent(noEventFrames[frame]) == self
+do
+	local GetMouseFoci, pcall, region = GetMouseFoci, pcall
+	local menuManager = Menu.GetManager()
+	local setRegion = function(_, ownerRegion) region = ownerRegion end
+	hooksecurefunc(menuManager, "OpenMenu", setRegion)
+	hooksecurefunc(menuManager, "OpenContextMenu", setRegion)
+
+
+	function hidingBarMixin:isFocusParent()
+		local menu = menuManager:GetOpenMenu()
+		if menu and menu:IsMouseOver() and noEventFrames[region] then
+			return self.GetParent(noEventFrames[region]) == self
 		end
-		status, numPoints = pcall(self.GetNumPoints, frame)
-		if status then
-			for i = 1, numPoints do
-				local status, _, rFrame = pcall(self.GetPoint, frame, i)
-				if status and noEventFrames[rFrame] then
-					return self.GetParent(noEventFrames[rFrame]) == self
+
+		local status, numPoints = true
+		local frame =  GetMouseFoci()[1]
+		while status and frame do
+			if noEventFrames[frame] then
+				return self.GetParent(noEventFrames[frame]) == self
+			end
+			status, numPoints = pcall(self.GetNumPoints, frame)
+			if status then
+				for i = 1, numPoints do
+					local status, _, rFrame = pcall(self.GetPoint, frame, i)
+					if status and noEventFrames[rFrame] then
+						return self.GetParent(noEventFrames[rFrame]) == self
+					end
 				end
 			end
+			status, frame = pcall(self.GetParent, frame)
 		end
-		status, frame = pcall(self.GetParent, frame)
 	end
 end
 
