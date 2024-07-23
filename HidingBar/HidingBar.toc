@@ -1,4 +1,4 @@
-## Interface: 110000
+## Interface: 110002, 110000
 ## Title: HidingBar
 ## Author: sfmict
 ## Version: @project-version@
@@ -7,7 +7,6 @@
 ## SavedVariables: HidingBarDB
 ## SavedVariablesPerCharacter: HidingBarDBChar
 ## OptionalDeps: Masque
-## OnlyBetaAndPTR: 1
 embeds.xml
 locales.xml
 templates.xml
