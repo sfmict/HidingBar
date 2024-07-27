@@ -734,7 +734,7 @@ main.customGrabPointBtn:SetPoint("LEFT", main.customGrabBtn, "RIGHT")
 main.customGrabPointBtn:SetText(L["Point to button"])
 main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
 	if not btn.isPoint then return end
-	local focus = GetMouseFocus()
+	local focus = GetMouseFoci()[1]
 	if focus then
 		local name = getNoErr(btn.GetName, focus)
 		if name and not getNoErr(btn.IsProtected, focus) and (
