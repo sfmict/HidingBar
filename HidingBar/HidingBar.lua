@@ -3149,7 +3149,7 @@ end
 
 
 setmetatable(hb.bars, {__index = function(self, key)
-	local bar = CreateFrame("FRAME", nil, UIParent, "HidingBarAddonPanel")
+	local bar = CreateFrame("FRAME", "HidingBarBar", UIParent, "HidingBarAddonPanel")
 	bar:SetClampedToScreen(true)
 	bar:SetScript("OnEnter", bar_OnEnter)
 	bar:SetScript("OnLeave", bar_OnLeave)
