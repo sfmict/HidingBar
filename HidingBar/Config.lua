@@ -1,4 +1,5 @@
-local addon, L = ...
+local addon, ns = ...
+local L = ns.L
 local IsAddOnLoaded = IsAddOnLoaded or C_AddOns.IsAddOnLoaded
 local LoadAddOn = LoadAddOn or C_AddOns.LoadAddOn
 local EnableAddOn = EnableAddOn or C_AddOns.EnableAddOn
@@ -35,6 +36,7 @@ end
 
 -- MAIN
 local config = CreateFrame("FRAME", addon.."ConfigAddon")
+ns.config = config
 config.name = addon
 config:Hide()
 config.L = L

@@ -2,7 +2,8 @@ if GetLocale() ~= "deDE" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "Autor"
 L["%s Configuration"] = "%s Konfiguration"
@@ -41,6 +42,7 @@ L["Background"] = "Hintergrund"
 L["Fade out line"] = "|cff%sLinie|r ausblenden"
 L["Fade out bar"] = "Balken ausblenden"
 L["Opacity"] = "Deckkraft"
+-- L["Hide the bar in Pet Battle"] = ""
 L["Line width"] = "|cff%sLinien|rbreite"
 L["Line Border"] = "Linien-Rand"
 L["Line Border Offset"] = "|cff%sLinien|r-Rand Versatz"

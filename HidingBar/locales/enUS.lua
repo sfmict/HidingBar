@@ -1,4 +1,6 @@
-local _, L = ...
+local _, ns = ...
+local L = {}
+ns.L = L
 
 L["author"] = "Author"
 L["%s Configuration"] = "%s Configuration"
@@ -37,6 +39,7 @@ L["Background"] = "Background"
 L["Fade out line"] = "Fade out |cff%sline|r"
 L["Fade out bar"] = "Fade out bar"
 L["Opacity"] = "Opacity"
+L["Hide the bar in Pet Battle"] = "Hide the bar in Pet Battle"
 L["Line width"] = "|cff%sLine|r width"
 L["Line Border"] = "Line Border"
 L["Line Border Offset"] = "|cff%sLine|r Border Offset"

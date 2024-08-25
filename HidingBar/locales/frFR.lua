@@ -2,7 +2,8 @@ if GetLocale() ~= "frFR" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "Auteur"
 L["%s Configuration"] = "%s Configuration"
@@ -41,6 +42,7 @@ L["Background"] = "Arrière-plan"
 L["Fade out line"] = "|cff%sLigne|r de disparition"
 L["Fade out bar"] = "Barre de disparition"
 L["Opacity"] = "Opacité"
+-- L["Hide the bar in Pet Battle"] = ""
 L["Line width"] = "Largeur de |cff%sligne|r"
 L["Line Border"] = "Bordure de ligne"
 L["Line Border Offset"] = "Décalage de bordure de |cff%sligne|r"
