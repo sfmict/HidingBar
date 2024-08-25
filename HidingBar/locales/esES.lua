@@ -2,7 +2,8 @@ if GetLocale() ~= "esES" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "Autor"
 L["%s Configuration"] = "Configuración de %s"

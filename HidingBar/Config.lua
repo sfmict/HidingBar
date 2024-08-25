@@ -1,4 +1,5 @@
-local addon, L = ...
+local addon, ns = ...
+local L = ns.L
 
 
 local function onShow(self)
@@ -32,6 +33,7 @@ end
 
 -- MAIN
 local config = CreateFrame("FRAME", addon.."ConfigAddon")
+ns.config = config
 config.name = addon
 config:Hide()
 config.L = L

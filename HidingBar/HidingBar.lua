@@ -1,5 +1,5 @@
-local addon, L = ...
-local config, UIParent = _G[addon.."ConfigAddon"], UIParent
+local addon, ns = ...
+local L, config, UIParent = ns.L, ns.config, UIParent
 local hb = CreateFrame("FRAME", addon.."Addon")
 local cover = CreateFrame("FRAME")
 cover:Hide()

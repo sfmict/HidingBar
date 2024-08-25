@@ -2,7 +2,8 @@ if GetLocale() ~= "zhTW" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "作者"
 L["%s Configuration"] = "%s 設定"
