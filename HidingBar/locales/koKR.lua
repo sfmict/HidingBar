@@ -2,7 +2,8 @@ if GetLocale() ~= "koKR" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "제작자"
 L["%s Configuration"] = "%s 설정"

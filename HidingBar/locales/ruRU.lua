@@ -2,7 +2,8 @@ if GetLocale() ~= "ruRU" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "Автор"
 L["%s Configuration"] = "Конфигурация %s"

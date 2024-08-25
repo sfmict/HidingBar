@@ -1,4 +1,6 @@
-local _, L = ...
+local _, ns = ...
+local L = {}
+ns.L = L
 
 L["author"] = "Author"
 L["%s Configuration"] = "%s Configuration"
