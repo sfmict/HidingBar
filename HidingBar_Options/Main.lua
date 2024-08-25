@@ -1010,6 +1010,17 @@ main.fadeOpacity:setOnChanged(function(frame, value)
 	main.barFrame:setFadeOpacity(value)
 end)
 
+-- PET BATTLE HIDE
+main.petBattleHide = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
+main.petBattleHide:SetPoint("TOPLEFT", main.fade, "BOTTOMLEFT", 0, -5)
+main.petBattleHide.Text:SetText(L["Hide the bar in Pet Battle"])
+main.petBattleHide:SetScript("OnClick", function(btn)
+	local checked = btn:GetChecked()
+	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+	main.bConfig.petBattleHide = checked
+	main.barFrame:refreshShown()
+end)
+
 -- ALIGN
 alignText(orientationText, hideHandlerText, showHandlerText)
 
@@ -2023,6 +2034,7 @@ function main:setBar(bar)
 		self.fade:SetChecked(self.bConfig.fade)
 		self.fadeOpacity:setValue(self.bConfig.fadeOpacity)
 		self.fadeOpacity:setEnabled(not not self.bConfig.fade)
+		self.petBattleHide:SetChecked(self.bConfig.petBattleHide)
 
 		bgCombobox:ddSetSelectedValue(self.bConfig.bgTexture or "None")
 		bgColor.color:SetColorTexture(unpack(self.bConfig.bgColor))

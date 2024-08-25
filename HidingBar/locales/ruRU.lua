@@ -2,7 +2,8 @@ if GetLocale() ~= "ruRU" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "Автор"
 L["%s Configuration"] = "Конфигурация %s"
@@ -41,6 +42,7 @@ L["Background"] = "Фон"
 L["Fade out line"] = "Исчезновение |cff%sлинии|r"
 L["Fade out bar"] = "Исчезновение панели"
 L["Opacity"] = "Прозрачность"
+L["Hide the bar in Pet Battle"] = "Скрывать панель в битве питомцев"
 L["Line width"] = "Ширина |cff%sлинии|r"
 L["Line Border"] = "Граница линии"
 L["Line Border Offset"] = "Смещение границы |cff%sлинии|r"

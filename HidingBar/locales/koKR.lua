@@ -2,7 +2,8 @@ if GetLocale() ~= "koKR" then
 	return
 end
 
-local _, L = ...
+local _, ns = ...
+local L = ns.L
 
 L["author"] = "제작자"
 L["%s Configuration"] = "%s 설정"
@@ -41,6 +42,7 @@ L["Background"] = "바탕화면"
 L["Fade out line"] = "|cff%s선|r 투명도"
 L["Fade out bar"] = "바 투명도"
 L["Opacity"] = "투명도"
+-- L["Hide the bar in Pet Battle"] = ""
 L["Line width"] = "선 너비"
 L["Line Border"] = "선 테두리"
 L["Line Border Offset"] = "선 테두리 오프셋"

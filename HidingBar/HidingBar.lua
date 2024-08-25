@@ -1,5 +1,5 @@
-local addon, L = ...
-local config, UIParent = _G[addon.."ConfigAddon"], UIParent
+local addon, ns = ...
+local L, config, UIParent = ns.L, ns.config, UIParent
 local hb = CreateFrame("FRAME", addon.."Addon")
 local cover = CreateFrame("FRAME")
 cover:Hide()
@@ -445,6 +445,9 @@ function hb:ADDON_LOADED(addonName)
 			self.db.config = nil
 		end
 
+		self:RegisterEvent("PET_BATTLE_OPENING_START")
+		self:RegisterEvent("PET_BATTLE_CLOSE")
+
 		C_Timer.After(0, function()
 			xpcall(self.setProfile, CallErrorHandler, self)
 			self.cb:Fire("INIT")
@@ -524,6 +527,9 @@ function hb:checkProfile(profile)
 		bar.config.lineBorderOffset = bar.config.lineBorderOffset or 1
 		bar.config.lineBorderSize = bar.config.lineBorderSize or 2
 		bar.config.gapSize = bar.config.gapSize or 0
+		if bar.config.petBattleHide == nil then
+			bar.config.petBattleHide = true
+		end
 		bar.config.omb = bar.config.omb or {}
 		if bar.config.omb.hide == nil then
 			bar.config.omb.hide = true
@@ -552,6 +558,26 @@ function hb:UI_SCALE_CHANGED()
 		bar:setBarTypePosition()
 		bar:setBorder()
 		bar:setLineBorder()
+	end
+end
+
+
+function hb:PET_BATTLE_OPENING_START()
+	self.petBattle = true
+	if self.currentProfile then
+		for i = 1, #self.currentProfile.bars do
+			self.bars[i]:refreshShown()
+		end
+	end
+end
+
+
+function hb:PET_BATTLE_CLOSE()
+	self.petBattle = nil
+	if self.currentProfile then
+		for i = 1, #self.currentProfile.bars do
+			self.bars[i]:refreshShown()
+		end
 	end
 end
 
@@ -2910,6 +2936,19 @@ end
 
 
 function hidingBarMixin:refreshShown()
+	if hb.petBattle then
+		local petBattleHide
+		if self.config.barTypePosition == 2 and self.omb and self.omb.isGrabbed then
+			petBattleHide = self.omb:GetParent().config.petBattleHide
+		else
+			petBattleHide = self.config.petBattleHide
+		end
+		if petBattleHide then
+			self:Hide()
+			self.drag:Hide()
+			return
+		end
+	end
 	if self.config.barTypePosition == 2 then
 		self.drag:Hide()
 		if self.config.showHandler == 3 then
