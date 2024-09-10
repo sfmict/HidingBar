@@ -2591,6 +2591,10 @@ end
 
 
 local GetMouseFocus, pcall = GetMouseFocus, pcall
+if not GetMouseFocus then
+	local GetMouseFoci = GetMouseFoci
+	GetMouseFocus = function() return GetMouseFoci()[1] end
+end
 function hidingBarMixin:isFocusParent()
 	local status, numPoints = true
 	local frame = GetMouseFocus()
