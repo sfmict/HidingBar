@@ -728,6 +728,12 @@ local function getNoErr(func, ...)
 	return status and val
 end
 
+local GetMouseFocus = GetMouseFocus
+if not GetMouseFocus then
+	local GetMouseFoci = GetMouseFoci
+	GetMouseFocus = function() return GetMouseFoci()[1] end
+end
+
 main.customGrabPointBtn = CreateFrame("BUTTON", nil, addBtnOptionsScroll.child, "UIPanelButtonTemplate")
 main.customGrabPointBtn:SetSize(140, 22)
 main.customGrabPointBtn:SetPoint("LEFT", main.customGrabBtn, "RIGHT")
