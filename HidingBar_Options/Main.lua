@@ -728,19 +728,13 @@ local function getNoErr(func, ...)
 	return status and val
 end
 
-local GetMouseFocus = GetMouseFocus
-if not GetMouseFocus then
-	local GetMouseFoci = GetMouseFoci
-	GetMouseFocus = function() return GetMouseFoci()[1] end
-end
-
 main.customGrabPointBtn = CreateFrame("BUTTON", nil, addBtnOptionsScroll.child, "UIPanelButtonTemplate")
 main.customGrabPointBtn:SetSize(140, 22)
 main.customGrabPointBtn:SetPoint("LEFT", main.customGrabBtn, "RIGHT")
 main.customGrabPointBtn:SetText(L["Point to button"])
 main.customGrabPointBtn:SetScript("OnUpdate", function(btn)
 	if not btn.isPoint then return end
-	local focus = GetMouseFocus()
+	local focus = GetMouseFoci()[1]
 	if focus then
 		local name = getNoErr(btn.GetName, focus)
 		if name and not getNoErr(btn.IsProtected, focus) and (
