@@ -60,15 +60,15 @@ translators:SetPoint("TOPLEFT", helpText, "BOTTOMLEFT", 0, -80)
 translators:SetText(L["Localization Translators:"])
 
 local langs, last = {
-	{"deDE", "SlayerEGT"},
+	{"deDE", "SlayerEGT, maylisdalan"},
 	{"esES", "neolynx_zero, maylisdalan"},
 	{"esMX", "maylisdalan"},
 	{"frFR", "PhantomLord, maylisdalan"},
-	{"itIT", "Grifo92"},
+	{"itIT", "Grifo92, maylisdalan"},
 	{"koKR", "drixwow, Hayan, netaras"},
 	{"ptBR", "cathzinhas, 6605270, maylisdalan"},
 	{"zhCN", "lambdapak, huchang47, kuaishan"},
-	{"zhTW", "BNS333, terry1314"},
+	{"zhTW", "BNS333, terry1314, RainbowUI"},
 }
 
 for _, l in ipairs(langs) do
