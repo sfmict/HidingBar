@@ -915,6 +915,7 @@ do
 		if createdButtonsByName[name] then return end
 		local button = CreateFrame("BUTTON", ("ADDON_%s_%s"):format(addon, name), nil, "HidingBarAddonCreatedButtonTemplate")
 		createdButtonsByName[name] = button
+		noEventFrames[button] = button
 		button.name = name
 		button.data = data
 		if data.icon then
