@@ -4,42 +4,6 @@ main.iconData = iconData
 iconData:Hide()
 
 
--- local function fillOutExtraIconsWithSpells(extraIcons, icons)
--- 	for skillLineIndex = 1, C_SpellBook.GetNumSpellBookSkillLines() do
--- 		local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(skillLineIndex)
--- 		for i = 1, skillLineInfo.numSpellBookItems do
--- 			local spellIndex = skillLineInfo.itemIndexOffset + i
--- 			local spellType, ID = C_SpellBook.GetSpellBookItemType(spellIndex, Enum.SpellBookSpellBank.Player)
--- 			if spellType ~= "FUTURESPELL" then
--- 				local fileID = C_SpellBook.GetSpellBookItemTexture(spellIndex, Enum.SpellBookSpellBank.Player)
--- 				if fileID ~= nil and not icons[fileID] then
--- 					local name = C_SpellBook.GetSpellBookItemName(spellIndex, Enum.SpellBookSpellBank.Player)
--- 					extraIcons[#extraIcons + 1] = {type = "spell", name = name, icon = fileID}
--- 					icons[fileID] = true
--- 				end
--- 			end
-
--- 			if spellType == "FLYOUT" then
--- 				local _, _, numSlots, isKnown = GetFlyoutInfo(ID)
--- 				if isKnown and (numSlots > 0) then
--- 					for k = 1, numSlots do
--- 						local spellID, overrideSpellID, isSlotKnown = GetFlyoutSlotInfo(ID, k)
--- 						if isSlotKnown then
--- 							local fileID = C_Spell.GetSpellTexture(spellID)
--- 							if fileID ~= nil and not icons[fileID] then
--- 								local name = C_Spell.GetSpellName(spellID)
--- 								extraIcons[#extraIcons + 1] = {type = "spell", name = name, icon = fileID}
--- 								icons[fileID] = true
--- 							end
--- 						end
--- 					end
--- 				end
--- 			end
--- 		end
--- 	end
--- end
-
-
 local function fillOutExtraIconsWithSpells(extraIcons, icons)
 	for i = 1, GetNumSpellTabs() do
 		local tab, tabTex, offset, numSpells = GetSpellTabInfo(i)
