@@ -9,4 +9,5 @@
 embeds.xml
 templates.xml
 Main.lua
+IconData.lua
 About.lua
