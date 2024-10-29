@@ -1,4 +1,4 @@
-## Interface: 40401, 40400
+## Interface: 40401
 ## Title: HidingBar Options
 ## Author: sfmict
 ## Version: @project-version@
@@ -9,4 +9,5 @@
 embeds.xml
 templates.xml
 Main.lua
+IconData.lua
 About.lua

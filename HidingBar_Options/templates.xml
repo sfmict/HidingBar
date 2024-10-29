@@ -674,4 +674,46 @@
 			</OnLeave>
 		</Scripts>
 	</Frame>
+
+	<Button name="HidingBarAddonIconButtonTemplate" virtual="true">
+		<Size x="32" y="32"/>
+		<Layers>
+			<Layer level="OVERLAY" textureSubLevel="2">
+				<Texture parentKey="border" inherits="ActionBarFlyoutButton-IconFrame">
+					<Size x="34" y="34"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<NormalTexture parentKey="icon"/>
+		<HighlightTexture parentKey="highlight" file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD"/>
+		<Scripts>
+			<OnDisable>self.icon:SetDesaturated(true)</OnDisable>
+			<OnEnable>self.icon:SetDesaturated()</OnEnable>
+		</Scripts>
+	</Button>
+
+	<Button name="HidingBarAddonIconButtonSelectedTemplate" inherits="HidingBarAddonIconButtonTemplate" virtual="true">
+		<Layers>
+			<Layer level="OVERLAY" textureSubLevel="1">
+				<Texture atlas="PetList-ButtonSelect" parentKey="selectedTexture" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="2" y="-1"/>
+						<Anchor point="BOTTOMRIGHT" x="-2" y="1"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</Button>
+
+	<Frame name="HidingBarAddonDarkPanelTemplate" inherits="BackdropTemplate" virtual="true">
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop(HidingBarConfigAddon.darkPanelBackdrop)
+				self:SetBackdropColor(.1, .1, .1, .8)
+			</OnLoad>
+		</Scripts>
+	</Frame>
 </Ui>

@@ -9,6 +9,7 @@ local btnSettingsMeta = {__index = function(self, key)
 	return self[key]
 end}
 local createdButtonsByName, btnSettings, noEventFrames = {}, {}, {}
+hb.ombDefIcon = "Interface/Icons/misc_arrowleft"
 hb.ldbiPrefix = "LibDBIcon10_"
 hb.matchName = hb.ldbiPrefix..addon.."%d+$"
 hb.createdButtons, hb.minimapButtons, hb.mixedButtons = {}, {}, {}
@@ -1743,7 +1744,7 @@ do
 		self.ldb_icon = ldb:NewDataObject(self.ombName, {
 			type = "data source",
 			text = self.ombName,
-			icon = "Interface/MINIMAP/Vehicle-SilvershardMines-Arrow",
+			icon = hb.ombDefIcon,
 			OnClick = OnClick,
 			OnEnter = OnEnter,
 			OnLeave = OnLeave,
@@ -2438,16 +2439,16 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 
 		if self.config.omb.anchor == "left" then
 			secondPosition = btnSize + self.config.omb.distanceToBar
-			self.omb.icon:SetRotation(-math.pi/2)
+			self.ldb_icon.icon = self.config.omb.icon or "Interface/Icons/misc_arrowright"
 		elseif self.config.omb.anchor == "right" then
 			secondPosition = -btnSize - self.config.omb.distanceToBar
-			self.omb.icon:SetRotation(math.pi/2)
+			self.ldb_icon.icon = self.config.omb.icon or "Interface/Icons/misc_arrowleft"
 		elseif self.config.omb.anchor == "top" then
 			secondPosition = -btnSize - self.config.omb.distanceToBar
-			self.omb.icon:SetRotation(math.pi)
+			self.ldb_icon.icon = self.config.omb.icon or "Interface/Icons/misc_arrowdown"
 		else
 			secondPosition = btnSize + self.config.omb.distanceToBar
-			self.omb.icon:SetRotation(0)
+			self.ldb_icon.icon = self.config.omb.icon or "Interface/Icons/misc_arrowlup"
 		end
 
 		self.anchorObj = self.config.omb
@@ -2657,28 +2658,37 @@ function hidingBarMixin:enter(force)
 end
 
 
-local GetMouseFocus, pcall = GetMouseFocus, pcall
-if not GetMouseFocus then
-	local GetMouseFoci = GetMouseFoci
-	GetMouseFocus = function() return GetMouseFoci()[1] end
-end
-function hidingBarMixin:isFocusParent()
-	local status, numPoints = true
-	local frame = GetMouseFocus()
-	while status and frame do
-		if noEventFrames[frame] then
-			return self.GetParent(noEventFrames[frame]) == self
+do
+	local GetMouseFoci, pcall, region = GetMouseFoci, pcall
+	local menuManager = Menu.GetManager()
+	local setRegion = function(_, ownerRegion) region = ownerRegion end
+	hooksecurefunc(menuManager, "OpenMenu", setRegion)
+	hooksecurefunc(menuManager, "OpenContextMenu", setRegion)
+
+
+	function hidingBarMixin:isFocusParent()
+		local menu = menuManager:GetOpenMenu()
+		if menu and menu:IsMouseOver() and noEventFrames[region] then
+			return self.GetParent(noEventFrames[region]) == self
 		end
-		status, numPoints = pcall(self.GetNumPoints, frame)
-		if status then
-			for i = 1, numPoints do
-				local status, _, rFrame = pcall(self.GetPoint, frame, i)
-				if status and noEventFrames[rFrame] then
-					return self.GetParent(noEventFrames[rFrame]) == self
+
+		local status, numPoints = true
+		local frame =  GetMouseFoci()[1]
+		while status and frame do
+			if noEventFrames[frame] then
+				return self.GetParent(noEventFrames[frame]) == self
+			end
+			status, numPoints = pcall(self.GetNumPoints, frame)
+			if status then
+				for i = 1, numPoints do
+					local status, _, rFrame = pcall(self.GetPoint, frame, i)
+					if status and noEventFrames[rFrame] then
+						return self.GetParent(noEventFrames[rFrame]) == self
+					end
 				end
 			end
+			status, frame = pcall(self.GetParent, frame)
 		end
-		status, frame = pcall(self.GetParent, frame)
 	end
 end
 

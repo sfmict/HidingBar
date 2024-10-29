@@ -41,6 +41,17 @@ main.colorButtonBackdrop = {
 }
 
 
+main.darkPanelBackdrop = {
+	bgFile = "Interface/ChatFrame/ChatFrameBackground",
+	edgeFile = "Interface/Buttons/UI-SliderBar-Border",
+	tile = true,
+	tileEdge = true,
+	tileSize = 8 * scale,
+	edgeSize = 8 * scale,
+	insets = {left = 3, right = 3, top = 6, bottom = 6},
+}
+
+
 local function toHex(tbl)
 	local str = ("%02x"):format(tbl[1] * 255)
 	for i = 2, #tbl do
@@ -156,7 +167,9 @@ StaticPopupDialogs[main.addonName.."NEW_PROFILE"] = {
 local function profileExistsAccept(popup, data)
 	if not popup then return end
 	popup:Hide()
-	main:createProfile(data)
+	main:profilePopupAction(data)
+	main.profilePopupAction = nil
+	main.lastProfileName = nil
 end
 StaticPopupDialogs[main.addonName.."PROFILE_EXISTS"] = {
 	text = addon..": "..L["A profile with the same name exists."],
@@ -165,6 +178,23 @@ StaticPopupDialogs[main.addonName.."PROFILE_EXISTS"] = {
 	whileDead = 1,
 	OnAccept = profileExistsAccept,
 	OnCancel = profileExistsAccept,
+}
+StaticPopupDialogs[main.addonName.."EDIT"] = {
+	text = addon..": "..EDIT,
+	button1 = ACCEPT,
+	button2 = CANCEL,
+	hasEditBox = 1,
+	maxLetters = 48,
+	editBoxWidth = 350,
+	hideOnEscape = 1,
+	whileDead = 1,
+	OnAccept = function(self, cb) self:Hide() cb(self) end,
+	EditBoxOnEnterPressed = function(self)
+		StaticPopup_OnClick(self:GetParent(), 1)
+	end,
+	EditBoxOnEscapePressed = function(self)
+		self:GetParent():Hide()
+	end,
 }
 StaticPopupDialogs[main.addonName.."DELETE_PROFILE"] = {
 	text = addon..": "..L["Are you sure you want to delete profile %s?"],
@@ -195,10 +225,12 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 		self.editBox:HighlightText()
 	end,
 }
-local function barExistsAccept(popup)
+local function barExistsAccept(popup, data)
 	if not popup then return end
 	popup:Hide()
-	main:createBar()
+	main:barPopupAction(data)
+	main.barPopupAction = nil
+	main.lastBarName = nil
 end
 StaticPopupDialogs[main.addonName.."BAR_EXISTS"] = {
 	text = addon..": "..L["A bar with the same name exists."],
@@ -278,6 +310,19 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 	local info = {}
 
 	if level == 1 then
+		local widgets = {
+			{
+				icon = [[Interface\WorldMap\GEAR_64GREY]],
+				OnClick = function(btn)
+					main:editProfile(btn.value)
+					self:ddCloseMenus()
+				end,
+				OnTooltipShow = function(_, tooltip)
+					tooltip:SetText(EDIT)
+				end,
+			},
+		}
+
 		local function removeProfile(btn)
 			main:removeProfile(btn.value)
 		end
@@ -295,6 +340,7 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 				value = profile.name,
 				checked = profile.name == main.currentProfile.name,
 				func = selectProfile,
+				widgets = widgets,
 			}
 			if #hb.profiles > 1 then
 				subInfo.remove = removeProfile
@@ -425,6 +471,19 @@ barCombobox:ddSetInitFunc(function(self)
 	local info = {}
 	info.list = {}
 
+	local widgets = {
+		{
+			icon = [[Interface\WorldMap\GEAR_64GREY]],
+			OnClick = function(btn)
+				main:editBar(btn.value.name)
+				self:ddCloseMenus()
+			end,
+			OnTooltipShow = function(_, tooltip)
+				tooltip:SetText(EDIT)
+			end,
+		},
+	}
+
 	local function removeBar(btn)
 		main:removeBar(btn.value.name)
 	end
@@ -439,6 +498,7 @@ barCombobox:ddSetInitFunc(function(self)
 			value = bar,
 			checked = bar.name == main.currentBar.name,
 			func = selectBar,
+			widgets = widgets,
 		}
 		if #main.pBars > 1 then
 			subInfo.remove = removeBar
@@ -1427,6 +1487,8 @@ local function updateBarTypePosition()
 	main.coordX:SetEnabled(main.bConfig.barTypePosition == 1)
 	main.coordY:SetEnabled(main.bConfig.barTypePosition == 1)
 	main.likeMB.check:SetShown(main.bConfig.barTypePosition == 2)
+	main.ombIcon:SetEnabled(main.bConfig.barTypePosition == 2)
+	main.ombIconCustom:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombShowToCombobox:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombSize:setEnabled(main.bConfig.barTypePosition == 2)
 	main.distanceFromButtonToBar:setEnabled(main.bConfig.barTypePosition == 2)
@@ -1570,9 +1632,64 @@ main.likeMB:SetScript("OnClick", function()
 	main:hidingBarUpdate()
 end)
 
+-- MINIMAP BUTTON ICON
+main.ombIcon = CreateFrame("BUTTON", nil, main.positionBarPanel, "HidingBarAddonIconButtonTemplate")
+main.ombIcon:SetPoint("TOPLEFT", main.likeMB, "BOTTOMLEFT", 24, -3)
+main.ombIcon.icon:SetTexture(hb.ombDefIcon)
+main.ombIcon:SetScript("OnClick", function(btn)
+	main.iconData:init(btn, function()
+		local icon = btn.icon:GetTexture()
+		if icon == 450906 then icon = nil end
+		main.bConfig.omb.icon = icon
+		main.ombIconCustom:SetText(icon or "")
+		main.barFrame:setBarTypePosition()
+		main:hidingBarUpdate()
+	end)
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+end)
+
+-- MINIMAP BUTTON ICON CUSTOM TEXT
+main.ombIconCustomText = main.positionBarPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+main.ombIconCustomText:SetPoint("BOTTOMLEFT", main.ombIcon, "BOTTOMRIGHT", 10, 4)
+main.ombIconCustomText:SetText(L["Icon"])
+
+-- MINIMAP BUTTON ICON CUSTOM
+main.ombIconCustom = CreateFrame("EditBox", nil, main.positionBarPanel, "InputBoxTemplate")
+main.ombIconCustom:SetPoint("LEFT", main.ombIconCustomText, "RIGHT", 5, 0)
+main.ombIconCustom:SetPoint("RIGHT", -10 , 0)
+main.ombIconCustom:SetHeight(20)
+main.ombIconCustom:SetAutoFocus(false)
+main.ombIconCustom.bgText = main.ombIconCustom:CreateFontString(nil, "BACKGROUND", "GameFontDisable")
+main.ombIconCustom.bgText:SetPoint("LEFT", 0, 0)
+main.ombIconCustom.bgText:SetText(hb.ombDefIcon)
+main.ombIconCustom:SetScript("OnEscapePressed", EditBox_ClearFocus)
+main.ombIconCustom:SetScript("OnEnterPressed", EditBox_ClearFocus)
+main.ombIconCustom:SetScript("OnEditFocusLost", function(editBox)
+	local text = editBox:GetText():trim()
+	editBox:SetText(text)
+	if text == "" then
+		main.bConfig.omb.icon = nil
+	else
+		main.bConfig.omb.icon = text
+	end
+	main.ombIcon.icon:SetTexture(main.bConfig.omb.icon or hb.ombDefIcon)
+	main.barFrame:setBarTypePosition()
+	main:hidingBarUpdate()
+end)
+main.ombIconCustom:SetScript("OnTextChanged", function(editBox)
+	local text = editBox:GetText()
+	editBox.bgText:SetShown(text == "")
+end)
+main.ombIconCustom:SetScript("OnDisable", function(editBox)
+	editBox:SetTextColor(GRAY_FONT_COLOR:GetRGB())
+end)
+main.ombIconCustom:SetScript("OnEnable", function(editBox)
+	editBox:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB())
+end)
+
 -- MINIMAP BUTTON SHOW TO
 main.ombShowToCombobox = lsfdd:CreateButton(main.positionBarPanel, 120)
-main.ombShowToCombobox:SetPoint("TOPLEFT", main.likeMB, "BOTTOMLEFT", 23, -3)
+main.ombShowToCombobox:SetPoint("TOPLEFT", main.ombIcon, "BOTTOMLEFT", -1, -10)
 main.ombShowToCombobox.texts = {
 	right = L["Show to left"],
 	left = L["Show to right"],
@@ -1817,6 +1934,7 @@ function main:createProfile(copy)
 			for _, profile in ipairs(hb.profiles) do
 				if profile.name == text then
 					self.lastProfileName = text
+					self.profilePopupAction = self.createProfile
 					StaticPopup_Show(self.addonName.."PROFILE_EXISTS", nil, nil, copy)
 					return
 				end
@@ -1826,7 +1944,7 @@ function main:createProfile(copy)
 			profile.isDefault = nil
 			hb:checkProfile(profile)
 			tinsert(hb.profiles, profile)
-			sort(hb.profiles, function(a, b) return a.name < b.name end)
+			sort(hb.profiles, function(a, b) return strcmputf8i(a.name, b.name) < 0 end)
 			hb:setProfile(text)
 			self:setProfile()
 			self:hidingBarUpdate()
@@ -1835,7 +1953,36 @@ function main:createProfile(copy)
 	if dialog and self.lastProfileName then
 		dialog.editBox:SetText(self.lastProfileName)
 		dialog.editBox:HighlightText()
-		self.lastProfileName = nil
+	end
+end
+
+
+function main:editProfile(profileName)
+	local dialog = StaticPopup_Show(self.addonName.."EDIT", nil, nil, function(popup)
+		local text = popup.editBox:GetText()
+		if text and text ~= profileName and text ~= "" then
+			local editProfile
+			for _, profile in ipairs(hb.profiles) do
+				if profile.name == text then
+					self.lastProfileName = text
+					self.profilePopupAction = self.editProfile
+					StaticPopup_Show(self.addonName.."PROFILE_EXISTS", nil, nil, profileName)
+					return
+				elseif profile.name == profileName then
+					editProfile = profile
+				end
+			end
+			if editProfile then
+				editProfile.name = text
+				sort(hb.profiles,  function(a, b) return strcmputf8i(a.name, b.name) < 0 end)
+				hb:setProfile(text)
+				profilesCombobox:SetText(self.currentProfile.name)
+			end
+		end
+	end)
+	if dialog then
+		dialog.editBox:SetText(self.lastProfileName or profileName)
+		dialog.editBox:HighlightText()
 	end
 end
 
@@ -1938,6 +2085,7 @@ function main:createBar()
 			for _, bar in ipairs(self.pBars) do
 				if bar.name == text then
 					self.lastBarName = text
+					self.barPopupAction = self.createBar
 					StaticPopup_Show(self.addonName.."BAR_EXISTS")
 					return
 				end
@@ -1945,7 +2093,7 @@ function main:createBar()
 			local bar = {name = text}
 			tinsert(self.pBars, bar)
 			self:updateBarsObjects(function()
-				sort(self.pBars, function(a, b) return a.name < b.name end)
+				sort(self.pBars, function(a, b) return strcmputf8i(a.name, b.name) < 0 end)
 			end)
 			hb:checkProfile(self.currentProfile)
 			self:removeAllControlOMB()
@@ -1956,7 +2104,49 @@ function main:createBar()
 	if dialog and self.lastBarName then
 		dialog.editBox:SetText(self.lastBarName)
 		dialog.editBox:HighlightText()
-		self.lastBarName = nil
+	end
+end
+
+
+function main:editBar(barName)
+	local dialog = StaticPopup_Show(self.addonName.."EDIT", nil, nil, function(popup)
+		local text = popup.editBox:GetText()
+		if text and text ~= barName and text ~= "" then
+			local editBar
+			for _, bar in ipairs(self.pBars) do
+				if bar.name == text then
+					self.lastBarName = text
+					self.barPopupAction = self.editBar
+					StaticPopup_Show(self.addonName.."BAR_EXISTS", nil, nil, barName)
+					return
+				elseif bar.name == barName then
+					editBar = bar
+				end
+			end
+			if editBar then
+				editBar.name = text
+				for _, btnSettings in pairs(self.pConfig.btnSettings) do
+					if btnSettings[3] == barName then
+						btnSettings[3] = text
+					end
+				end
+				for _, btnSettings in pairs(self.pConfig.mbtnSettings) do
+					if btnSettings[3] == barName then
+						btnSettings[3] = text
+					end
+				end
+				self:updateBarsObjects(function()
+					sort(self.pBars, function(a, b) return strcmputf8i(a.name, b.name) < 0 end)
+				end)
+				self:removeAllControlOMB()
+				hb:updateBars()
+				self:setBar(self.currentBar)
+			end
+		end
+	end)
+	if dialog then
+		dialog.editBox:SetText(self.lastBarName or barName)
+		dialog.editBox:HighlightText()
 	end
 end
 
@@ -2009,7 +2199,6 @@ function main:setBar(bar)
 	if self.currentBar ~= bar then
 		self.currentBar = bar
 		self.bConfig = self.currentBar.config
-		barCombobox:ddSetSelectedText(self.currentBar.name)
 
 		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture), true)
 		self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
@@ -2059,6 +2248,8 @@ function main:setBar(bar)
 
 		self.hideToCombobox:ddSetSelectedValue(self.bConfig.anchor)
 		self.hideToCombobox:ddSetSelectedText(self.hideToCombobox.texts[self.bConfig.anchor])
+		self.ombIcon.icon:SetTexture(self.bConfig.omb.icon or hb.ombDefIcon)
+		self.ombIconCustom:SetText(self.bConfig.omb.icon or "")
 		self.ombShowToCombobox:ddSetSelectedValue(self.bConfig.omb.anchor)
 		self.ombShowToCombobox:ddSetSelectedText(self.ombShowToCombobox.texts[self.bConfig.omb.anchor])
 		self.ombSize:setValue(self.bConfig.omb.size)
@@ -2068,6 +2259,7 @@ function main:setBar(bar)
 
 		updateBarTypePosition()
 	end
+	barCombobox:ddSetSelectedText(self.currentBar.name)
 
 	self.barFrame = hb.barByName[self.currentBar.name]
 	self.direction = self.barFrame.direction
