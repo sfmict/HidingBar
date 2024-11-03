@@ -2661,19 +2661,33 @@ end
 do
 	local GetMouseFoci, pcall, region = GetMouseFoci, pcall
 	local menuManager = Menu.GetManager()
-	local setRegion = function(_, ownerRegion) region = ownerRegion end
+	local menus = {}
+	local function addMenu(menu) menus[#menus + 1] = menu end
+	local function removeMenu() menus[#menus] = nil end
+	local function setRegion(menuManager, ownerRegion, menuDescription)
+		region = ownerRegion
+		local menu = menuManager:GetOpenMenu()
+		if menu then
+			addMenu(menu)
+			menuDescription:AddMenuAcquiredCallback(addMenu)
+			menuDescription:AddMenuReleasedCallback(removeMenu)
+		end
+	end
 	hooksecurefunc(menuManager, "OpenMenu", setRegion)
 	hooksecurefunc(menuManager, "OpenContextMenu", setRegion)
 
 
 	function hidingBarMixin:isFocusParent()
-		local menu = menuManager:GetOpenMenu()
-		if menu and menu:IsMouseOver() and noEventFrames[region] then
-			return self.GetParent(noEventFrames[region]) == self
+		if noEventFrames[region] then
+			for i = 1, #menus do
+				if menus[i]:IsMouseOver() then
+					return self.GetParent(noEventFrames[region]) == self
+				end
+			end
 		end
 
 		local status, numPoints = true
-		local frame =  GetMouseFoci()[1]
+		local frame = GetMouseFoci()[1]
 		while status and frame do
 			if noEventFrames[frame] then
 				return self.GetParent(noEventFrames[frame]) == self
