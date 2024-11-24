@@ -30,7 +30,7 @@ local ignoreFrameNameList = {
 	["MinimapZoomOut"] = true,
 	["MiniMapWorldMapButton"] = true,
 	["MiniMapMailFrame"] = true,
-	["MiniMapTrackingFrame"] = true,
+	["MiniMapTracking"] = true,
 	["MiniMapBattlefieldFrame"] = true,
 	["MiniMapLFGFrame"] = true,
 }
@@ -981,12 +981,12 @@ function hb:grabDefButtons()
 	end
 
 	-- TRACKING BUTTON
-	local tracking =  MiniMapTrackingFrame
-	if tracking and self:ignoreCheck("MiniMapTrackingFrame") and not self.btnParams[tracking] then
-		local btnData = rawget(self.pConfig.mbtnSettings, "HidingBarAddonTracking")
+	local tracking =  MiniMapTracking
+	if tracking and self:ignoreCheck("MiniMapTracking") and not self.btnParams[tracking] then
+		local btnData = rawget(self.pConfig.mbtnSettings, "MiniMapTrackingFrame")
 		if btnData then
-			self.pConfig.mbtnSettings["MiniMapTrackingFrame"] = btnData
-			self.pConfig.mbtnSettings["HidingBarAddonTracking"] = nil
+			self.pConfig.mbtnSettings["MiniMapTracking"] = btnData
+			self.pConfig.mbtnSettings["MiniMapTrackingFrame"] = nil
 		end
 		tracking.icon = MiniMapTrackingIcon
 		tracking.icon:SetTexture(132328)
