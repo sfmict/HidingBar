@@ -744,6 +744,7 @@ function hb:updateBars()
 		end
 
 		bar:Hide()
+		bar:SetAlpha(1)
 		if bar.config.fade then
 			bar.drag:SetAlpha(bar.config.fadeOpacity)
 		end
@@ -762,7 +763,7 @@ function hb:updateBars()
 		if self.currentProfile.bars[i] then
 			bar:setFrameStrata()
 			bar.drag:setShowHandler()
-			bar:setBarTypePosition()
+			bar:setBarTypePosition(bar.config.barTypePosition)
 			bar:setBackground()
 			bar:setBorder()
 			bar:setLineTexture()
@@ -1628,8 +1629,7 @@ local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
 
 
 do
-	local OnClick = function(btn, button)
-		local bar = btn.bar
+	local OnClick = function(btn, button, bar)
 		if button == "LeftButton" then
 			if bar:IsShown() and bar.config.showHandler ~= 3 then
 				bar:Hide()
@@ -1643,8 +1643,12 @@ do
 	end
 
 
-	local OnEnter = function(btn)
-		local curBar = btn.bar
+	local OnEnter = function(btn, curBar)
+		if curBar.rFrame ~= btn and curBar.config.barTypePosition == 2 then
+			curBar.rFrame = btn
+			curBar:updateBarPosition()
+		end
+
 		local func = curBar.drag:GetScript("OnEnter")
 		if func then func(curBar.drag) end
 
@@ -1654,8 +1658,7 @@ do
 			if bar ~= curBar
 			and bar.config.barTypePosition == 2
 			and bar.config.showHandler ~= 3
-			and bar.omb
-			and parent == bar.omb:GetParent()
+			and parent == bar.rFrame:GetParent()
 			and bar:IsShown()
 			then
 				bar:Hide()
@@ -1665,8 +1668,7 @@ do
 	end
 
 
-	local OnLeave = function(btn)
-		local drag = btn.bar.drag
+	local OnLeave = function(btn, drag)
 		local func = drag:GetScript("OnLeave")
 		if func then func(drag) end
 	end
@@ -1679,9 +1681,9 @@ do
 			type = "data source",
 			text = self.ombName,
 			icon = hb.ombDefIcon,
-			OnClick = OnClick,
-			OnEnter = OnEnter,
-			OnLeave = OnLeave,
+			OnClick = function(btn, button) OnClick(btn, button, self) end,
+			OnEnter = function(btn) OnEnter(btn, self) end,
+			OnLeave = function(btn) OnLeave(btn, self.drag) end,
 		})
 		ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
 	end
@@ -2334,8 +2336,14 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 	if typePosition then self.config.barTypePosition = typePosition end
 
 	if self.config.barTypePosition == 2 then
-		self.config.omb.hide = false
-		ldbi:Show(self.ombName)
+		self.config.omb.hide = self.config.ombHide
+
+		if self.config.ombHide then
+			ldbi:Hide(self.ombName)
+		else
+			ldbi:Show(self.ombName)
+		end
+
 		if self.config.lock then
 			ldbi:Lock(self.ombName)
 		else
@@ -2388,8 +2396,9 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		self.ldb_icon.icon = self.config.omb.icon or hb.ombDefIcon
 		self.omb.icon:SetRotation(self.config.omb.icon and 0 or rotation)
 
+		if typePosition or not self.rFrame then self.rFrame = self.omb end
+
 		self.anchorObj = self.config.omb
-		self.rFrame = self.omb
 		self.position = position + self.config.omb.barDisplacement
 		self.secondPosition = secondPosition
 	else

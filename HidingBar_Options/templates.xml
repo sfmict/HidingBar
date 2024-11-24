@@ -171,27 +171,23 @@
 		<Size x="22" y="22"/>
 		<HitRectInsets left="0" right="-100" top="0" bottom="0"/>
 		<Layers>
-			<Layer level="ARTWORK">
+			<Layer level="ARTWORK" textureSubLevel="2">
 				<FontString inherits="GameFontHighlightLeft" parentKey="Text">
 					<Anchors>
 						<Anchor point="LEFT" relativePoint="RIGHT" x="1"/>
 					</Anchors>
 				</FontString>
-				<Texture parentKey="check" file="Interface/Common/UI-DropDownRadioChecks" hidden="true">
-					<Size x="20" y="20"/>
+				<Texture parentKey="check" atlas="common-dropdown-icon-radialtick-yellow" useAtlasSize="true">
 					<Anchors>
-						<Anchor point="CENTER" x="1" y="1"/>
+						<Anchor point="CENTER"/>
 					</Anchors>
-					<TexCoords left="0" right=".5" top=".5" bottom="1"/>
 				</Texture>
 			</Layer>
 		</Layers>
-		<NormalTexture file="Interface/Common/UI-DropDownRadioChecks">
-			<Size x="20" y="20"/>
+		<NormalTexture atlas="common-dropdown-tickradial" useAtlasSize="true">
 			<Anchors>
-				<Anchor point="CENTER" x="1" y="1"/>
+				<Anchor point="CENTER"/>
 			</Anchors>
-			<TexCoords left=".5" right="1" top=".5" bottom="1"/>
 		</NormalTexture>
 		<HighlightTexture alphaMode="ADD" file="Interface/Minimap/UI-Minimap-ZoomButton-Highlight">
 			<Size x="16" y="16"/>
