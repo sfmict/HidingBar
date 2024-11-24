@@ -1494,6 +1494,7 @@ local function updateBarTypePosition()
 	main.distanceFromButtonToBar:setEnabled(main.bConfig.barTypePosition == 2)
 	main.ombBarDisplacement:setEnabled(main.bConfig.barTypePosition == 2)
 	main.canGrabbed:SetEnabled(main.bConfig.barTypePosition == 2)
+	main.buttonHide:SetEnabled(main.bConfig.barTypePosition == 2 and not main.bConfig.omb.canGrabbed)
 end
 
 -- BAR ATTACHED TO THE SIDE
@@ -1768,6 +1769,7 @@ main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will b
 main.canGrabbed:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+	main.buttonHide:SetEnabled(not checked)
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then
@@ -1788,6 +1790,19 @@ main.canGrabbed:SetScript("OnClick", function(btn)
 	end
 	main:hidingBarUpdate()
 end)
+
+
+-- THE BUTTON HIDE
+main.buttonHide = CreateFrame("CheckButton", nil, main.positionBarPanel, "HidingBarAddonCheckButtonTemplate")
+main.buttonHide:SetPoint("LEFT", main.canGrabbed.Text, "RIGHT", 6, 0)
+main.buttonHide.Text:SetText(HIDE)
+main.buttonHide:SetScript("OnClick", function(btn)
+	local checked = btn:GetChecked()
+	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+	main.bConfig.ombHide = checked
+	main.barFrame:setBarTypePosition()
+end)
+
 
 -- CONTEXT MENU
 local contextmenu = lsfdd:SetMixin({})
@@ -2099,6 +2114,7 @@ function main:createBar()
 			self:removeAllControlOMB()
 			hb:updateBars()
 			self:setBar(self.currentBar)
+			self:hidingBarUpdate()
 		end
 	end)
 	if dialog and self.lastBarName then
@@ -2182,6 +2198,7 @@ function main:removeBar(barName)
 		else
 			self:setBar(self.currentBar)
 		end
+		self:hidingBarUpdate()
 	end)
 end
 
@@ -2256,6 +2273,7 @@ function main:setBar(bar)
 		self.distanceFromButtonToBar:setValue(self.bConfig.omb.distanceToBar)
 		self.ombBarDisplacement:setValue(self.bConfig.omb.barDisplacement)
 		self.canGrabbed:SetChecked(self.bConfig.omb.canGrabbed)
+		self.buttonHide:SetChecked(self.bConfig.ombHide)
 
 		updateBarTypePosition()
 	end
