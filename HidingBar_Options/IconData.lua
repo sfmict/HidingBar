@@ -68,6 +68,13 @@ local function refreshExtraIcons()
 end
 
 
+local function getIconTexture(icon)
+	local fileDataID = tonumber(icon)
+	if fileDataID then return fileDataID end
+	return [[INTERFACE\ICONS\]]..icon
+end
+
+
 iconData:SetScript("OnShow", function(self)
 	self:EnableMouse(true)
 	self:SetFrameLevel(self:GetParent():GetFrameLevel() + 10)
@@ -276,11 +283,11 @@ function iconData:getIconByIndex(index)
 	if self.filters.extra and self.filters.text then
 		if self.filters.spell then
 			numIcons = #self.spell
-			if index <= numIcons then return self.spell[index] end
+			if index <= numIcons then return getIconTexture(self.spell[index]) end
 			index = index - numIcons
 		end
 		if self.filters.item then
-			return self.item[index]
+			return getIconTexture(self.item[index])
 		end
 	end
 end

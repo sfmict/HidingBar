@@ -531,6 +531,7 @@ function hb:checkProfile(profile)
 		bar.config.omb.size = bar.config.omb.size or 31
 		bar.config.omb.distanceToBar = bar.config.omb.distanceToBar or 0
 		bar.config.omb.barDisplacement = bar.config.omb.barDisplacement or 0
+		bar.config.omb.fadeOpacity = bar.config.omb.fadeOpacity or 1
 	end
 
 	local ombGrabQueue =  profile.config.ombGrabQueue
@@ -763,7 +764,7 @@ function hb:updateBars()
 		if self.currentProfile.bars[i] then
 			bar:setFrameStrata()
 			bar.drag:setShowHandler()
-			bar:setBarTypePosition(bar.config.barTypePosition)
+			bar:setBarTypePosition(nil, true)
 			bar:setBackground()
 			bar:setBorder()
 			bar:setLineTexture()
@@ -1623,6 +1624,29 @@ end
 
 
 -------------------------------------------
+-- MINIMAP
+-------------------------------------------
+Minimap:HookScript("OnEnter", function()
+	for i = 1, #hb.currentProfile.bars do
+		local bar = hb.bars[i]
+		if bar.config.barTypePosition == 2 and bar.omb and not bar.omb.isGrabbed and bar.config.omb.fadeOpacity ~= 1 then
+			frameFadeStop(bar.omb, 1)
+		end
+	end
+end)
+
+
+Minimap:HookScript("OnLeave", function()
+	for i = 1, #hb.currentProfile.bars do
+		local bar = hb.bars[i]
+		if bar.config.barTypePosition == 2 and bar.omb and not bar.omb.isGrabbed and bar.config.omb.fadeOpacity ~= 1 then
+			bar.omb:GetScript("OnLeave")(bar.omb)
+		end
+	end
+end)
+
+
+-------------------------------------------
 -- HIDINGBAR MIXIN
 -------------------------------------------
 local hidingBarMixin = CreateFromMixins(BackdropTemplateMixin)
@@ -1644,6 +1668,10 @@ do
 
 
 	local OnEnter = function(btn, curBar)
+		if curBar.omb == btn and curBar.config.omb.fadeOpacity ~= 1 then
+			frameFadeStop(btn, 1)
+		end
+
 		if curBar.rFrame ~= btn and curBar.config.barTypePosition == 2 then
 			curBar.rFrame = btn
 			curBar:updateBarPosition()
@@ -1668,7 +1696,21 @@ do
 	end
 
 
-	local OnLeave = function(btn, drag)
+	local hideBtn = function(btn, elapsed)
+		btn.timer = btn.timer -  elapsed
+		if btn.timer <= 0  then
+			frameFade(btn, 1.5, btn.bar.config.omb.fadeOpacity)
+		end
+	end
+
+
+	local OnLeave = function(btn, bar)
+		if bar.omb == btn and bar.config.omb.fadeOpacity ~= 1 then
+			bar.omb.timer = bar.config.hideDelay
+			bar.omb:SetScript("OnUpdate", hideBtn)
+		end
+
+		local drag = bar.drag
 		local func = drag:GetScript("OnLeave")
 		if func then func(drag) end
 	end
@@ -1683,7 +1725,7 @@ do
 			icon = hb.ombDefIcon,
 			OnClick = function(btn, button) OnClick(btn, button, self) end,
 			OnEnter = function(btn) OnEnter(btn, self) end,
-			OnLeave = function(btn) OnLeave(btn, self.drag) end,
+			OnLeave = function(btn) OnLeave(btn, self) end,
 		})
 		ldbi:Register(self.ombName, self.ldb_icon, self.config.omb)
 	end
@@ -1733,6 +1775,12 @@ function hidingBarMixin:setOMBSize(size)
 			self.omb:SetPoint(point, rFrame, rPoint, x * oldScale, y * oldScale)
 		end
 	end
+end
+
+
+function hidingBarMixin:setOMBFade(opacity)
+	self.config.omb.fadeOpacity = opacity
+	frameFadeStop(self.omb, opacity)
 end
 
 
@@ -2332,7 +2380,7 @@ function hidingBarMixin:setBarExpand(expand)
 end
 
 
-function hidingBarMixin:setBarTypePosition(typePosition)
+function hidingBarMixin:setBarTypePosition(typePosition, force)
 	if typePosition then self.config.barTypePosition = typePosition end
 
 	if self.config.barTypePosition == 2 then
@@ -2396,7 +2444,11 @@ function hidingBarMixin:setBarTypePosition(typePosition)
 		self.ldb_icon.icon = self.config.omb.icon or hb.ombDefIcon
 		self.omb.icon:SetRotation(self.config.omb.icon and 0 or rotation)
 
-		if typePosition or not self.rFrame then self.rFrame = self.omb end
+		if typePosition or force or not self.rFrame then
+			frameFadeStop(self.omb, 1)
+			self.omb:GetScript("OnLeave")(self.omb)
+			self.rFrame = self.omb
+		end
 
 		self.anchorObj = self.config.omb
 		self.position = position + self.config.omb.barDisplacement
