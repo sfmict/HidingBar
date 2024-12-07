@@ -449,6 +449,25 @@ function hb:ADDON_LOADED(addonName)
 			xpcall(self.setProfile, CallErrorHandler, self)
 			self.cb:Fire("INIT")
 			self.init = nil
+
+			-- MINIMAP HOOKS
+			Minimap:HookScript("OnEnter", function()
+				for i = 1, #hb.currentProfile.bars do
+					local bar = hb.bars[i]
+					if bar.config.barTypePosition == 2 and bar.omb and not bar.omb.isGrabbed and bar.config.omb.fadeOpacity ~= 1 then
+						frameFadeStop(bar.omb, 1)
+					end
+				end
+			end)
+
+			Minimap:HookScript("OnLeave", function()
+				for i = 1, #hb.currentProfile.bars do
+					local bar = hb.bars[i]
+					if bar.config.barTypePosition == 2 and bar.omb and not bar.omb.isGrabbed and bar.config.omb.fadeOpacity ~= 1 then
+						bar.omb:GetScript("OnLeave")(bar.omb)
+					end
+				end
+			end)
 		end)
 	end
 end
@@ -1687,29 +1706,6 @@ local function frameFadeStop(self, alpha)
 	self:SetScript("OnUpdate", nil)
 	self:SetAlpha(alpha)
 end
-
-
--------------------------------------------
--- MINIMAP
--------------------------------------------
-Minimap:HookScript("OnEnter", function()
-	for i = 1, #hb.currentProfile.bars do
-		local bar = hb.bars[i]
-		if bar.config.barTypePosition == 2 and bar.omb and not bar.omb.isGrabbed and bar.config.omb.fadeOpacity ~= 1 then
-			frameFadeStop(bar.omb, 1)
-		end
-	end
-end)
-
-
-Minimap:HookScript("OnLeave", function()
-	for i = 1, #hb.currentProfile.bars do
-		local bar = hb.bars[i]
-		if bar.config.barTypePosition == 2 and bar.omb and not bar.omb.isGrabbed and bar.config.omb.fadeOpacity ~= 1 then
-			bar.omb:GetScript("OnLeave")(bar.omb)
-		end
-	end
-end)
 
 
 -------------------------------------------
