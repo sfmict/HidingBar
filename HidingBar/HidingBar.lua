@@ -80,6 +80,37 @@ local function setOMBPoint(self, point, rFrame, rPoint, x, y)
 end
 
 
+-------------------------------------------
+-- FRAME FADE
+-------------------------------------------
+local function fade(self, elapsed)
+	self.timer = self.timer - elapsed
+	if self.timer <= 0 then
+		self:SetScript("OnUpdate", nil)
+		self:SetAlpha(self.endAlpha)
+	else
+		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer)
+	end
+end
+
+
+local function frameFade(self, delay, endAlpha)
+	self.timer = delay
+	self.endAlpha = endAlpha
+	self.deltaAlpha = (endAlpha - self:GetAlpha()) / delay
+	self:SetScript("OnUpdate", fade)
+end
+
+
+local function frameFadeStop(self, alpha)
+	self:SetScript("OnUpdate", nil)
+	self:SetAlpha(alpha)
+end
+
+
+-------------------------------------------
+-- MASQUE
+-------------------------------------------
 if MSQ then
 	local _, defSkin = MSQ:GetDefaultSkin()
 	local defNormal = defSkin.Normal
@@ -382,6 +413,9 @@ if MSQ then
 end
 
 
+-------------------------------------------
+-- CORE
+-------------------------------------------
 hb:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 hb:RegisterEvent("ADDON_LOADED")
 
@@ -1611,34 +1645,6 @@ function hb:setClipButtons()
 			btn:SetClipsChildren(not not btnData[4])
 		end
 	end
-end
-
-
--------------------------------------------
--- FRAME FADE
--------------------------------------------
-local function fade(self, elapsed)
-	self.timer = self.timer - elapsed
-	if self.timer <= 0 then
-		self:SetScript("OnUpdate", nil)
-		self:SetAlpha(self.endAlpha)
-	else
-		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer)
-	end
-end
-
-
-local function frameFade(self, delay, endAlpha)
-	self.timer = delay
-	self.endAlpha = endAlpha
-	self.deltaAlpha = (endAlpha - self:GetAlpha()) / delay
-	self:SetScript("OnUpdate", fade)
-end
-
-
-local function frameFadeStop(self, alpha)
-	self:SetScript("OnUpdate", nil)
-	self:SetAlpha(alpha)
 end
 
 
