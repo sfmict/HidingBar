@@ -1051,6 +1051,7 @@ function hb:grabDefButtons()
 		GameTimeCalendarInvitesGlow.Show = void
 		GameTimeCalendarInvitesGlow:Hide()
 		self:setHooks(GameTimeFrame)
+		self:setSecureHooks(GameTimeFrame)
 		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
 			GameTimeCalendarInvitesGlow.Show = nil
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
@@ -1085,6 +1086,7 @@ function hb:grabDefButtons()
 		local icon = MiniMapTrackingIcon
 		MiniMapTracking.rButton = MiniMapTrackingButton
 		self:setHooks(MiniMapTracking)
+		self:setSecureHooks(MiniMapTracking)
 		local p = self:setParams(MiniMapTracking, function(p)
 			if MiniMapTrackingButton.__MSQ_Addon then return end
 			icon.SetPoint = nil
@@ -1133,6 +1135,7 @@ function hb:grabDefButtons()
 		LFGFrame.icon = MiniMapLFGFrameIconTexture
 		LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
 		self:setHooks(LFGFrame)
+		self:setSecureHooks(LFGFrame)
 		self:setParams(LFGFrame)
 
 		local btnData = self:getMBtnSettings(LFGFrame)
@@ -1151,6 +1154,7 @@ function hb:grabDefButtons()
 	if battlefield and self:ignoreCheck("MiniMapBattlefieldFrame") and not self.btnParams[battlefield] then
 		battlefield.icon = MiniMapBattlefieldIcon
 		self:setHooks(battlefield)
+		self:setSecureHooks(battlefield)
 		self:setParams(battlefield)
 
 		local btnData = self:getMBtnSettings(battlefield)
@@ -1175,6 +1179,7 @@ function hb:grabDefButtons()
 
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
+		self:setSecureHooks(mail)
 		self:setParams(mail)
 
 		local btnData = self:getMBtnSettings(mail)
@@ -1193,6 +1198,7 @@ function hb:grabDefButtons()
 		local name = zoom:GetName()
 		if self:ignoreCheck(name) and not self.btnParams[zoom] then
 			self:setHooks(zoom)
+			self:setSecureHooks(zoom)
 			local normal = zoom:GetNormalTexture()
 
 			if checkMasqueConditions(zoom) then
@@ -1244,6 +1250,7 @@ function hb:grabDefButtons()
 	local mapButton = MiniMapWorldMapButton
 	if mapButton and self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[mapButton] then
 		self:setHooks(mapButton)
+		self:setSecureHooks(mapButton)
 		local p = self:setParams(mapButton, function(p, mapButton)
 			if mapButton.__MSQ_Addon then return end
 			mapButton.normal:ClearAllPoints()
@@ -1336,6 +1343,7 @@ function hb:addCustomGrabButton(name)
 			return button
 		end
 	elseif self:addMButton(button, true, self.MSQ_CGButton) then
+		self:setSecureHooks(button)
 		self.manuallyButtons[button] = true
 		self.btnParams[button].name = name
 		return button
@@ -1570,6 +1578,44 @@ do
 		btn.IsShown = nil
 		btn.SetScript = nil
 		btn.HookScript = nil
+	end
+end
+
+
+do
+	local function SetPoint(btn)
+		local parent = hb.GetParent(btn)
+		if parent.applyLayout and parent.anchorObj then parent:applyLayout() end
+	end
+
+
+	local function SetShown(btn, show)
+		if hb.btnParams[btn].isShown == show then return end
+		hb.btnParams[btn].isShown = show
+		local btnData = btnSettings[btn]
+		-- [1] - is disabled
+		-- [5] - auto show/hide
+		if btnData and btnData[5] and not btnData[1] then
+			local parent = hb.GetParent(btn)
+			if parent.applyLayout and parent.anchorObj then parent:applyLayout() end
+		else
+			show = not (btnData and btnData[1])
+			hb.SetShown(btn, show)
+		end
+	end
+
+
+	function hb:setSecureHooks(btn)
+		btn.SetPoint = nil
+		hooksecurefunc(btn, "SetPoint", SetPoint)
+		btn.SetShown = nil
+		hooksecurefunc(btn, "SetShown", SetShown)
+		local Show = btn.Show
+		btn.Show = nil
+		hooksecurefunc(btn, "Show", Show)
+		local Hide = btn.Hide
+		btn.Hide = nil
+		hooksecurefunc(btn, "Hide", Hide)
 	end
 end
 
