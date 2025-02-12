@@ -1077,6 +1077,7 @@ function hb:grabDefButtons()
 	local GameTimeFrame = GameTimeFrame
 	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
 		self:setHooks(GameTimeFrame)
+		self:setSecureHooks(GameTimeFrame)
 		sexyMapRegionsHide(GameTimeFrame)
 
 		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
@@ -1165,6 +1166,7 @@ function hb:grabDefButtons()
 	local AddonCompartmentFrame = AddonCompartmentFrame
 	if AddonCompartmentFrame and self:ignoreCheck("AddonCompartmentFrame") and not self.btnParams[AddonCompartmentFrame] then
 		self:setHooks(AddonCompartmentFrame)
+		self:setSecureHooks(AddonCompartmentFrame)
 		self:setParams(AddonCompartmentFrame)
 		sexyMapRegionsHide(AddonCompartmentFrame)
 
@@ -1185,6 +1187,7 @@ function hb:grabDefButtons()
 		tracking.rButton = tracking.Button
 		tracking.icon = tracking.Button:GetNormalTexture()
 		self:setHooks(tracking)
+		self:setSecureHooks(tracking)
 		sexyMapRegionsHide(tracking)
 
 		local p = self:setParams(tracking, function(p, tracking)
@@ -1243,6 +1246,7 @@ function hb:grabDefButtons()
 	if mail and self:ignoreCheck("MinimapCluster.IndicatorFrame.MailFrame") and not self.btnParams[mail] then
 		mail.icon = MiniMapMailIcon
 		self:setHooks(mail)
+		self:setSecureHooks(mail)
 		sexyMapRegionsHide(mail)
 
 		local p = self:setParams(mail, function(p, mail)
@@ -1287,6 +1291,7 @@ function hb:grabDefButtons()
 	if craftingOrder and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[craftingOrder] then
 		craftingOrder.icon = MiniMapCraftingOrderIcon
 		self:setHooks(craftingOrder)
+		self:setSecureHooks(craftingOrder)
 		sexyMapRegionsHide(craftingOrder)
 
 		local p = self:setParams(craftingOrder, function(p, craftingOrder)
@@ -1327,6 +1332,7 @@ function hb:grabDefButtons()
 	local expBtn = ExpansionLandingPageMinimapButton
 	if expBtn and self:ignoreCheck("ExpansionLandingPageMinimapButton") and not self.btnParams[expBtn] then
 		self:setHooks(expBtn)
+		self:setSecureHooks(expBtn)
 		self:setParams(expBtn).autoShowHideDisabled = true
 
 		local btnData = self:getMBtnSettings(expBtn)
@@ -1353,6 +1359,7 @@ function hb:grabDefButtons()
 			local pushed = zoom:GetPushedTexture()
 			local highlight = zoom:GetHighlightTexture()
 			self:setHooks(zoom)
+			self:setSecureHooks(zoom)
 			sexyMapRegionsHide(zoom)
 
 			local p = self:setParams(zoom, function(p, zoom)
@@ -1424,6 +1431,7 @@ function hb:grabDefButtons()
 	if queue and self:ignoreCheck("QueueStatusButton") and not self.btnParams[queue] then
 		queue.icon = queue.Eye.texture
 		self:setHooks(queue)
+		self:setSecureHooks(queue)
 
 		local p = self:setParams(queue, function(p, queue)
 			QueueStatusFrame:ClearAllPoints()
@@ -1546,6 +1554,7 @@ function hb:addCustomGrabButton(name)
 			return button
 		end
 	elseif self:addMButton(button, true, self.MSQ_CGButton) then
+		self:setSecureHooks(button)
 		self.manuallyButtons[button] = true
 		self.btnParams[button].name = name
 		return button
@@ -1780,6 +1789,44 @@ do
 		btn.IsShown = nil
 		btn.SetScript = nil
 		btn.HookScript = nil
+	end
+end
+
+
+do
+	local function SetPoint(btn)
+		local parent = hb.GetParent(btn)
+		if parent.applyLayout and parent.anchorObj then parent:applyLayout() end
+	end
+
+
+	local function SetShown(btn, show)
+		if hb.btnParams[btn].isShown == show then return end
+		hb.btnParams[btn].isShown = show
+		local btnData = btnSettings[btn]
+		-- [1] - is disabled
+		-- [5] - auto show/hide
+		if btnData and btnData[5] and not btnData[1] then
+			local parent = hb.GetParent(btn)
+			if parent.applyLayout and parent.anchorObj then parent:applyLayout() end
+		else
+			show = not (btnData and btnData[1])
+			hb.SetShown(btn, show)
+		end
+	end
+
+
+	function hb:setSecureHooks(btn)
+		btn.SetPoint = nil
+		hooksecurefunc(btn, "SetPoint", SetPoint)
+		btn.SetShown = nil
+		hooksecurefunc(btn, "SetShown", SetShown)
+		local Show = btn.Show
+		btn.Show = nil
+		hooksecurefunc(btn, "Show", Show)
+		local Hide = btn.Hide
+		btn.Hide = nil
+		hooksecurefunc(btn, "Hide", Hide)
 	end
 end
 
