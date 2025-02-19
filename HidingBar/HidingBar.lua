@@ -1517,8 +1517,10 @@ end
 
 do
 	local function SetPoint(btn)
-		local parent = hb.GetParent(btn)
-		if parent.applyLayout and parent.anchorObj then parent:applyLayout() end
+		if hb.IsShown(btn) then
+			local parent = hb.GetParent(btn)
+			if parent.applyLayout and parent.anchorObj then parent:applyLayout() end
+		end
 	end
 
 
@@ -1538,9 +1540,19 @@ do
 	end
 
 
+	local function SetScale(btn, scale)
+		local parent = hb.GetParent(btn)
+		if parent.applyLayout and parent.anchorObj then parent:setButtonSize() end
+	end
+
+
 	function hb:setSecureHooks(btn)
+		btn.ClearAllPoints = nil
+		hooksecurefunc(btn, "ClearAllPoints", SetPoint)
 		btn.SetPoint = nil
 		hooksecurefunc(btn, "SetPoint", SetPoint)
+		btn.SetScale = nil
+		hooksecurefunc(btn, "SetScale", SetScale)
 		btn.SetShown = nil
 		hooksecurefunc(btn, "SetShown", SetShown)
 		local Show = btn.Show
