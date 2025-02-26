@@ -4,6 +4,10 @@
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\HidingBar\media\icon
 ## Notes: Convenient hiding panel
+## Notes-esES: Notas: Panel de ocultación conveniente
+## Notes-esMX: Notas: Panel de ocultación conveniente
+## Notes-frFR: Notes : Panneau de dissimulation pratique
+## Notes-ptBR: Notas: Painel de ocultação conveniente
 ## SavedVariables: HidingBarDB
 ## SavedVariablesPerCharacter: HidingBarDBChar
 ## OptionalDeps: Masque
