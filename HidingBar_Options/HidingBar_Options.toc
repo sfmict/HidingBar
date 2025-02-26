@@ -4,6 +4,10 @@
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\HidingBar\media\icon
 ## Notes: HidingBar Options
+## Notes-esES: Opciones de HidingBar
+## Notes-esMX: Opciones de HidingBar
+## Notes-frFR: Options de HidingBar
+## Notes-ptBR: Opções de HidingBar
 ## LoadOnDemand: 1
 ## Dependencies: HidingBar
 embeds.xml
