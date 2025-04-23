@@ -152,7 +152,7 @@ StaticPopupDialogs[main.addonName.."NEW_PROFILE"] = {
 	editBoxWidth = 350,
 	hideOnEscape = 1,
 	whileDead = 1,
-	OnAccept = function(self, cb) self:Hide() cb(self) end,
+	OnAccept = function(self, cb) cb(self) end,
 	EditBoxOnEnterPressed = function(self)
 		StaticPopup_OnClick(self:GetParent(), 1)
 	end,
@@ -179,7 +179,7 @@ StaticPopupDialogs[main.addonName.."PROFILE_EXISTS"] = {
 	OnAccept = profileExistsAccept,
 	OnCancel = profileExistsAccept,
 }
-StaticPopupDialogs[main.addonName.."EDIT"] = {
+StaticPopupDialogs[main.addonName.."EDIT_PROFILE"] = {
 	text = addon..": "..EDIT,
 	button1 = ACCEPT,
 	button2 = CANCEL,
@@ -188,7 +188,7 @@ StaticPopupDialogs[main.addonName.."EDIT"] = {
 	editBoxWidth = 350,
 	hideOnEscape = 1,
 	whileDead = 1,
-	OnAccept = function(self, cb) self:Hide() cb(self) end,
+	OnAccept = function(self, cb) cb(self) end,
 	EditBoxOnEnterPressed = function(self)
 		StaticPopup_OnClick(self:GetParent(), 1)
 	end,
@@ -213,7 +213,7 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 	editBoxWidth = 350,
 	hideOnEscape = 1,
 	whileDead = 1,
-	OnAccept = function(self, cb) self:Hide() cb(self) end,
+	OnAccept = function(self, cb) cb(self) end,
 	EditBoxOnEnterPressed = function(self)
 		StaticPopup_OnClick(self:GetParent(), 1)
 	end,
@@ -1967,6 +1967,7 @@ end
 function main:createProfile(copy)
 	local dialog = StaticPopup_Show(self.addonName.."NEW_PROFILE", nil, nil, function(popup)
 		local text = popup.editBox:GetText()
+		popup:Hide()
 		if text and text ~= "" then
 			for _, profile in ipairs(hb.profiles) do
 				if profile.name == text then
@@ -1995,8 +1996,9 @@ end
 
 
 function main:editProfile(profileName)
-	local dialog = StaticPopup_Show(self.addonName.."EDIT", nil, nil, function(popup)
+	local dialog = StaticPopup_Show(self.addonName.."EDIT_PROFILE", nil, nil, function(popup)
 		local text = popup.editBox:GetText()
+		popup:Hide()
 		if text and text ~= profileName and text ~= "" then
 			local editProfile
 			for _, profile in ipairs(hb.profiles) do
@@ -2118,6 +2120,7 @@ end
 function main:createBar()
 	local dialog = StaticPopup_Show(self.addonName.."NEW_BAR", nil, nil, function(popup)
 		local text = popup.editBox:GetText()
+		popup:Hide()
 		if text and text ~= "" then
 			for _, bar in ipairs(self.pBars) do
 				if bar.name == text then
@@ -2147,7 +2150,7 @@ end
 
 
 function main:editBar(barName)
-	local dialog = StaticPopup_Show(self.addonName.."EDIT", nil, nil, function(popup)
+	local dialog = StaticPopup_Show(self.addonName.."EDIT_PROFILE", nil, nil, function(popup)
 		local text = popup.editBox:GetText()
 		if text and text ~= barName and text ~= "" then
 			local editBar
