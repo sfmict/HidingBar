@@ -64,6 +64,7 @@ Settings.RegisterAddOnCategory(subcategory)
 -- OPEN CONFIG
 function config:openConfig()
 	if SettingsPanel:IsVisible() and self:IsVisible() then
+		if InCombatLockdown() then return end
 		HideUIPanel(SettingsPanel)
 	else
 		Settings.OpenToCategory(addon, true)
@@ -72,4 +73,5 @@ end
 
 
 SLASH_HIDDINGBAR1 = "/hidingbar"
+SLASH_HIDDINGBAR2 = "/hb"
 SlashCmdList["HIDDINGBAR"] = function() config:openConfig() end

@@ -15,16 +15,12 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: download tools
+    - name: download packager
       uses: actions/checkout@v2
       with:
         repository: sfmict/js_packager
         token: ${{ secrets.OAUTH }}
         path: my-tools
-
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '16'
 
     - name: install packages
       run: cd "my-tools" && npm install
