@@ -2974,11 +2974,11 @@ end
 
 function hidingBarMixin:enter(force)
 	if not self.isDrag then
+		self:Raise()
 		if self.config.showHandler ~= 3 or force then
 			frameFadeStop(self.drag, 1)
 			self:SetScript("OnUpdate", nil)
 			self:Show()
-			self:Raise()
 			self:updateDragBarPosition()
 		else
 			frameFadeStop(self, 1)
@@ -3328,6 +3328,7 @@ end
 setmetatable(hb.bars, {__index = function(self, key)
 	local bar = CreateFrame("FRAME", nil, UIParent, "HidingBarAddonPanel")
 	bar:SetClampedToScreen(true)
+	bar:SetToplevel(true)
 	bar:SetScript("OnEnter", bar_OnEnter)
 	bar:SetScript("OnLeave", bar_OnLeave)
 	bar:SetScript("OnEvent", bar_OnEvent)
