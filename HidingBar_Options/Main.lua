@@ -4,6 +4,7 @@ main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
 main.noIcon:Hide()
 main.buttons, main.mbuttons, main.mixedButtons = {}, {}, {}
+main.defIcon = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and 651945 or 450906
 local media = LibStub("LibSharedMedia-3.0")
 local lsfdd = LibStub("LibSFDropDown-1.5")
 
@@ -1668,7 +1669,7 @@ main.ombIcon.icon:SetTexture(hb.ombDefIcon)
 main.ombIcon:SetScript("OnClick", function(btn)
 	main.iconData:init(btn, function()
 		local icon = btn.icon:GetTexture()
-		if icon == 450906 then icon = nil end
+		if icon == main.defIcon then icon = nil end
 		main.bConfig.omb.icon = icon
 		main.ombIconCustom:SetText(icon or "")
 		main.barFrame:setBarTypePosition()
