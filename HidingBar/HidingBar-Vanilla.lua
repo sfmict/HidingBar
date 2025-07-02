@@ -1,6 +1,7 @@
 local addon, ns = ...
 local hb = HidingBarAddon
 local hidingBarMixin = ns.hidingBarMixin
+local ldbi = LibStub("LibDBIcon-1.0")
 hb.ombDefIcon = "Interface/MINIMAP/Vehicle-SilvershardMines-Arrow"
 
 
