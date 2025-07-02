@@ -1,4 +1,4 @@
-## Interface: 110107
+## Interface: 110107, 50500, 11507
 ## Title: HidingBar
 ## Author: sfmict
 ## Version: @project-version@
@@ -28,3 +28,4 @@ locales.xml
 templates.xml
 Config.lua
 HidingBar.lua
+HidingBar-[Game].lua
