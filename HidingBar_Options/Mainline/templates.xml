@@ -1,0 +1,26 @@
+<Ui>
+	<Button name="HidingBarAddonIconButtonTemplate" virtual="true">
+		<Size x="32" y="32"/>
+		<Layers>
+			<Layer level="OVERLAY" textureSubLevel="2">
+				<Texture parentKey="border" inherits="ActionBarFlyoutButton-IconFrame">
+					<Size x="34" y="34"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<NormalTexture parentKey="icon"/>
+		<HighlightTexture atlas="UI-HUD-ActionBar-IconFrame-Mouseover" parentKey="HighlightTexture">
+			<Size x="35" y="34"/>
+			<Anchors>
+				<Anchor point="CENTER" x="1" y="0"/>
+			</Anchors>
+		</HighlightTexture>
+		<Scripts>
+			<OnDisable>self.icon:SetDesaturated(true)</OnDisable>
+			<OnEnable>self.icon:SetDesaturated()</OnEnable>
+		</Scripts>
+	</Button>
+</Ui>

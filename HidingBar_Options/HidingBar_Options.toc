@@ -1,4 +1,4 @@
-## Interface: 110107
+## Interface: 110107, 50500, 11507
 ## Title: HidingBar Options
 ## Author: sfmict
 ## Version: @project-version@
@@ -25,6 +25,7 @@
 ## OptionalDeps: LibSFDropDown
 embeds.xml
 templates.xml
+[Family]/templates.xml
 Main.lua
-IconData.lua
+[Family]/IconData.lua
 About.lua
