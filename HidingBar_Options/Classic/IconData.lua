@@ -97,8 +97,7 @@ iconData:SetScript("OnShow", function(self)
 		elseif a.type ~= "spell" and b.type == "spell" then return false end
 		return a.name < b.name
 	end)
-	local icon = WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and 651945 or 450906
-	tinsert(self.extraIcons, 1, {type = "other", name = HidingBarAddon.ombDefIcon, icon = icon})
+	tinsert(self.extraIcons, 1, {type = "other", name = HidingBarAddon.ombDefIcon, icon = main.defIcon})
 
 	-- SELECTED ICON
 	self.selectedIconBtn = CreateFrame("BUTTON", nil, self, "HidingBarAddonIconButtonTemplate")
