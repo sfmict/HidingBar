@@ -23,17 +23,7 @@ local media = LibStub("LibSharedMedia-3.0")
 local MSQ = LibStub("Masque", true)
 
 
-hb.ignoreFrameNameList = {
-	["GameTimeFrame"] = true,
-	["HelpOpenWebTicketButton"] = true,
-	["MinimapBackdrop"] = true,
-	["ExpansionLandingPageMinimapButton"] = true,
-	["QueueStatusButton"] = true,
-	["AddonCompartmentFrame"] = true,
-}
-
 local ignoreFrameList = {}
-
 local ignoreFrameNamePattern = {
 	"^GatherMatePin%d+$",
 	"^TTMinimapButton%d+$",

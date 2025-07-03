@@ -269,7 +269,8 @@ function hidingBarMixin:setBarTypePosition(typePosition, force)
 		self.omb.icon:SetRotation(self.config.omb.icon and 0 or rotation)
 
 		if typePosition or force or not self.rFrame then
-			frameFadeStop(self.omb, 1)
+			self.omb:SetScript("OnUpdate", nil)
+			self.omb:SetAlpha(1)
 			self.omb:GetScript("OnLeave")(self.omb)
 			self.rFrame = self.omb
 		end
