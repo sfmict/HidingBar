@@ -181,8 +181,9 @@ StaticPopupDialogs[main.addonName.."NEW_PROFILE"] = {
 		self:GetParent():Hide()
 	end,
 	OnShow = function(self)
-		self.editBox:SetText(UnitName("player").." - "..GetRealmName())
-		self.editBox:HighlightText()
+		local editBox = self.EditBox or self.editBox
+		editBox:SetText(UnitName("player").." - "..GetRealmName())
+		editBox:HighlightText()
 	end,
 }
 local function profileExistsAccept(popup, data)
@@ -242,8 +243,9 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 		self:GetParent():Hide()
 	end,
 	OnShow = function(self)
-		self.editBox:SetText(L["Bar"].." "..(#main.pBars + 1))
-		self.editBox:HighlightText()
+		local editBox = self.EditBox or self.editBox
+		editBox:SetText(L["Bar"].." "..(#main.pBars + 1))
+		editBox:HighlightText()
 	end,
 }
 local function barExistsAccept(popup, data)
@@ -1989,7 +1991,7 @@ end
 
 function main:createProfile(copy)
 	local dialog = StaticPopup_Show(self.addonName.."NEW_PROFILE", nil, nil, function(popup)
-		local text = popup.editBox:GetText()
+		local text = (popup.EditBox or popup.editBox):GetText()
 		popup:Hide()
 		if text and text ~= "" then
 			for _, profile in ipairs(hb.profiles) do
@@ -2012,15 +2014,16 @@ function main:createProfile(copy)
 		end
 	end)
 	if dialog and self.lastProfileName then
-		dialog.editBox:SetText(self.lastProfileName)
-		dialog.editBox:HighlightText()
+		local editBox = dialog.EditBox or dialog.editBox
+		editBox:SetText(self.lastProfileName)
+		editBox:HighlightText()
 	end
 end
 
 
 function main:editProfile(profileName)
 	local dialog = StaticPopup_Show(self.addonName.."EDIT_PROFILE", nil, nil, function(popup)
-		local text = popup.editBox:GetText()
+		local text = (popup.EditBox or popup.editBox):GetText()
 		popup:Hide()
 		if text and text ~= profileName and text ~= "" then
 			local editProfile
@@ -2043,8 +2046,9 @@ function main:editProfile(profileName)
 		end
 	end)
 	if dialog then
-		dialog.editBox:SetText(self.lastProfileName or profileName)
-		dialog.editBox:HighlightText()
+		local editBox = dialog.EditBox or dialog.editBox
+		editBox:SetText(self.lastProfileName or profileName)
+		editBox:HighlightText()
 	end
 end
 
@@ -2142,7 +2146,7 @@ end
 
 function main:createBar()
 	local dialog = StaticPopup_Show(self.addonName.."NEW_BAR", nil, nil, function(popup)
-		local text = popup.editBox:GetText()
+		local text = (popup.EditBox or popup.editBox):GetText()
 		popup:Hide()
 		if text and text ~= "" then
 			for _, bar in ipairs(self.pBars) do
@@ -2166,15 +2170,16 @@ function main:createBar()
 		end
 	end)
 	if dialog and self.lastBarName then
-		dialog.editBox:SetText(self.lastBarName)
-		dialog.editBox:HighlightText()
+		local editBox = dialog.EditBox or dialog.editBox
+		editBox:SetText(self.lastBarName)
+		editBox:HighlightText()
 	end
 end
 
 
 function main:editBar(barName)
 	local dialog = StaticPopup_Show(self.addonName.."EDIT_PROFILE", nil, nil, function(popup)
-		local text = popup.editBox:GetText()
+		local text = (popup.EditBox or popup.editBox):GetText()
 		if text and text ~= barName and text ~= "" then
 			local editBar
 			for _, bar in ipairs(self.pBars) do
@@ -2209,8 +2214,9 @@ function main:editBar(barName)
 		end
 	end)
 	if dialog then
-		dialog.editBox:SetText(self.lastBarName or barName)
-		dialog.editBox:HighlightText()
+		local editBox = dialog.EditBox or dialog.editBox
+		editBox:SetText(self.lastBarName or barName)
+		editBox:HighlightText()
 	end
 end
 
