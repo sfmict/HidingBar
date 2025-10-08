@@ -486,9 +486,9 @@ end
 
 function hb:checkProfile(profile)
 	profile.config = profile.config or {}
-	if profile.config.addFromDataBroker == nil then
-		profile.config.addFromDataBroker = true
-	end
+	--if profile.config.addFromDataBroker == nil then
+	--	profile.config.addFromDataBroker = true
+	--end
 	if profile.config.grabMinimap == nil then
 		profile.config.grabMinimap = true
 	end
