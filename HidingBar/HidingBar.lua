@@ -68,30 +68,66 @@ end
 
 
 -------------------------------------------
--- FRAME FADE
+-- TIMER FRAME
 -------------------------------------------
-local function fade(self, elapsed)
-	self.timer = self.timer - elapsed
-	if self.timer <= 0 then
-		self:SetScript("OnUpdate", nil)
-		self:SetAlpha(self.endAlpha)
-	else
-		self:SetAlpha(self.endAlpha - self.deltaAlpha * self.timer)
+local stopTimerFunc, setTimerFunc do
+	local timerFrame = CreateFrame("FRAME")
+	local frameFunc = setmetatable({}, {__mode = "v"})
+	local funcTimer = {}
+
+
+	local function onUpdate(self, elapsed)
+		for func, timer in next, funcTimer do
+			timer = timer - elapsed
+			func(timer)
+			if timer <= 0 then
+				funcTimer[func] = nil
+				if next(funcTimer) == nil then
+					self:SetScript("OnUpdate", nil)
+				end
+			else
+				funcTimer[func] = timer
+			end
+		end
+	end
+
+
+	function stopTimerFunc(frame)
+		if not frameFunc[frame] then return end
+		funcTimer[frameFunc[frame]] = nil
+		frameFunc[frame] = nil
+		if next(funcTimer) == nil then
+			timerFrame:SetScript("OnUpdate", nil)
+		end
+	end
+
+
+	function setTimerFunc(frame, timer, func, p1, p2)
+		stopTimerFunc(frame)
+		local timerFunc = function(timer) func(frame, timer, p1, p2) end
+		frameFunc[frame] = timerFunc
+		funcTimer[timerFunc] = timer
+		timerFrame:SetScript("OnUpdate", onUpdate)
 	end
 end
 
 
-local function frameFade(self, delay, endAlpha)
-	self.timer = delay
-	self.endAlpha = endAlpha
-	self.deltaAlpha = (endAlpha - self:GetAlpha()) / delay
-	self:SetScript("OnUpdate", fade)
+-------------------------------------------
+-- FRAME FADE
+-------------------------------------------
+local function fade(frame, timer, endAlpha, deltaAlpha)
+	frame:SetAlpha(timer <= 0 and endAlpha or endAlpha - deltaAlpha * timer)
 end
 
 
-local function frameFadeStop(self, alpha)
-	self:SetScript("OnUpdate", nil)
-	self:SetAlpha(alpha)
+local function frameFade(frame, delay, endAlpha)
+	setTimerFunc(frame, delay, fade, endAlpha, (endAlpha - frame:GetAlpha()) / delay)
+end
+
+
+local function stopFrameFade(frame, alpha)
+	stopTimerFunc(frame)
+	frame:SetAlpha(alpha)
 end
 
 
@@ -466,7 +502,7 @@ function hb:ADDON_LOADED(addonName)
 				for i = 1, #hb.currentProfile.bars do
 					local bar = hb.bars[i]
 					if bar.config.barTypePosition == 2 and bar.omb and not bar.omb.isGrabbed and bar.config.omb.fadeOpacity ~= 1 then
-						frameFadeStop(bar.omb, 1)
+						stopFrameFade(bar.omb, 1)
 					end
 				end
 			end)
@@ -1534,7 +1570,7 @@ do
 
 	local OnEnter = function(btn, curBar)
 		if curBar.omb == btn and curBar.config.omb.fadeOpacity ~= 1 then
-			frameFadeStop(btn, 1)
+			stopFrameFade(btn, 1)
 		end
 
 		if curBar.rFrame ~= btn and curBar.config.barTypePosition == 2 then
@@ -1561,18 +1597,14 @@ do
 	end
 
 
-	local hideBtn = function(btn, elapsed)
-		btn.timer = btn.timer -  elapsed
-		if btn.timer <= 0  then
-			frameFade(btn, 1.5, btn.bar.config.omb.fadeOpacity)
-		end
+	local hideBtn = function(btn, timer)
+		if timer <= 0 then frameFade(btn, 1.5, btn.bar.config.omb.fadeOpacity) end
 	end
 
 
 	local OnLeave = function(btn, bar)
-		if bar.omb == btn and bar.config.omb.fadeOpacity ~= 1 then
-			bar.omb.timer = bar.config.hideDelay
-			bar.omb:SetScript("OnUpdate", hideBtn)
+		if bar.omb == btn and bar.config.omb.fadeOpacity ~= 1 and not btn.isGrabbed then
+			setTimerFunc(bar.omb, bar.config.hideDelay, hideBtn)
 		end
 
 		local drag = bar.drag
@@ -1645,7 +1677,7 @@ end
 
 function hidingBarMixin:setOMBFade(opacity)
 	self.config.omb.fadeOpacity = opacity
-	frameFadeStop(self.omb, opacity)
+	stopFrameFade(self.omb, opacity)
 end
 
 
@@ -1942,20 +1974,20 @@ function hidingBarMixin:setFade(fade)
 		if fade then
 			frameFade(self, 1.5, self.config.fadeOpacity)
 		else
-			frameFadeStop(self, 1)
+			stopFrameFade(self, 1)
 		end
 	end
 	if fade and self.drag:IsShown() then
 		frameFade(self.drag, 1.5, self.config.fadeOpacity)
 	else
-		frameFadeStop(self.drag, 1)
+		stopFrameFade(self.drag, 1)
 	end
 end
 
 
 function hidingBarMixin:setFadeOpacity(opacity)
 	self.config.fadeOpacity = opacity
-	frameFadeStop(self.config.showHandler == 3 and self or self.drag, opacity)
+	stopFrameFade(self.config.showHandler == 3 and self or self.drag, opacity)
 end
 
 
@@ -2307,7 +2339,7 @@ function hidingBarMixin:setBarTypePosition(typePosition, force)
 		end
 
 		if typePosition or force or not self.rFrame then
-			frameFadeStop(self.omb, 1)
+			stopFrameFade(self.omb, 1)
 			self.omb:GetScript("OnLeave")(self.omb)
 			self.rFrame = self.omb
 		end
@@ -2504,14 +2536,14 @@ function hidingBarMixin:enter(force)
 	if not self.isDrag then
 		self:Raise()
 		if self.config.showHandler ~= 3 or force then
-			frameFadeStop(self.drag, 1)
+			stopFrameFade(self.drag, 1)
 			self:SetScript("OnUpdate", nil)
 			self:Show()
 			self:updateDragBarPosition()
 		else
-			frameFadeStop(self, 1)
+			stopFrameFade(self, 1)
 			if self.drag:IsShown() then
-				frameFadeStop(self.drag, 1)
+				stopFrameFade(self.drag, 1)
 			end
 		end
 	end
@@ -2621,7 +2653,7 @@ function hidingBarMixin:refreshShown()
 			self:enter(true)
 			self:leave()
 		elseif self:IsShown() then
-			frameFadeStop(self, 1)
+			stopFrameFade(self, 1)
 			self:GetScript("OnShow")(self)
 			if not self.isMouse then
 				self:leave()
@@ -2637,9 +2669,9 @@ function hidingBarMixin:refreshShown()
 		self:leave()
 	else
 		self.drag:Show()
-		frameFadeStop(self, 1)
+		stopFrameFade(self, 1)
 		if self:IsShown() then
-			frameFadeStop(self.drag, 1)
+			stopFrameFade(self.drag, 1)
 			self:GetScript("OnShow")(self)
 			if not self.isMouse then
 				self:leave()
