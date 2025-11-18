@@ -1771,7 +1771,7 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 		local vPoint, vRPoint, hPoint
 		local tHeight = tooltip:GetHeight()
 
-		if (issecretvalue and issecretvalue(tHeight)) -- midnight
+		if issecretvalue and issecretvalue(tHeight) -- midnight
 		or self:GetTop() + tHeight + 10 < UIParent:GetHeight() then
 			vPoint = "BOTTOM"
 			vRPoint = "TOP"
