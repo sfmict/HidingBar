@@ -134,6 +134,15 @@ end
 -------------------------------------------
 -- MASQUE
 -------------------------------------------
+function hb.isMsqEnabled(btn)
+	return btn._MSQ_CFG and btn._MSQ_CFG.Enabled or btn.__MSQ_Enabled
+end
+
+function hb.getMsqIcon(btn)
+	return btn._MSQ_CFG and btn._MSQ_CFG.Regions.Icon or btn.__MSQ_Icon
+end
+
+
 if MSQ then
 	local _, defSkin = MSQ:GetDefaultSkin()
 	local defNormal = defSkin.Normal
@@ -170,7 +179,7 @@ if MSQ then
 
 	local prevCoord, curCoord, MSQ_Coord = {}, {}, {}
 	function hb:MSQ_CoordUpdate(btn)
-		local icon = btn.__MSQ_Icon
+		local icon = self.getMsqIcon(btn)
 		if not icon then return end
 		if not MSQ_Coord[icon] then MSQ_Coord[icon] = {} end
 		for i = 1, 8 do
@@ -232,7 +241,7 @@ if MSQ then
 
 
 	function hb:MSQ_Button_Update(btn)
-		if not btn.__MSQ_Enabled then return end
+		if not self.isMsqEnabled(btn) then return end
 		local data = self.MSQ_Button_Data[btn]
 		if data then
 			if data._Border then
@@ -325,7 +334,7 @@ if MSQ then
 				data._Highlight.SetTexture = void
 			end
 			if data._IconCircleMask then
-				btn.__MSQ_Icon:RemoveMaskTexture(data._IconCircleMask)
+				self.getMsqIcon(btn):RemoveMaskTexture(data._IconCircleMask)
 				data._IconCircleMask = nil
 			end
 			if not next(data) then
@@ -1160,7 +1169,7 @@ function hb:addMButton(button, force, MSQ_Group)
 			end
 
 			local btnData = self:getMBtnSettings(button)
-			if self.MSQ_MButton and not button.__MSQ_Addon and not (btnData and btnData[6]) then
+			if self.MSQ_MButton and not (button._MSQ_CFG or button.__MSQ_Addon) and not (btnData and btnData[6]) then
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 

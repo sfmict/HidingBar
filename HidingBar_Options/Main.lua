@@ -2471,7 +2471,7 @@ function main:removeMButtonByName(name, update)
 		if btn.name == name then
 			self:removeMButton(btn, i, update)
 			hb:removeMButton(btn.rButton, update)
-			if btn.rButton.__MSQ_Enabled or btn.rButton.rButton and btn.rButton.rButton.__MSQ_Enabled then
+			if hb.isMsqEnabled(btn.rButton) or btn.rButton.rButton and btn.rButton.rButton.__MSQ_Enabled then
 				StaticPopup_Show(self.addonName.."GET_RELOAD")
 			end
 			break
@@ -2849,7 +2849,7 @@ function main:initMButtons(update)
 			          or button.Icon
 			          or _G[name.."icon"]
 			          or _G[name.."Icon"]
-			          or button.__MSQ_Icon
+			          or hb.getMsqIcon(button)
 			          or button.GetNormalTexture and button:GetNormalTexture()
 			          or button.texture
 			          or button.Texture

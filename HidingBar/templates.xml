@@ -27,7 +27,7 @@
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
 			</OnLoad>
 			<OnEnter>
-				if not self.__MSQ_Enabled then
+				if not HidingBarAddon.isMsqEnabled(self) then
 					self.icon:SetSize(32, 32)
 				end
 				if self.data.OnEnter then
@@ -48,7 +48,7 @@
 				end
 			</OnEnter>
 			<OnLeave>
-				if not self.__MSQ_Enabled then
+				if not HidingBarAddon.isMsqEnabled(self) then
 					self.icon:SetSize(30, 30)
 				end
 				if self.data.OnLeave then

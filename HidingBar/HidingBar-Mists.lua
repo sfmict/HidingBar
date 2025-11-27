@@ -15,7 +15,7 @@ hb:addToIgnoreFrameList("MiniMapLFGFrame")
 
 function hb:grabDefButtons()
 	local function checkMasqueConditions(btn, btnData)
-		return self.MSQ_MButton and not btn.__MSQ_Addon and not (btnData or self:getMBtnSettings(btn))[6]
+		return self.MSQ_MButton and not (btn._MSQ_CFG or btn.__MSQ_Addon) and not (btnData or self:getMBtnSettings(btn))[6]
 	end
 
 	-- CALENDAR BUTTON
@@ -42,7 +42,7 @@ function hb:grabDefButtons()
 			end
 		end)
 
-		if not GameTimeFrame.__MSQ_Addon then
+		if not (GameTimeFrame._MSQ_CFG or GameTimeFrame.__MSQ_Addon) then
 			GameTimeFrame:GetNormalTexture():SetTexCoord(0, .375, 0, .75)
 			GameTimeFrame:GetPushedTexture():SetTexCoord(.5, .875, 0, .75)
 			GameTimeFrame:GetHighlightTexture():SetTexCoord(0, 1, 0, .9375)
@@ -65,7 +65,7 @@ function hb:grabDefButtons()
 		self:setHooks(MiniMapTracking)
 		self:setSecureHooks(MiniMapTracking)
 		local p = self:setParams(MiniMapTracking, function(p)
-			if MiniMapTrackingButton.__MSQ_Addon then return end
+			if MiniMapTrackingButton._MSQ_CFG or MiniMapTrackingButton.__MSQ_Addon then return end
 			icon.SetPoint = nil
 			MiniMapTrackingButton:SetScript("OnMouseDown", p.OnMouseDown)
 			MiniMapTrackingButton:SetScript("OnMouseUp", p.OnMouseUp)
@@ -230,7 +230,7 @@ function hb:grabDefButtons()
 		self:setSecureHooks(mapButton)
 
 		local p = self:setParams(mapButton, function(p, mapButton)
-			if mapButton.__MSQ_Addon then return end
+			if mapButton._MSQ_CFG or mapButton.__MSQ_Addon then return end
 			mapButton.normal:SetTexture(p.normalTexture)
 			mapButton.normal:SetTexCoord(unpack(p.normalCoords))
 			mapButton.normal:SetAllPoints()
@@ -244,7 +244,7 @@ function hb:grabDefButtons()
 			mapButton.border:Hide()
 		end)
 
-		if not mapButton.__MSQ_Addon then
+		if not (mapButton._MSQ_CFG or mapButton.__MSQ_Addon) then
 			mapButton.normal = mapButton:GetNormalTexture()
 			p.normalTexture = mapButton.normal:GetTexture()
 			p.normalCoords = {mapButton.normal:GetTexCoord()}
