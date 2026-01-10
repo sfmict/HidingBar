@@ -43,7 +43,6 @@ config:SetScript("OnShow", loadOptions)
 
 -- ADD CATEGORY
 local category, layout = Settings.RegisterCanvasLayoutCategory(config, addon)
-category.ID = addon
 -- layout:AddAnchorPoint("TOPLEFT", -12, 8)
 -- layout:AddAnchorPoint("BOTTOMRIGHT", 0, 0)
 Settings.RegisterAddOnCategory(category)
@@ -57,7 +56,6 @@ aboutConfig:SetScript("OnShow", loadOptions)
 
 -- ADD SUBCATEGORY
 local subcategory, layout = Settings.RegisterCanvasLayoutSubcategory(category, aboutConfig,  L["About"])
-subcategory.ID = L["About"]
 Settings.RegisterAddOnCategory(subcategory)
 
 
@@ -67,7 +65,7 @@ function config:openConfig()
 		if InCombatLockdown() then return end
 		HideUIPanel(SettingsPanel)
 	else
-		Settings.OpenToCategory(addon, true)
+		Settings.OpenToCategory(category:GetID(), addon)
 	end
 end
 
