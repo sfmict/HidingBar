@@ -2471,7 +2471,7 @@ function main:removeMButtonByName(name, update)
 		if btn.name == name then
 			self:removeMButton(btn, i, update)
 			hb:removeMButton(btn.rButton, update)
-			if hb.isMsqEnabled(btn.rButton) or btn.rButton.rButton and btn.rButton.rButton.__MSQ_Enabled then
+			if hb.isMsqEnabled(btn.rButton) or btn.rButton.rButton and hb.isMsqEnabled(btn.rButton.rButton) then
 				StaticPopup_Show(self.addonName.."GET_RELOAD")
 			end
 			break

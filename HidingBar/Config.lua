@@ -61,8 +61,8 @@ Settings.RegisterAddOnCategory(subcategory)
 
 -- OPEN CONFIG
 function config:openConfig()
+	if InCombatLockdown() then return end
 	if SettingsPanel:IsVisible() and self:IsVisible() then
-		if InCombatLockdown() then return end
 		HideUIPanel(SettingsPanel)
 	else
 		Settings.OpenToCategory(category:GetID(), addon)

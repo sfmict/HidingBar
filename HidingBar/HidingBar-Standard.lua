@@ -27,7 +27,7 @@ function hb:grabDefButtons()
 	end
 
 	local function checkMasqueConditions(btn, btnData)
-		return self.MSQ_MButton and not (btn._MSQ_CFG or btn.__MSQ_Addon) and not (btnData or self:getMBtnSettings(btn))[6]
+		return self.MSQ_MButton and not btn._MSQ_CFG and not (btnData or self:getMBtnSettings(btn))[6]
 	end
 
 	-- CALENDAR BUTTON
@@ -39,7 +39,7 @@ function hb:grabDefButtons()
 
 		local p = self:setParams(GameTimeFrame, function(p, GameTimeFrame)
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
-			if not (GameTimeFrame._MSQ_CFG or GameTimeFrame.__MSQ_Addon) then
+			if not GameTimeFrame._MSQ_CFG then
 				GameTimeFrame:SetSize(p.width, p.height)
 				GameTimeFrame:GetNormalTexture():SetTexCoord(unpack(p.normalTexCoord))
 				GameTimeFrame:GetPushedTexture():SetTexCoord(unpack(p.pushedTexCoord))
@@ -210,7 +210,7 @@ function hb:grabDefButtons()
 			mail.GetParent = p.GetParent
 			self.SetScript(mail, "OnShow", p.OnShow)
 			mail:GetParent():Layout()
-			if mail._MSQ_CFG or mail.__MSQ_Addon then return end
+			if mail._MSQ_CFG then return end
 			self.SetSize(mail, p.width, p.height)
 			self.ClearAllPoints(mail.icon)
 			for i = 1, #p.iconPoints do
@@ -254,7 +254,7 @@ function hb:grabDefButtons()
 		local p = self:setParams(craftingOrder, function(p, craftingOrder)
 			craftingOrder.GetParent = p.GetParent
 			craftingOrder:GetParent():Layout()
-			if craftingOrder._MSQ_CFG or craftingOrder.__MSQ_Addon then return end
+			if craftingOrder._MSQ_CFG then return end
 			self.SetSize(craftingOrder, p.width, p.height)
 			self.ClearAllPoints(craftingOrder.icon)
 			for i = 1, #p.iconPoints do
@@ -332,7 +332,7 @@ function hb:grabDefButtons()
 				end
 				zoom:SetScript("OnClick", zoom.click)
 
-				if not (zoom._MSQ_CFG or zoom.__MSQ_Addon) then
+				if not zoom._MSQ_CFG then
 					normal:SetTexCoord(unpack(p.normalTexCoord))
 					pushed:SetTexCoord(unpack(p.pushedTexCoord))
 					highlight:SetTexCoord(unpack(p.highlightTexCoord))

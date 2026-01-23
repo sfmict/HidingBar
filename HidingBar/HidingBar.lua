@@ -135,11 +135,11 @@ end
 -- MASQUE
 -------------------------------------------
 function hb.isMsqEnabled(btn)
-	return btn._MSQ_CFG and btn._MSQ_CFG.Enabled or btn.__MSQ_Enabled
+	return btn._MSQ_CFG and btn._MSQ_CFG.Enabled
 end
 
 function hb.getMsqIcon(btn)
-	return btn._MSQ_CFG and btn._MSQ_CFG.Regions.Icon or btn.__MSQ_Icon
+	return btn._MSQ_CFG and btn._MSQ_CFG.Regions.Icon
 end
 
 
@@ -686,7 +686,7 @@ function hb:init()
 		local ldbiTbl = ldbi:GetButtonList()
 		for i = 1, #ldbiTbl do
 			local button = ldbi:GetMinimapButton(ldbiTbl[i])
-			if self:ignoreCheck(self.GetName(button)) then
+			if self:ignoreCheck(self.GetName(button)) and not self.IsProtected(button) then
 				self.minimapButtons[button[0]] = button
 				self:setHooks(button)
 			end
@@ -1169,7 +1169,7 @@ function hb:addMButton(button, force, MSQ_Group)
 			end
 
 			local btnData = self:getMBtnSettings(button)
-			if self.MSQ_MButton and not (button._MSQ_CFG or button.__MSQ_Addon) and not (btnData and btnData[6]) then
+			if self.MSQ_MButton and not button._MSQ_CFG and not (btnData and btnData[6]) then
 				self:setMButtonRegions(button, nil, MSQ_Group)
 			end
 

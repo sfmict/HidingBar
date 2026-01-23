@@ -19,7 +19,7 @@ hb:addToIgnoreFrameList("LFGMinimapFrame")
 
 function hb:grabDefButtons()
 	local function checkMasqueConditions(btn, btnData)
-		return self.MSQ_MButton and not (btn._MSQ_CFG or btn.__MSQ_Addon) and not (btnData or self:getMBtnSettings(btn))[6]
+		return self.MSQ_MButton and not btn._MSQ_CFG and not (btnData or self:getMBtnSettings(btn))[6]
 	end
 
 	-- TRACKING BUTTON
@@ -173,7 +173,7 @@ function hb:grabDefButtons()
 	--	self:setHooks(mapButton)
 	--	self:setSecureHooks(mapButton)
 	--	local p = self:setParams(mapButton, function(p, mapButton)
-	--		if mapButton._MSQ_CFG or mapButton.__MSQ_Addon then return end
+	--		if mapButton._MSQ_CFG then return end
 	--		mapButton.normal:ClearAllPoints()
 	--		mapButton.normal:SetPoint(unpack(p.iconPoint))
 	--		mapButton.puched:ClearAllPoints()
