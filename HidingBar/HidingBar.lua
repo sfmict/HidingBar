@@ -1146,9 +1146,13 @@ end
 
 
 function hb:grabMinimapAddonsButtons(parentFrame)
+	local pw, ph = parentFrame:GetSize()
 	for _, child in ipairs({self.GetChildren(parentFrame)}) do
 		local width, height = self.GetSize(child)
-		if math.max(width, height) > 16 and math.abs(width - height) < 5 and not self.IsProtected(child) then
+		if not self.IsProtected(child)
+		and pw * .5 > width and ph * .5 > height
+		and math.max(width, height) > 16 and math.abs(width - height) < 5
+		then
 			self:addMButton(child)
 		end
 	end
