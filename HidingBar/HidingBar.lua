@@ -1262,6 +1262,7 @@ do
 
 
 	local function SetShown(btn, show)
+   		if hb.btnParams[btn] == nil then return end
 		if hb.btnParams[btn].isShown == show then return end
 		hb.btnParams[btn].isShown = show
 		local btnData = btnSettings[btn]
