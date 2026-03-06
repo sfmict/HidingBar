@@ -11,12 +11,12 @@ jobs:
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 
     - name: download packager
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
       with:
         repository: sfmict/js_packager
         token: ${{ secrets.OAUTH }}

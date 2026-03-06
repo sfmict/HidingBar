@@ -683,15 +683,6 @@ function hb:init()
 	})
 
 	if self.pConfig.grabMinimap then
-		local ldbiTbl = ldbi:GetButtonList()
-		for i = 1, #ldbiTbl do
-			local button = ldbi:GetMinimapButton(ldbiTbl[i])
-			if self:ignoreCheck(self.GetName(button)) and not self.IsProtected(button) then
-				self.minimapButtons[button[0]] = button
-				self:setHooks(button)
-			end
-		end
-
 		self:grabMinimapAddonsButtons(Minimap)
 		self:grabMinimapAddonsButtons(MinimapBackdrop)
 		ldbi.RegisterCallback(self, "LibDBIcon_IconCreated", "ldbi_add")
@@ -1166,11 +1157,7 @@ function hb:addMButton(button, force, MSQ_Group)
 		or self.HasScript(button, "OnMouseUp") and self.GetScript(button, "OnMouseUp")
 		or self.HasScript(button, "OnMouseDown") and self.GetScript(button, "OnMouseDown")
 		or force then
-			local btn = self.minimapButtons[button[0]]
-			self.minimapButtons[button[0]] = nil
-			if btn ~= button then
-				self:setHooks(button)
-			end
+			self:setHooks(button)
 
 			local btnData = self:getMBtnSettings(button)
 			if self.MSQ_MButton and not button._MSQ_CFG and not (btnData and btnData[6]) then
