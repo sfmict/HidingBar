@@ -1,5 +1,5 @@
 local addon, ns = ...
-local L, config, UIParent = ns.L, ns.config, UIParent
+local L, config, UIParent, pcall = ns.L, ns.config, UIParent, pcall
 local hb = CreateFrame("FRAME", addon.."Addon")
 local cover = CreateFrame("FRAME")
 cover:Hide()
@@ -236,7 +236,7 @@ if MSQ then
 			ULy = ULy + mULy * left
 		end
 
-		config.noIcon.SetTexCoord(self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
+		pcall(config.noIcon.SetTexCoord, self, ULx, ULy, LLx, LLy, URx, URy, LRx, LRy)
 	end
 
 
@@ -2553,7 +2553,7 @@ end
 
 
 do
-	local GetMouseFoci, pcall, region = GetMouseFoci, pcall
+	local GetMouseFoci, region = GetMouseFoci
 	local menuManager = Menu.GetManager()
 	local menus = {}
 	local function addMenu(menu) menus[#menus + 1] = menu end
