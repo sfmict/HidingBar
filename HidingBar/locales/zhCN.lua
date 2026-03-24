@@ -138,4 +138,3 @@ L["If a suitable bar exists then the button will be grabbed"] = "若存在匹配
 L["About"] = "关于"
 L["Help with translation of %s. Thanks."] = "感谢为 %s 提供翻译支持。"
 L["Localization Translators:"] = "简体中文译者：【NGA】阿思儡，2026/03/24 对 v12.0.3 内置翻译修改，感谢前人付出。"
-
