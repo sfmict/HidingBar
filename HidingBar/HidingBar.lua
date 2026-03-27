@@ -31,6 +31,7 @@ local ignoreFrameNamePattern = {
 
 
 local function void() end
+local issecretvalue = issecretvalue or void
 
 local function enter(btn, _, eventFrame)
 	local bar = hb.GetParent(btn)
@@ -1771,7 +1772,7 @@ function hidingBarMixin:updateTooltipPosition(eventFrame)
 		local vPoint, vRPoint, hPoint
 		local tHeight = tooltip:GetHeight()
 
-		if issecretvalue and issecretvalue(tHeight) -- midnight
+		if issecretvalue(tHeight) -- midnight
 		or self:GetTop() + tHeight + 10 < UIParent:GetHeight() then
 			vPoint = "BOTTOM"
 			vRPoint = "TOP"
@@ -2587,7 +2588,7 @@ do
 				return self.GetParent(noEventFrames[frame]) == self
 			end
 			status, numPoints = pcall(self.GetNumPoints, frame)
-			if status then
+			if status and not issecretvalue(numPounts) then
 				for i = 1, numPoints do
 					local status, _, rFrame = pcall(self.GetPoint, frame, i)
 					if status and noEventFrames[rFrame] then
