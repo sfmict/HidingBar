@@ -2588,7 +2588,7 @@ do
 				return self.GetParent(noEventFrames[frame]) == self
 			end
 			status, numPoints = pcall(self.GetNumPoints, frame)
-			if status and not issecretvalue(numPounts) then
+			if status and not issecretvalue(numPoints) then
 				for i = 1, numPoints do
 					local status, _, rFrame = pcall(self.GetPoint, frame, i)
 					if status and noEventFrames[rFrame] then
