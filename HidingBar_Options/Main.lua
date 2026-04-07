@@ -1,4 +1,4 @@
-local main, hb = HidingBarConfigAddon, HidingBarAddon
+local main, hb, dataDialog = HidingBarConfigAddon, HidingBarAddon, HidingBarDataDialog
 local addon, L = main.name, main.L
 main.noIcon:SetTexture("Interface/Icons/INV_Misc_QuestionMark")
 main.noIcon:SetTexCoord(.05, .95, .05, .95)
@@ -71,6 +71,15 @@ main.darkPanelBackdrop = {
 	edgeSize = 8 * scale,
 	insets = {left = 3, right = 3, top = 6, bottom = 6},
 }
+
+
+local function copyTable(t)
+	local n = {}
+	for k, v in pairs(t) do
+		n[k] = type(v) == "table" and copyTable(v) or v
+	end
+	return n
+end
 
 
 local function toHex(tbl)
@@ -189,9 +198,12 @@ StaticPopupDialogs[main.addonName.."NEW_PROFILE"] = {
 local function profileExistsAccept(popup, data)
 	if not popup then return end
 	popup:Hide()
-	main:profilePopupAction(data)
-	main.profilePopupAction = nil
-	main.lastProfileName = nil
+
+	if main.profilePopupAction then
+		main:profilePopupAction(data)
+		main.profilePopupAction = nil
+		main.lastProfileName = nil
+	end
 end
 StaticPopupDialogs[main.addonName.."PROFILE_EXISTS"] = {
 	text = addon..": "..L["A profile with the same name exists."],
@@ -381,9 +393,10 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 		info.text = L["New profile"]
 		self:ddAddButton(info, level)
 
+		info.keepShownOnClick = nil
+		info.hasArrow = nil
+
 		if not main.currentProfile.isDefault then
-			info.keepShownOnClick = nil
-			info.hasArrow = nil
 			info.text = L["Set as default"]
 			info.func = function()
 				for _, profile in ipairs(hb.profiles) do
@@ -393,6 +406,43 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 			end
 			self:ddAddButton(info, level)
 		end
+
+		self:ddAddSeparator(level)
+
+		info.text = L["Import"]
+		info.func = function()
+			dataDialog:open({
+				type = "import",
+				defName = UnitName("player").." - "..GetRealmName(),
+				valid = function(data)
+					return type(data.config) == "table"
+					   and type(data.config.grabMinimap) == "boolean"
+					   and type(data.config.ignoreMBtn) == "table"
+						and type(data.config.grabMinimapAfterN) == "number"
+					   and type(data.config.customGrabList) == "table"
+					   and type(data.config.ombGrabQueue) == "table"
+					   and type(data.config.btnSettings) == "table"
+					   and type(data.config.mbtnSettings) == "table"
+					   and type(data.bars) == "table"
+				end,
+				save = function(profile, text)
+					return main:saveProfile(profile, text)
+				end,
+			})
+		end
+		self:ddAddButton(info, level)
+
+		info.text = L["Export"]
+		info.func = function()
+			local profile = copyTable(main.currentProfile)
+			profile.isDefault = nil
+			profile.name = nil
+			dataDialog:open({
+				type = "export",
+				data = profile,
+			})
+		end
+		self:ddAddButton(info, level)
 	else
 		info.notCheckable = true
 
@@ -1980,38 +2030,34 @@ end)
 
 
 -- METHODS
-local function copyTable(t)
-	local n = {}
-	for k, v in pairs(t) do
-		n[k] = type(v) == "table" and copyTable(v) or v
+function main:saveProfile(profile, text, popupAction, copy)
+	if not text or text == "" then return end
+	for _, profile in ipairs(hb.profiles) do
+		if profile.name == text then
+			self.lastProfileName = text
+			self.profilePopupAction = popupAction
+			StaticPopup_Show(self.addonName.."PROFILE_EXISTS", nil, nil, copy)
+			return
+		end
 	end
-	return n
+	profile.name = text
+	profile.isDefault = nil
+	hb:checkProfile(profile)
+	tinsert(hb.profiles, profile)
+	sort(hb.profiles, function(a, b) return strcmputf8i(a.name, b.name) < 0 end)
+	hb:setProfile(text)
+	self:setProfile()
+	self:hidingBarUpdate()
+	return true
 end
 
 
 function main:createProfile(copy)
 	local dialog = StaticPopup_Show(self.addonName.."NEW_PROFILE", nil, nil, function(popup)
+		local profile = copy and copyTable(self.currentProfile) or {}
 		local text = (popup.EditBox or popup.editBox):GetText()
 		popup:Hide()
-		if text and text ~= "" then
-			for _, profile in ipairs(hb.profiles) do
-				if profile.name == text then
-					self.lastProfileName = text
-					self.profilePopupAction = self.createProfile
-					StaticPopup_Show(self.addonName.."PROFILE_EXISTS", nil, nil, copy)
-					return
-				end
-			end
-			local profile = copy and copyTable(self.currentProfile) or {}
-			profile.name = text
-			profile.isDefault = nil
-			hb:checkProfile(profile)
-			tinsert(hb.profiles, profile)
-			sort(hb.profiles, function(a, b) return strcmputf8i(a.name, b.name) < 0 end)
-			hb:setProfile(text)
-			self:setProfile()
-			self:hidingBarUpdate()
-		end
+		self:saveProfile(profile, text, self.createProfile, copy)
 	end)
 	if dialog and self.lastProfileName then
 		local editBox = dialog.EditBox or dialog.editBox
