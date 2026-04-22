@@ -1,4 +1,4 @@
-## Interface: 120001, 50503, 20505, 11508
+## Interface: 120005, 120001, 50503, 20505, 11508
 ## Title: HidingBar Options
 ## Author: sfmict
 ## Version: @project-version@
@@ -25,6 +25,7 @@
 ## OptionalDeps: LibSFDropDown
 embeds.xml
 templates.xml
+DataDialog.lua
 [Family]/templates.xml
 Main.lua
 [Family]/IconData.lua

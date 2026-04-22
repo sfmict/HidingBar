@@ -9,6 +9,8 @@ L["New profile"] = "New profile"
 L["Create"] = "Create"
 L["Copy current"] = "Copy current"
 L["Set as default"] = "Set as default"
+L["Import"] = "Import"
+L["Export"] = "Export"
 L["A profile with the same name exists."] = "A profile with the same name exists."
 L["Are you sure you want to delete profile %s?"] = "Are you sure you want to delete profile %s?"
 L["RELOAD_INTERFACE_QUESTION"] = "You need to reload the interface to apply the changes. Do it now?"
@@ -137,6 +139,6 @@ L["Help with translation of %s. Thanks."] = "Help with translation of %s. Thanks
 L["Localization Translators:"] = "Localization Translators:"
 
 setmetatable(L, {__index = function(self, key)
-	self[key] = key or ""
-	return key
+	self[key] = "[PH]"..key
+	return self[key]
 end})

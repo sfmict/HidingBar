@@ -25,6 +25,7 @@
 ## OptionalDeps: LibSFDropDown
 embeds.xml
 templates.xml
+DataDialog.lua
 Classic/templates.xml
 Main.lua
 Classic/IconData.lua
