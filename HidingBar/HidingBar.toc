@@ -9,6 +9,7 @@
 ## Notes-frFR: Panneau de dissimulation pratique
 ## Notes-ptBR: Painel de ocultação conveniente
 ## Notes-ruRU: Удобная скрывающаяся панель
+## Notes-zhCN: 便捷的插件钮收纳管理面板
 ## Category-enUS: User Interface
 ## Category-deDE: Benutzerinterface
 ## Category-esES: Interfaz de usuario
