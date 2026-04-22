@@ -68,7 +68,7 @@ local langs, last = {
 	{"koKR", "drixwow, Hayan, netaras, maylisdalan"},
 	{"ptBR", "cathzinhas, 6605270, maylisdalan"},
 	{"zhCN", "lambdapak, huchang47, kuaishan, LvWind"},
-	{"zhTW", "BNS333, terry1314, RainbowUI"},
+	{"zhTW", "7peanuts, BNS333, terry1314, RainbowUI"},
 }
 
 for _, l in ipairs(langs) do

@@ -418,7 +418,7 @@ profilesCombobox:ddSetInitFunc(function(self, level)
 					return type(data.config) == "table"
 					   and type(data.config.grabMinimap) == "boolean"
 					   and type(data.config.ignoreMBtn) == "table"
-						and type(data.config.grabMinimapAfterN) == "number"
+					   and type(data.config.grabMinimapAfterN) == "number"
 					   and type(data.config.customGrabList) == "table"
 					   and type(data.config.ombGrabQueue) == "table"
 					   and type(data.config.btnSettings) == "table"
