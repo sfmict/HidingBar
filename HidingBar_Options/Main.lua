@@ -2901,7 +2901,7 @@ function main:initMButtons(update)
 			          or button.Texture
 			          or button.background
 			          or button.Background
-			if not icon or not icon.GetTexture or not icon:GetTexture() then
+			if type(icon) ~= "table" or not icon.GetTexture or not icon:GetTexture() then
 				icon = self.noIcon
 			end
 			self:createMButton(button, name, icon, update)
