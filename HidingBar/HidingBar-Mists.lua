@@ -10,7 +10,7 @@ hb:addToIgnoreFrameList("MiniMapWorldMapButton")
 hb:addToIgnoreFrameList("MiniMapMailFrame")
 hb:addToIgnoreFrameList("MiniMapTracking")
 hb:addToIgnoreFrameList("MiniMapBattlefieldFrame")
-hb:addToIgnoreFrameList("MiniMapLFGFrame")
+hb:addToIgnoreFrameList("LFGMinimapFrame")
 
 
 function hb:grabDefButtons()
@@ -107,9 +107,9 @@ function hb:grabDefButtons()
 	end
 
 	-- MINIMAP LFG FRAME
-	local LFGFrame = MiniMapLFGFrame
-	if LFGFrame and self:ignoreCheck("MiniMapLFGFrame") and not self.btnParams[LFGFrame] then
-		LFGFrame.icon = MiniMapLFGFrameIconTexture
+	local LFGFrame = LFGMinimapFrame
+	if LFGFrame and self:ignoreCheck("LFGMinimapFrame") and not self.btnParams[LFGFrame] then
+		LFGFrame.icon = LFGMinimapFrameIconTexture
 		LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
 		self:setHooks(LFGFrame)
 		self:setSecureHooks(LFGFrame)
