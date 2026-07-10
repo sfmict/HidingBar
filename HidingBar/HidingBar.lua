@@ -80,8 +80,10 @@ local stopTimerFunc, setTimerFunc do
 	local function onUpdate(self, elapsed)
 		for func, timer in next, funcTimer do
 			timer = timer - elapsed
-			func(timer)
-			if timer <= 0 then
+			local isZero = timer <= 0
+			func(isZero, timer)
+
+			if isZero then
 				funcTimer[func] = nil
 				if next(funcTimer) == nil then
 					self:SetScript("OnUpdate", nil)
@@ -104,8 +106,7 @@ local stopTimerFunc, setTimerFunc do
 
 
 	function setTimerFunc(frame, timer, func, p1, p2)
-		stopTimerFunc(frame)
-		local timerFunc = function(timer) func(frame, timer, p1, p2) end
+		local timerFunc = function(isZero, timer) func(frame, isZero, timer, p1, p2) end
 		frameFunc[frame] = timerFunc
 		funcTimer[timerFunc] = timer
 		timerFrame:SetScript("OnUpdate", onUpdate)
@@ -116,13 +117,15 @@ end
 -------------------------------------------
 -- FRAME FADE
 -------------------------------------------
-local function fade(frame, timer, endAlpha, deltaAlpha)
-	frame:SetAlpha(timer <= 0 and endAlpha or endAlpha - deltaAlpha * timer)
+local function fade(frame, isZero, timer, endAlpha, deltaAlpha)
+	frame:SetAlpha(isZero and endAlpha or endAlpha - deltaAlpha * timer)
 end
 
 
-local function frameFade(frame, delay, endAlpha)
-	setTimerFunc(frame, delay, fade, endAlpha, (endAlpha - frame:GetAlpha()) / delay)
+local function frameFade(frame, delay, endAlpha, startAlpha)
+	local deltaAlpha = endAlpha - frame:GetAlpha()
+	delay = delay * deltaAlpha / (endAlpha - (startAlpha or 1))
+	setTimerFunc(frame, delay, fade, endAlpha, deltaAlpha / delay)
 end
 
 
@@ -1139,10 +1142,12 @@ end
 
 function hb:grabMinimapAddonsButtons(parentFrame)
 	local pw, ph = parentFrame:GetSize()
+	pw, ph = pw * .5, ph * .5
 	for _, child in ipairs({self.GetChildren(parentFrame)}) do
 		local width, height = self.GetSize(child)
-		if not self.IsProtected(child)
-		and pw * .5 > width and ph * .5 > height
+		if width and height
+		and not self.IsProtected(child)
+		and pw > width and ph > height
 		and math.max(width, height) > 16 and math.abs(width - height) < 5
 		then
 			self:addMButton(child)
@@ -1598,8 +1603,8 @@ do
 	end
 
 
-	local hideBtn = function(btn, timer)
-		if timer <= 0 then frameFade(btn, 1.5, btn.bar.config.omb.fadeOpacity) end
+	local hideBtn = function(btn, isZero)
+		if isZero then frameFade(btn, 1.5, btn.bar.config.omb.fadeOpacity) end
 	end
 
 
@@ -2695,7 +2700,7 @@ function hidingBarDragMixin:hoverWithClick()
 	if bar:IsShown() then
 		bar:enter()
 	elseif self:IsShown() and bar.config.fade then
-		frameFade(self, bar.config.showDelay, 1)
+		frameFade(self, bar.config.showDelay, 1, bar.config.fadeOpacity)
 	end
 end
 
@@ -2732,7 +2737,7 @@ do
 			bar:enter()
 		else
 			if self:IsShown() and bar.config.fade then
-				frameFade(self, bar.config.showDelay, 1)
+				frameFade(self, bar.config.showDelay, 1, bar.config.fadeOpacity)
 			end
 			hb.tBar = bar
 			hb.timer = bar.config.showDelay
