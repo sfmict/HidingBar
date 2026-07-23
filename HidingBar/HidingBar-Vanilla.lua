@@ -9,11 +9,12 @@ hb:addToIgnoreFrameList("HelpOpenWebTicketButton")
 hb:addToIgnoreFrameList("MinimapBackdrop")
 hb:addToIgnoreFrameList("MinimapZoomIn")
 hb:addToIgnoreFrameList("MinimapZoomOut")
-hb:addToIgnoreFrameList("MiniMapWorldMapButton")
+-- hb:addToIgnoreFrameList("MiniMapWorldMapButton")
 hb:addToIgnoreFrameList("MiniMapMailFrame")
 hb:addToIgnoreFrameList("MiniMapTracking")
 hb:addToIgnoreFrameList("MiniMapBattlefieldFrame")
-hb:addToIgnoreFrameList("MiniMapLFGFrame")
+SetLookingForGroupUIAvailable(C_LFGInfo.IsGroupFinderEnabled()) --Blizzard_GroupFinder_VanillaStyle
+hb:addToIgnoreFrameList("LFGMinimapFrame")
 
 
 function hb:grabDefButtons()
@@ -49,9 +50,9 @@ function hb:grabDefButtons()
 	end
 
 	-- MINIMAP LFG FRAME
-	local LFGFrame = MiniMapLFGFrame
-	if LFGFrame and self:ignoreCheck("MiniMapLFGFrame") and not self.btnParams[LFGFrame] then
-		LFGFrame.icon = MiniMapLFGFrameIconTexture
+	local LFGFrame = LFGMinimapFrame
+	if LFGFrame and self:ignoreCheck("LFGMinimapFrame") and not self.btnParams[LFGFrame] then
+		LFGFrame.icon = LFGMinimapFrameIconTexture
 		LFGFrame.icon:SetTexCoord(0, .125, 0, .25)
 		self:setHooks(LFGFrame)
 		self:setSecureHooks(LFGFrame)
@@ -167,40 +168,40 @@ function hb:grabDefButtons()
 	end
 
 	-- WORLD MAP BUTTON
-	local mapButton = MiniMapWorldMapButton
-	if MiniMapWorldMapButton and self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
-		self:setHooks(mapButton)
-		self:setSecureHooks(mapButton)
-		local p = self:setParams(mapButton, function(p, mapButton)
-			if mapButton._MSQ_CFG then return end
-			mapButton.normal:ClearAllPoints()
-			mapButton.normal:SetPoint(unpack(p.iconPoint))
-			mapButton.puched:ClearAllPoints()
-			mapButton.puched:SetPoint(unpack(p.pushedPoint))
-			mapButton.border:ClearAllPoints()
-			mapButton.border:SetPoint(unpack(p.borderPoint))
-		end)
+	-- local mapButton = MiniMapWorldMapButton
+	-- if MiniMapWorldMapButton and self:ignoreCheck("MiniMapWorldMapButton") and not self.btnParams[MiniMapWorldMapButton] then
+	-- 	self:setHooks(mapButton)
+	-- 	self:setSecureHooks(mapButton)
+	-- 	local p = self:setParams(mapButton, function(p, mapButton)
+	-- 		if mapButton._MSQ_CFG then return end
+	-- 		mapButton.normal:ClearAllPoints()
+	-- 		mapButton.normal:SetPoint(unpack(p.iconPoint))
+	-- 		mapButton.puched:ClearAllPoints()
+	-- 		mapButton.puched:SetPoint(unpack(p.pushedPoint))
+	-- 		mapButton.border:ClearAllPoints()
+	-- 		mapButton.border:SetPoint(unpack(p.borderPoint))
+	-- 	end)
 
-		mapButton.normal = mapButton:GetNormalTexture()
-		p.iconPoint = {mapButton.normal:GetPoint()}
-		mapButton.normal:ClearAllPoints()
-		mapButton.normal:SetPoint("CENTER")
-		mapButton.puched = mapButton:GetPushedTexture()
-		p.pushedPoint = {mapButton.puched:GetPoint()}
-		mapButton.puched:ClearAllPoints()
-		mapButton.puched:SetPoint("CENTER", 1, -1)
-		mapButton.border = MiniMapWorldBorder
-		p.borderPoint = {mapButton.border:GetPoint()}
-		mapButton.border:ClearAllPoints()
-		mapButton.border:SetPoint("TOPLEFT", 1, -1)
+	-- 	mapButton.normal = mapButton:GetNormalTexture()
+	-- 	p.iconPoint = {mapButton.normal:GetPoint()}
+	-- 	mapButton.normal:ClearAllPoints()
+	-- 	mapButton.normal:SetPoint("CENTER")
+	-- 	mapButton.puched = mapButton:GetPushedTexture()
+	-- 	p.pushedPoint = {mapButton.puched:GetPoint()}
+	-- 	mapButton.puched:ClearAllPoints()
+	-- 	mapButton.puched:SetPoint("CENTER", 1, -1)
+	-- 	mapButton.border = MiniMapWorldBorder
+	-- 	p.borderPoint = {mapButton.border:GetPoint()}
+	-- 	mapButton.border:ClearAllPoints()
+	-- 	mapButton.border:SetPoint("TOPLEFT", 1, -1)
 
-		if checkMasqueConditions(mapButton) then
-			self:setMButtonRegions(mapButton)
-		end
+	-- 	if checkMasqueConditions(mapButton) then
+	-- 		self:setMButtonRegions(mapButton)
+	-- 	end
 
-		tinsert(self.minimapButtons, mapButton)
-		tinsert(self.mixedButtons, mapButton)
-	end
+	-- 	tinsert(self.minimapButtons, mapButton)
+	-- 	tinsert(self.mixedButtons, mapButton)
+	-- end
 end
 
 
