@@ -132,24 +132,21 @@ function hb:grabDefButtons()
 			if not zoom.icon then zoom.icon = normal end
 
 			zoom.click = zoom:GetScript("OnClick")
-			zoom.Disable = function(zoom)
-				zoom:SetScript("OnClick", nil)
-				zoom.icon:SetDesaturated(true)
-				zoom:GetNormalTexture():SetDesaturated(true)
-				zoom:GetPushedTexture():SetDesaturated(true)
+			zoom.SetEnabled = function(zoom, enabled)
+				zoom:SetScript("OnClick", enabled and zoom.click or nil)
+				zoom.icon:SetDesaturated(not enabled)
+				zoom:GetNormalTexture():SetDesaturated(not enabled)
+				zoom:GetPushedTexture():SetDesaturated(not enabled)
 			end
-			zoom.Enable = function(zoom)
-				zoom:SetScript("OnClick", zoom.click)
-				zoom.icon:SetDesaturated(false)
-				zoom:GetNormalTexture():SetDesaturated(false)
-				zoom:GetPushedTexture():SetDesaturated(false)
-			end
+			zoom.Disable = function(zoom) zoom:SetEnabled(false) end
+			zoom.Enable = function(zoom) zoom:SetEnabled(true) end
 			if not zoom:IsEnabled() then
 				getmetatable(zoom).__index.Enable(zoom)
 				zoom:Disable()
 			end
 
-			local p = self:setParams(zoom, function()
+			local p = self:setParams(zoom, function(p, zoom)
+				zoom.SetEnabled = nil
 				zoom.Enable = nil
 				zoom.Disable = nil
 				if not zoom:GetScript("OnClick") then
