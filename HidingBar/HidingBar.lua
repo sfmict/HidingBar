@@ -353,7 +353,7 @@ if MSQ then
 		local isButton = btn:IsObjectType("Button")
 
 		for _, region in ipairs({btn:GetRegions()}) do
-			if region:IsObjectType("Texture") then
+			if region:GetObjectType() == "Texture" then
 				name = region:GetDebugName():gsub(".*%.", ""):lower()
 				texture = region:GetTexture()
 				tIsString = type(texture) == "string"
