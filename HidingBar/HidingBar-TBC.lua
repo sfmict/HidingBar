@@ -41,6 +41,7 @@ function hb:grabDefButtons()
 		if btnData[5] == nil then btnData[5] = true end
 
 		if checkMasqueConditions(tracking, btnData)then
+			MiniMapTrackingButtonBorder:Hide()
 			self:setMButtonRegions(tracking)
 		end
 
