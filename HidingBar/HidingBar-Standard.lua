@@ -62,7 +62,7 @@ function hb:grabDefButtons()
 		p.OnUpdate = GameTimeFrame:GetScript("OnUpdate")
 		self.HookScript(GameTimeFrame, "OnUpdate", function(GameTimeFrame)
 			local bar = GameTimeFrame:GetParent()
-			if bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
+			if bar.config and bar.config.interceptTooltip and GameTooltip:IsOwned(GameTimeFrame) then
 				bar:updateTooltipPosition()
 			end
 		end)

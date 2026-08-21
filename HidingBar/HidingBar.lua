@@ -1237,7 +1237,9 @@ end
 
 do
 	local voidFunctions = {
+		"SetFrameStrata",
 		"SetFixedFrameStrata",
+		"SetFrameLevel",
 		"SetFixedFrameLevel",
 		"SetHitRectInsets",
 		"ClearAllPoints",
