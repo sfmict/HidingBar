@@ -505,8 +505,7 @@ function hb:ADDON_LOADED(addonName)
 			self.db.config = nil
 		end
 
-		-- 1.1 is a fix for SexyMap grabbing
-		C_Timer.After(WOW_PROJECT_MAINLINE == WOW_PROJECT_ID and 0 or 1.1, function()
+		C_Timer.After(0, function()
 			xpcall(self.setProfile, CallErrorHandler, self)
 			self.cb:Fire("INIT")
 			self.init = nil

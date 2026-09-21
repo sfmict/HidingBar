@@ -1144,7 +1144,7 @@ main.fadeOpacity:setOnChanged(function(frame, value)
 end)
 
 -- PET BATTLE HIDE
-if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
+if hb.PET_BATTLE_OPENING_START then
 	main.petBattleHide = CreateFrame("CheckButton", nil, main.barSettingsPanel, "HidingBarAddonCheckButtonTemplate")
 	main.petBattleHide:SetPoint("TOPLEFT", main.fade, "BOTTOMLEFT", 0, -5)
 	main.petBattleHide.Text:SetText(L["Hide the bar in Pet Battle"])

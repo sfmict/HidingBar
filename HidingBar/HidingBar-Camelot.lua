@@ -447,27 +447,3 @@ function hb:grabDefButtons()
 		tinsert(self.mixedButtons, queue)
 	end
 end
-
-
-function hb:PET_BATTLE_OPENING_START()
-	self.petBattle = true
-	if self.currentProfile then
-		for i = 1, #self.currentProfile.bars do
-			self.bars[i]:refreshShown()
-		end
-	end
-end
-
-
-function hb:PET_BATTLE_CLOSE()
-	self.petBattle = nil
-	if self.currentProfile then
-		for i = 1, #self.currentProfile.bars do
-			self.bars[i]:refreshShown()
-		end
-	end
-end
-
-
-hb:RegisterEvent("PET_BATTLE_OPENING_START")
-hb:RegisterEvent("PET_BATTLE_CLOSE")

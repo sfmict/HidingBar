@@ -43,12 +43,16 @@ end
 local function fillOutExtraIconsWithTalents(extraIcons, icons)
 	local isInspect = false
 	for specIndex = 1, GetNumSpecGroups(isInspect) do
-		for tier = 1, MAX_TALENT_TIERS do
-			for column = 1, NUM_TALENT_COLUMNS do
-				local spellID, name, icon = GetTalentInfo(tier, column, specIndex)
-				if icon ~= nil and not icons[icon] then
-					extraIcons[#extraIcons + 1] = {type = "spell", name = name, icon = icon}
-					icons[icon] = true
+		for tier = 1, Constants.TalentTierConstants.MAX_TALENT_TIERS do
+			for column = 1, Constants.TalentConsts.NumTalentColumns do
+				local talentInfoQuery = {}
+				talentInfoQuery.tier = tier
+				talentInfoQuery.column = column
+				talentInfoQuery.specializationIndex = specIndex
+				local talentInfo = C_SpecializationInfo.GetTalentInfo(talentInfoQuery)
+				if talentInfo and talentInfo.icon and not icons[talentInfo.icon] then
+					extraIcons[#extraIcons + 1] = {type = "spell", name = talentInfo.name, icon = talentInfo.icon}
+					icons[talentInfo.icon] = true
 				end
 			end
 		end
