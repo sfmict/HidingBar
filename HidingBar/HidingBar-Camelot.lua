@@ -12,7 +12,7 @@ hb:addToIgnoreFrameList("Minimap.ZoomIn")
 hb:addToIgnoreFrameList("Minimap.ZoomOut")
 hb:addToIgnoreFrameList("MinimapCluster.Tracking")
 hb:addToIgnoreFrameList("MinimapCluster.IndicatorFrame.MailFrame")
-hb:addToIgnoreFrameList("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
+-- hb:addToIgnoreFrameList("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
 
 
 function hb:grabDefButtons()
@@ -34,6 +34,7 @@ function hb:grabDefButtons()
 	-- CALENDAR BUTTON
 	local GameTimeFrame = GameTimeFrame
 	if GameTimeFrame and self:ignoreCheck("GameTimeFrame") and not self.btnParams[GameTimeFrame] then
+		GameTimeFrame.icon = GameTimeFrame.StateTexture
 		self:setHooks(GameTimeFrame)
 		self:setSecureHooks(GameTimeFrame)
 		sexyMapRegionsHide(GameTimeFrame)
@@ -67,15 +68,6 @@ function hb:grabDefButtons()
 				bar:updateTooltipPosition()
 			end
 		end)
-		local normalTexture = GameTimeFrame:GetNormalTexture()
-		p.normalTexCoord = {normalTexture:GetTexCoord()}
-		normalTexture:SetTexCoord(0, .8, 0, .8)
-		local pushedTexture = GameTimeFrame:GetPushedTexture()
-		p.pushedTexCoord = {pushedTexture:GetTexCoord()}
-		pushedTexture:SetTexCoord(0, .8, 0, .8)
-		local highlightTexture = GameTimeFrame:GetHighlightTexture()
-		p.highlightTexCoord = {highlightTexture:GetTexCoord()}
-		highlightTexture:SetTexCoord(0, .8, 0, .8)
 
 		local AddonCompartmentFrame = AddonCompartmentFrame
 		local point, rFrame, rPoint, x, y = AddonCompartmentFrame:GetPoint()
@@ -90,19 +82,13 @@ function hb:grabDefButtons()
 		end
 
 		if checkMasqueConditions(GameTimeFrame) then
-			local icon = GameTimeFrame:CreateTexture(nil, "BACKGROUND")
-			icon:SetAtlas(normalTexture:GetAtlas())
-			icon:SetTexCoord(normalTexture:GetTexCoord())
-			icon:SetSize(normalTexture:GetSize())
+			local icon = GameTimeFrame.StateTexture
 			self.HookScript(GameTimeFrame, "OnMouseDown", function() icon:SetScale(.9) end)
 			self.HookScript(GameTimeFrame, "OnMouseUp", function() icon:SetScale(1) end)
 			self:setTexCurCoord(icon, icon:GetTexCoord())
 			icon.SetTexCoord = self.setTexCoord
 
 			self.MSQ_Button_Data[GameTimeFrame] = {
-				_Normal = normalTexture,
-				_Pushed = pushedTexture,
-				_Highlight = highlightTexture,
 				_Icon = icon,
 				_IsNormalIcon = true,
 				_Group = self.MSQ_MButton,
@@ -114,6 +100,7 @@ function hb:grabDefButtons()
 			self.MSQ_MButton:AddButton(GameTimeFrame, data, "Legacy", true)
 			self:MSQ_Button_Update(GameTimeFrame)
 			self:MSQ_CoordUpdate(GameTimeFrame)
+			GameTimeFrame:OnButtonStateChanged()
 		end
 
 		tinsert(self.minimapButtons, GameTimeFrame)
@@ -143,7 +130,7 @@ function hb:grabDefButtons()
 	local tracking = self:getFrameFromPath("MinimapCluster.Tracking")
 	if tracking and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[tracking] then
 		tracking.rButton = tracking.Button
-		tracking.icon = tracking.Button:GetNormalTexture()
+		tracking.Icon = tracking.Button.StateTexture
 		self:setHooks(tracking)
 		self:setSecureHooks(tracking)
 		sexyMapRegionsHide(tracking)
@@ -189,10 +176,25 @@ function hb:grabDefButtons()
 		end
 
 		if checkMasqueConditions(tracking.Button, self:getMBtnSettings(tracking)) then
-			self:setMButtonRegions(tracking.Button)
-			if self.isMsqEnabled(tracking.Button) then
-				tracking.icon = self.getMsqIcon(tracking.Button)
-			end
+			local icon = tracking.Button.StateTexture
+			self.HookScript(tracking.Button, "OnMouseDown", function() icon:SetScale(.9) end)
+			self.HookScript(tracking.Button, "OnMouseUp", function() icon:SetScale(1) end)
+			self:setTexCurCoord(icon, icon:GetTexCoord())
+			icon.SetTexCoord = self.setTexCoord
+
+			self.MSQ_Button_Data[tracking.Button] = {
+				_Icon = icon,
+				_IsNormalIcon = true,
+				_Group = self.MSQ_MButton,
+			}
+			local data = {
+				Icon = icon,
+				Highlight = tracking.Button:CreateTexture(nil, "HIGHLIGHT"),
+			}
+			self.MSQ_MButton:AddButton(tracking.Button, data, "Legacy", true)
+			self:MSQ_Button_Update(tracking.Button)
+			self:MSQ_CoordUpdate(tracking.Button)
+			tracking.Button:OnButtonStateChanged()
 		end
 
 		tinsert(self.minimapButtons, tracking)
@@ -245,46 +247,46 @@ function hb:grabDefButtons()
 	end
 
 	-- CRAFTING ORDER FRAME
-	local craftingOrder = self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
-	if craftingOrder and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[craftingOrder] then
-		craftingOrder.icon = MiniMapCraftingOrderIcon
-		self:setHooks(craftingOrder)
-		self:setSecureHooks(craftingOrder)
-		sexyMapRegionsHide(craftingOrder)
+	-- local craftingOrder = self:getFrameFromPath("MinimapCluster.IndicatorFrame.CraftingOrderFrame")
+	-- if craftingOrder and self:ignoreCheck("MinimapCluster.IndicatorFrame.CraftingOrderFrame") and not self.btnParams[craftingOrder] then
+	-- 	craftingOrder.icon = MiniMapCraftingOrderIcon
+	-- 	self:setHooks(craftingOrder)
+	-- 	self:setSecureHooks(craftingOrder)
+	-- 	sexyMapRegionsHide(craftingOrder)
 
-		local p = self:setParams(craftingOrder, function(p, craftingOrder)
-			craftingOrder.GetParent = p.GetParent
-			craftingOrder:GetParent():Layout()
-			if craftingOrder._MSQ_CFG then return end
-			self.SetSize(craftingOrder, p.width, p.height)
-			self.ClearAllPoints(craftingOrder.icon)
-			for i = 1, #p.iconPoints do
-				self.SetPoint(craftingOrder.icon, unpack(p.iconPoints[i]))
-			end
-		end)
+	-- 	local p = self:setParams(craftingOrder, function(p, craftingOrder)
+	-- 		craftingOrder.GetParent = p.GetParent
+	-- 		craftingOrder:GetParent():Layout()
+	-- 		if craftingOrder._MSQ_CFG then return end
+	-- 		self.SetSize(craftingOrder, p.width, p.height)
+	-- 		self.ClearAllPoints(craftingOrder.icon)
+	-- 		for i = 1, #p.iconPoints do
+	-- 			self.SetPoint(craftingOrder.icon, unpack(p.iconPoints[i]))
+	-- 		end
+	-- 	end)
 
-		p.GetParent = rawget(craftingOrder, "GetParent")
-		craftingOrder.GetParent = function() return MinimapCluster.IndicatorFrame end
-		p.name = "MinimapCluster.IndicatorFrame.CraftingOrderFrame"
-		p.width, p.height = craftingOrder:GetSize()
-		self.SetSize(craftingOrder, 20, 20)
-		p.iconPoints = {}
-		for i = 1, self.GetNumPoints(craftingOrder.icon) do
-			p.iconPoints[i] = {self.GetPoint(craftingOrder.icon, i)}
-		end
-		self.ClearAllPoints(craftingOrder.icon)
-		self.SetPoint(craftingOrder.icon, "CENTER")
+	-- 	p.GetParent = rawget(craftingOrder, "GetParent")
+	-- 	craftingOrder.GetParent = function() return MinimapCluster.IndicatorFrame end
+	-- 	p.name = "MinimapCluster.IndicatorFrame.CraftingOrderFrame"
+	-- 	p.width, p.height = craftingOrder:GetSize()
+	-- 	self.SetSize(craftingOrder, 20, 20)
+	-- 	p.iconPoints = {}
+	-- 	for i = 1, self.GetNumPoints(craftingOrder.icon) do
+	-- 		p.iconPoints[i] = {self.GetPoint(craftingOrder.icon, i)}
+	-- 	end
+	-- 	self.ClearAllPoints(craftingOrder.icon)
+	-- 	self.SetPoint(craftingOrder.icon, "CENTER")
 
-		local btnData = self:getMBtnSettings(craftingOrder)
-		if btnData[5] == nil then btnData[5] = true end
+	-- 	local btnData = self:getMBtnSettings(craftingOrder)
+	-- 	if btnData[5] == nil then btnData[5] = true end
 
-		if checkMasqueConditions(craftingOrder, btnData) then
-			self:setMButtonRegions(craftingOrder)
-		end
+	-- 	if checkMasqueConditions(craftingOrder, btnData) then
+	-- 		self:setMButtonRegions(craftingOrder)
+	-- 	end
 
-		tinsert(self.minimapButtons, craftingOrder)
-		tinsert(self.mixedButtons, craftingOrder)
-	end
+	-- 	tinsert(self.minimapButtons, craftingOrder)
+	-- 	tinsert(self.mixedButtons, craftingOrder)
+	-- end
 
 	-- GARRISON BUTTON
 	local expBtn = ExpansionLandingPageMinimapButton
