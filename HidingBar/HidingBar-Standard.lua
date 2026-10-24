@@ -42,9 +42,11 @@ function hb:grabDefButtons()
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
 			if not GameTimeFrame._MSQ_CFG then
 				GameTimeFrame:SetSize(p.width, p.height)
-				GameTimeFrame:GetNormalTexture():SetTexCoord(unpack(p.normalTexCoord))
-				GameTimeFrame:GetPushedTexture():SetTexCoord(unpack(p.pushedTexCoord))
-				GameTimeFrame:GetHighlightTexture():SetTexCoord(unpack(p.highlightTexCoord))
+				if p.normalTexCoord then -- 12.1.5
+					GameTimeFrame:GetNormalTexture():SetTexCoord(unpack(p.normalTexCoord))
+					GameTimeFrame:GetPushedTexture():SetTexCoord(unpack(p.pushedTexCoord))
+					GameTimeFrame:GetHighlightTexture():SetTexCoord(unpack(p.highlightTexCoord))
+				end
 			end
 			if p.AddonCompartmentFramePoint then
 				local ACFParams = self.btnParams[AddonCompartmentFrame]
@@ -68,14 +70,20 @@ function hb:grabDefButtons()
 			end
 		end)
 		local normalTexture = GameTimeFrame:GetNormalTexture()
-		p.normalTexCoord = {normalTexture:GetTexCoord()}
-		normalTexture:SetTexCoord(0, .8, 0, .8)
-		local pushedTexture = GameTimeFrame:GetPushedTexture()
-		p.pushedTexCoord = {pushedTexture:GetTexCoord()}
-		pushedTexture:SetTexCoord(0, .8, 0, .8)
-		local highlightTexture = GameTimeFrame:GetHighlightTexture()
-		p.highlightTexCoord = {highlightTexture:GetTexCoord()}
-		highlightTexture:SetTexCoord(0, .8, 0, .8)
+		local pushedTexture, highlightTexture
+		if normalTexture then -- 12.1.5
+			p.normalTexCoord = {normalTexture:GetTexCoord()}
+			normalTexture:SetTexCoord(0, .8, 0, .8)
+			pushedTexture = GameTimeFrame:GetPushedTexture()
+			p.pushedTexCoord = {pushedTexture:GetTexCoord()}
+			pushedTexture:SetTexCoord(0, .8, 0, .8)
+			highlightTexture = GameTimeFrame:GetHighlightTexture()
+			p.highlightTexCoord = {highlightTexture:GetTexCoord()}
+			highlightTexture:SetTexCoord(0, .8, 0, .8)
+		else -- 12.1.7
+			GameTimeFrame.Icon = GameTimeFrame.StateTexture
+			GameTimeFrame.Icon:SetTexCoord(0, .8, 0, .8)
+		end
 
 		local AddonCompartmentFrame = AddonCompartmentFrame
 		local point, rFrame, rPoint, x, y = AddonCompartmentFrame:GetPoint()
@@ -91,12 +99,19 @@ function hb:grabDefButtons()
 
 		if checkMasqueConditions(GameTimeFrame) then
 			local icon = GameTimeFrame:CreateTexture(nil, "BACKGROUND")
-			icon:SetAtlas(normalTexture:GetAtlas())
-			icon:SetTexCoord(normalTexture:GetTexCoord())
-			icon:SetSize(normalTexture:GetSize())
-			self.HookScript(GameTimeFrame, "OnMouseDown", function() icon:SetScale(.9) end)
-			self.HookScript(GameTimeFrame, "OnMouseUp", function() icon:SetScale(1) end)
-			self:setTexCurCoord(icon, icon:GetTexCoord())
+			if normalTexture then -- 12.1.5
+				icon:SetAtlas(normalTexture:GetAtlas())
+				icon:SetTexCoord(normalTexture:GetTexCoord())
+				icon:SetSize(normalTexture:GetSize())
+				self.HookScript(GameTimeFrame, "OnMouseDown", function() icon:SetScale(.9) end)
+				self.HookScript(GameTimeFrame, "OnMouseUp", function() icon:SetScale(1) end)
+				self:setTexCurCoord(icon, icon:GetTexCoord())
+			else -- 12.1.7 fix
+				icon = GameTimeFrame.StateTexture
+				self.HookScript(GameTimeFrame, "OnMouseDown", function() icon:SetScale(.9) end)
+				self.HookScript(GameTimeFrame, "OnMouseUp", function() icon:SetScale(1) end)
+				self:setTexCurCoord(icon, icon:GetTexCoord())
+			end
 			icon.SetTexCoord = self.setTexCoord
 
 			self.MSQ_Button_Data[GameTimeFrame] = {
@@ -143,7 +158,8 @@ function hb:grabDefButtons()
 	local tracking = self:getFrameFromPath("MinimapCluster.Tracking")
 	if tracking and self:ignoreCheck("MinimapCluster.Tracking") and not self.btnParams[tracking] then
 		tracking.rButton = tracking.Button
-		tracking.icon = tracking.Button:GetNormalTexture()
+		tracking.Icon = tracking.Button:GetNormalTexture() or tracking.Button.StateTexture -- 12.1.7 fix
+		tracking.Button.Icon = tracking.Icon
 		self:setHooks(tracking)
 		self:setSecureHooks(tracking)
 		sexyMapRegionsHide(tracking)
@@ -192,6 +208,7 @@ function hb:grabDefButtons()
 			self:setMButtonRegions(tracking.Button)
 			if self.isMsqEnabled(tracking.Button) then
 				tracking.icon = self.getMsqIcon(tracking.Button)
+				fprint(tracking.icon)
 			end
 		end
 

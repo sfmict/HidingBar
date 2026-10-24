@@ -43,9 +43,6 @@ function hb:grabDefButtons()
 			GameTimeFrame:SetScript("OnUpdate", p.OnUpdate)
 			if not GameTimeFrame._MSQ_CFG then
 				GameTimeFrame:SetSize(p.width, p.height)
-				GameTimeFrame:GetNormalTexture():SetTexCoord(unpack(p.normalTexCoord))
-				GameTimeFrame:GetPushedTexture():SetTexCoord(unpack(p.pushedTexCoord))
-				GameTimeFrame:GetHighlightTexture():SetTexCoord(unpack(p.highlightTexCoord))
 			end
 			if p.AddonCompartmentFramePoint then
 				local ACFParams = self.btnParams[AddonCompartmentFrame]
@@ -90,7 +87,6 @@ function hb:grabDefButtons()
 
 			self.MSQ_Button_Data[GameTimeFrame] = {
 				_Icon = icon,
-				_IsNormalIcon = true,
 				_Group = self.MSQ_MButton,
 			}
 			local data = {
@@ -184,7 +180,6 @@ function hb:grabDefButtons()
 
 			self.MSQ_Button_Data[tracking.Button] = {
 				_Icon = icon,
-				_IsNormalIcon = true,
 				_Group = self.MSQ_MButton,
 			}
 			local data = {
