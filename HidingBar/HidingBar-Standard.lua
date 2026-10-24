@@ -208,7 +208,6 @@ function hb:grabDefButtons()
 			self:setMButtonRegions(tracking.Button)
 			if self.isMsqEnabled(tracking.Button) then
 				tracking.icon = self.getMsqIcon(tracking.Button)
-				fprint(tracking.icon)
 			end
 		end
 
