@@ -1,4 +1,5 @@
 local hb = HidingBarAddon
+local function void() end
 
 
 hb:addToIgnoreFrameList("GameTimeFrame")
@@ -231,9 +232,9 @@ function hb:grabDefButtons()
 			mapButton.normal:SetTexture(p.normalTexture)
 			mapButton.normal:SetTexCoord(unpack(p.normalCoords))
 			mapButton.normal:SetAllPoints()
-			mapButton.puched:SetTexture(p.pushedTexture)
-			mapButton.puched:SetTexCoord(unpack(p.pushedCoords))
-			mapButton.puched:SetAllPoints()
+			mapButton.pushed:SetTexture(p.pushedTexture)
+			mapButton.pushed:SetTexCoord(unpack(p.pushedCoords))
+			mapButton.pushed:SetAllPoints()
 			mapButton.highlight:SetTexture(p.highlightTexture)
 			mapButton.highlight:SetTexCoord(unpack(p.highlightCoords))
 			mapButton.highlight:ClearAllPoints()
@@ -250,14 +251,14 @@ function hb:grabDefButtons()
 			mapButton.normal:SetSize(27, 27)
 			mapButton.normal:ClearAllPoints()
 			mapButton.normal:SetPoint("CENTER")
-			mapButton.puched = mapButton:GetPushedTexture()
-			p.pushedTexture = mapButton.puched:GetTexture()
-			p.pushedCoords = {mapButton.puched:GetTexCoord()}
-			mapButton.puched:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
-			mapButton.puched:SetTexCoord(.125, .875, .5, 1)
-			mapButton.puched:SetSize(27, 27)
-			mapButton.puched:ClearAllPoints()
-			mapButton.puched:SetPoint("CENTER")
+			mapButton.pushed = mapButton:GetPushedTexture()
+			p.pushedTexture = mapButton.pushed:GetTexture()
+			p.pushedCoords = {mapButton.pushed:GetTexCoord()}
+			mapButton.pushed:SetTexture("Interface/QuestFrame/UI-QuestMap_Button")
+			mapButton.pushed:SetTexCoord(.125, .875, .5, 1)
+			mapButton.pushed:SetSize(27, 27)
+			mapButton.pushed:ClearAllPoints()
+			mapButton.pushed:SetPoint("CENTER")
 			mapButton.highlight = mapButton:GetHighlightTexture()
 			p.highlightTexture = mapButton.highlight:GetTexture()
 			p.highlightCoords = {mapButton.highlight:GetTexCoord()}

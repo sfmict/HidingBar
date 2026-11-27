@@ -1,5 +1,6 @@
 local addon, ns = ...
 local hb = HidingBarAddon
+local MSQ = LibStub("Masque", true)
 
 
 hb:addToIgnoreFrameList("GameTimeFrame")

@@ -263,9 +263,12 @@ StaticPopupDialogs[main.addonName.."NEW_BAR"] = {
 local function barExistsAccept(popup, data)
 	if not popup then return end
 	popup:Hide()
-	main:barPopupAction(data)
-	main.barPopupAction = nil
-	main.lastBarName = nil
+
+	if main.barPopupAction then
+		main:barPopupAction(data)
+		main.barPopupAction = nil
+		main.lastBarName = nil
+	end
 end
 StaticPopupDialogs[main.addonName.."BAR_EXISTS"] = {
 	text = addon..": "..L["A bar with the same name exists."],
@@ -651,9 +654,9 @@ end)
 main.ignoreScroll = CreateFrame("FRAME", nil, main.ignoreTabPanel, "WowScrollBoxList")
 main.ignoreScroll:SetSize(302, 200)
 main.ignoreScroll:SetPoint("TOPLEFT", editBoxIgnore, "BOTTOMLEFT", -2, -2)
-local customGrabScrollBg = main.ignoreScroll:CreateTexture(nil, "BACKGROUND")
-customGrabScrollBg:SetAllPoints()
-customGrabScrollBg:SetColorTexture(0, 0, 0, .2)
+local ignoreScrollBg = main.ignoreScroll:CreateTexture(nil, "BACKGROUND")
+ignoreScrollBg:SetAllPoints()
+ignoreScrollBg:SetColorTexture(0, 0, 0, .2)
 main.ignoreScroll.scrollBar = CreateFrame("EventFrame", nil, main.ignoreTabPanel, "MinimalScrollBar")
 main.ignoreScroll.scrollBar:SetPoint("TOPLEFT", main.ignoreScroll, "TOPRIGHT", 6, -2)
 main.ignoreScroll.scrollBar:SetPoint("BOTTOMLEFT", main.ignoreScroll, "BOTTOMRIGHT", 6, 0)
@@ -674,7 +677,7 @@ main.ignoreScroll.update = function(scroll)
 end
 
 -- IGNORE DESCRIPTION
-local ignoreDescription = main.ignoreTabPanel:CreateFontString("ARTWORK", nil, "GameFontHighlight")
+local ignoreDescription = main.ignoreTabPanel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 ignoreDescription:SetPoint("TOPLEFT", main.ignoreBtn, "TOPRIGHT", 5, 0)
 ignoreDescription:SetPoint("BOTTOMRIGHT", main.ignoreTabPanel, -5, 5)
 ignoreDescription:SetJustifyH("LEFT")
@@ -2317,7 +2320,7 @@ function main:setBar(bar)
 		self.currentBar = bar
 		self.bConfig = self.currentBar.config
 
-		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture), true)
+		self.buttonPanel.bg:SetTexture(media:Fetch("background", self.bConfig.bgTexture, true))
 		self.buttonPanel.bg:SetVertexColor(unpack(self.bConfig.bgColor))
 		expandToCombobox:ddSetSelectedValue(self.bConfig.expand)
 		expandToCombobox:ddSetSelectedText(expandToCombobox.texts[self.bConfig.expand])

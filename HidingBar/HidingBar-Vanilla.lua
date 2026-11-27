@@ -172,8 +172,8 @@ function hb:grabDefButtons()
 			if mapButton._MSQ_CFG then return end
 			mapButton.normal:ClearAllPoints()
 			mapButton.normal:SetPoint(unpack(p.iconPoint))
-			mapButton.puched:ClearAllPoints()
-			mapButton.puched:SetPoint(unpack(p.pushedPoint))
+			mapButton.pushed:ClearAllPoints()
+			mapButton.pushed:SetPoint(unpack(p.pushedPoint))
 			mapButton.border:ClearAllPoints()
 			mapButton.border:SetPoint(unpack(p.borderPoint))
 		end)
@@ -182,10 +182,10 @@ function hb:grabDefButtons()
 		p.iconPoint = {mapButton.normal:GetPoint()}
 		mapButton.normal:ClearAllPoints()
 		mapButton.normal:SetPoint("CENTER")
-		mapButton.puched = mapButton:GetPushedTexture()
-		p.pushedPoint = {mapButton.puched:GetPoint()}
-		mapButton.puched:ClearAllPoints()
-		mapButton.puched:SetPoint("CENTER", 1, -1)
+		mapButton.pushed = mapButton:GetPushedTexture()
+		p.pushedPoint = {mapButton.pushed:GetPoint()}
+		mapButton.pushed:ClearAllPoints()
+		mapButton.pushed:SetPoint("CENTER", 1, -1)
 		mapButton.border = MiniMapWorldBorder
 		p.borderPoint = {mapButton.border:GetPoint()}
 		mapButton.border:ClearAllPoints()
@@ -266,8 +266,7 @@ function hidingBarMixin:setBarTypePosition(typePosition, force)
 		self.omb.icon:SetRotation(self.config.omb.icon and 0 or rotation)
 
 		if typePosition or force or not self.rFrame then
-			self.omb:SetScript("OnUpdate", nil)
-			self.omb:SetAlpha(1)
+			hb.stopFrameFade(self.omb, 1)
 			self.omb:GetScript("OnLeave")(self.omb)
 			self.rFrame = self.omb
 		end

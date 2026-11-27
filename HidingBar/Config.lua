@@ -70,6 +70,6 @@ function config:openConfig()
 end
 
 
-SLASH_HIDDINGBAR1 = "/hidingbar"
-SLASH_HIDDINGBAR2 = "/hb"
-SlashCmdList["HIDDINGBAR"] = function() config:openConfig() end
+SLASH_HIDINGBAR1 = "/hidingbar"
+SLASH_HIDINGBAR2 = "/hb"
+SlashCmdList["HIDINGBAR"] = function() config:openConfig() end

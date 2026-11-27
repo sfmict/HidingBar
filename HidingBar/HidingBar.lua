@@ -133,6 +133,7 @@ local function stopFrameFade(frame, alpha)
 	stopTimerFunc(frame)
 	frame:SetAlpha(alpha)
 end
+hb.stopFrameFade = stopFrameFade
 
 
 -------------------------------------------
